@@ -24,20 +24,6 @@ context on what a command could have answered.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-### §AR27 A Claude Code skill
-
-The author ships his Claude Code tools (roadkeep, commitclerk) with skills and plugins.
-An agent that needs to know what assistants say about a product, or to research across
-assistants, should reach for askround without being told.
-
-A skill describes when to use askround (visibility of a product, finding the question
-that leads to it, research across assistants), how to keep questions neutral and free of
-personal data, and how to read a report; a plugin installs the MCP server and the skill
-together.
-
-Done when, in a fresh Claude Code session with the plugin, asking 'do assistants
-recommend my app?' leads the agent to run a round.
-
 ## Block G — Shipping: package, tests and the first screen
 
 ### §AR28 Package and first screen
@@ -192,8 +178,12 @@ Claude Code on the web, which never installs a marketplace plugin.
 
 askround ships the same way: a marketplace with the plugin at project scope, its MCP
 tools, slash commands (ask, run, report, diff), the skill, install and install --check
-from a checkout, and the launcher for the web. Its MCP schemas carry the project's own
-prompt sets, providers and budget, as roadkeep's carry its limits.
+from a checkout, and the launcher for the web. AR27 shipped the first piece:
+.claude-plugin/marketplace.json and plugin/ (plugin.json, the askround skill, an MCP
+config running the installed askround mcp); the plugin does not yet bundle the package,
+so the machine needs askround on the PATH, which the launcher should remove. Its MCP
+schemas carry the project's own prompt sets, providers and budget, as roadkeep's carry
+its limits.
 
 Done when a repository that commits the settings gets askround's tools, commands and
 skill on a fresh clone, and on Claude Code on the web through the launcher.

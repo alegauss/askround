@@ -43,6 +43,7 @@
 - ✅ **AR24** **An agent in Claude Code cannot ask other assistants mid-analysis; it has to stop and ask the user** — askround mcp serves ask, answer, run, report, diff and doctor over stdio with every refusal and the cost cap; a stdio client asked two providers and read an answer.
 - ✅ **AR25** **Researching a question across assistants means reading each answer and merging the sources by hand** — askround research asks every provider with search, merges the answers' verified statements into claims ranked by provider support, with passages and sources primary first; also an MCP tool.
 - ✅ **AR26** **Disagreements between assistants on a fact, such as a model's licence, are not flagged for a check at the source** — Research mode reports where the assistants disagree on a fact first, with both sides, their passages and the primary sources to settle it; one provider's own sources are not read.
+- ✅ **AR27** **No Claude Code skill tells an agent when to use askround instead of asking the user to test a prompt** — A skill tells an agent when to run askround itself (visibility, discovery, research), how to ask neutrally and within budget; a validated plugin installs it with the MCP server.
 
 ## Block G — Shipping: package, tests and the first screen
 

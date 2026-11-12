@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "askround",
+  "description": "askround: ask several AI assistants the same question and read what they recommend.",
+  "owner": {
+    "name": "Alexandre Oliveira",
+    "url": "https://github.com/alegauss"
+  },
+  "plugins": [
+    {
+      "name": "askround",
+      "source": "./plugin",
+      "category": "productivity"
+    }
+  ]
+}

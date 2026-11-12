@@ -242,13 +242,17 @@ Where the assistants disagree on a fact (one says a model's licence allows comme
 use, another that it does not), the report opens with it: both sides, their passages,
 and the primary sources to read to settle it.
 
-## For agents: the MCP server
+## For agents: the plugin and the MCP server
 
-`askround mcp` serves askround over stdio to an agent. In Claude Code:
+In Claude Code, the plugin installs the MCP server and a skill that tells the agent to
+run a question across assistants itself, instead of asking you to paste ChatGPT's
+answer (askround itself must be installed, `pip install -e .`, and on the PATH):
 
 ```
-claude mcp add askround -- askround mcp
+/plugin install askround --marketplace alegauss/askround
 ```
+
+or the server alone: `claude mcp add askround -- askround mcp`. Either serves:
 
 | Tool | What it does |
 | --- | --- |
