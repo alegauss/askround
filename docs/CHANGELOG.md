@@ -3,6 +3,7 @@
 ## Block A — The round: one question to every assistant, with web search
 
 - ✅ **AR1** **No code exists to send one question to several assistants and keep their answers side by side** — askround ask sends one question to every provider with a key (OpenAI, Gemini, Anthropic) in parallel, prints the answers together and saves each raw response with the date.
+- ✅ **AR2** **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Every adapter searches with its provider's own tool and keeps queries and cited sources, with --no-search to compare; OpenAI and Gemini were checked live.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 

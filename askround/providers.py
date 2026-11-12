@@ -4,16 +4,30 @@ Each adapter is a single HTTPS POST to the provider's own API, read from an API 
 in the environment. askround never stores a key: it reads the variable at call time
 and writes only the response.
 
+Web search is on by default, through each provider's own tool: OpenAI's Responses API
+`web_search` tool, Gemini's grounding with Google Search, Anthropic's web search server
+tool, and Perplexity's Sonar models, which search unless told not to. Assistants
+recommend products through search, so a round without it measures something no user
+sees; `search=False` is there to compare against. Each answer keeps the search queries
+and the sources the provider reported, as the provider reported them (Gemini's are
+redirect links titled with the domain).
+
 The model is the provider's default below unless `ASKROUND_<NAME>_MODEL` is set.
 """
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from askround.http import PostJson, post_json
+
+
+@dataclass(frozen=True)
+class Source:
+    url: str
+    title: str = ""
 
 
 @dataclass
@@ -22,6 +36,16 @@ class Answer:
     model: str
     text: str
     raw: dict[str, Any]
+    search: bool = True
+    sources: list[Source] = field(default_factory=list)
+    queries: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Parsed:
+    text: str
+    sources: list[Source] = field(default_factory=list)
+    queries: list[str] = field(default_factory=list)
 
 
 class Provider:
@@ -47,19 +71,41 @@ class Provider:
     def configured(self) -> bool:
         return self.api_key() is not None
 
-    def ask(self, question: str) -> Answer:
+    def ask(self, question: str, search: bool = True) -> Answer:
         key = self.api_key()
         if key is None:
             raise RuntimeError(f"{self.name}: none of {', '.join(self.key_vars)} is set")
-        url, headers, body = self.request(question, key)
-        raw = self._post(url, headers, body, self.timeout)
-        return Answer(self.name, self.model, self.text(raw), raw)
+        raw = self.call(question, key, search)
+        parsed = self.parse(raw)
+        return Answer(
+            self.name,
+            self.model,
+            parsed.text,
+            raw,
+            search=search,
+            sources=_unique(parsed.sources),
+            queries=list(dict.fromkeys(q for q in parsed.queries if q)),
+        )
 
-    def request(self, question: str, key: str) -> tuple[str, dict[str, str], dict[str, Any]]:
+    def call(self, question: str, key: str, search: bool) -> dict[str, Any]:
+        url, headers, body = self.request(question, key, search)
+        return self._post(url, headers, body, self.timeout)
+
+    def request(
+        self, question: str, key: str, search: bool
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
         raise NotImplementedError
 
-    def text(self, raw: dict[str, Any]) -> str:
+    def parse(self, raw: dict[str, Any]) -> Parsed:
         raise NotImplementedError
+
+
+def _unique(sources: list[Source]) -> list[Source]:
+    seen: dict[str, Source] = {}
+    for source in sources:
+        if source.url and source.url not in seen:
+            seen[source.url] = source
+    return list(seen.values())
 
 
 class OpenAI(Provider):
@@ -69,22 +115,36 @@ class OpenAI(Provider):
     key_vars = ("OPENAI_API_KEY",)
     default_model = "gpt-5"
 
-    def request(self, question, key):
+    def request(self, question, key, search):
+        body: dict[str, Any] = {"model": self.model, "input": question}
+        if search:
+            body["tools"] = [{"type": "web_search"}]
+            body["include"] = ["web_search_call.action.sources"]
         return (
             "https://api.openai.com/v1/responses",
             {"Authorization": f"Bearer {key}"},
-            {"model": self.model, "input": question},
+            body,
         )
 
-    def text(self, raw):
-        parts = []
+    def parse(self, raw):
+        parts: list[str] = []
+        sources: list[Source] = []
+        queries: list[str] = []
         for item in raw.get("output") or []:
-            if item.get("type") != "message":
-                continue
-            for content in item.get("content") or []:
-                if content.get("type") == "output_text":
+            kind = item.get("type")
+            if kind == "web_search_call":
+                action = item.get("action") or {}
+                queries.append(action.get("query", ""))
+                queries.extend(action.get("queries") or [])
+            elif kind == "message":
+                for content in item.get("content") or []:
+                    if content.get("type") != "output_text":
+                        continue
                     parts.append(content.get("text", ""))
-        return "\n".join(parts).strip()
+                    for note in content.get("annotations") or []:
+                        if note.get("type") == "url_citation":
+                            sources.append(Source(note.get("url", ""), note.get("title", "")))
+        return Parsed("\n".join(parts).strip(), sources, queries)
 
 
 class Gemini(Provider):
@@ -92,43 +152,121 @@ class Gemini(Provider):
     key_vars = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
     default_model = "gemini-2.5-flash"
 
-    def request(self, question, key):
+    def request(self, question, key, search):
+        body: dict[str, Any] = {"contents": [{"role": "user", "parts": [{"text": question}]}]}
+        if search:
+            body["tools"] = [{"google_search": {}}]
         return (
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
             {"x-goog-api-key": key},
-            {"contents": [{"role": "user", "parts": [{"text": question}]}]},
+            body,
         )
 
-    def text(self, raw):
+    def parse(self, raw):
         candidates = raw.get("candidates") or []
         if not candidates:
-            return ""
-        parts = (candidates[0].get("content") or {}).get("parts") or []
-        return "".join(part.get("text", "") for part in parts).strip()
+            return Parsed("")
+        candidate = candidates[0]
+        parts = (candidate.get("content") or {}).get("parts") or []
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+        grounding = candidate.get("groundingMetadata") or {}
+        sources = [
+            Source(chunk["web"].get("uri", ""), chunk["web"].get("title", ""))
+            for chunk in grounding.get("groundingChunks") or []
+            if chunk.get("web")
+        ]
+        return Parsed(text, sources, list(grounding.get("webSearchQueries") or []))
 
 
 class Anthropic(Provider):
     name = "anthropic"
     key_vars = ("ANTHROPIC_API_KEY",)
     default_model = "claude-opus-5-5"
+    # a searching turn can pause server-side; it is resumed by sending it back
+    max_continuations = 3
 
-    def request(self, question, key):
+    def request(self, question, key, search):
+        body: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": 16000,
+            "messages": [{"role": "user", "content": question}],
+        }
+        if search:
+            body["tools"] = [{"type": "web_search_20260209", "name": "web_search"}]
         return (
             "https://api.anthropic.com/v1/messages",
             {"x-api-key": key, "anthropic-version": "2026-10-21"},
-            {
-                "model": self.model,
-                "max_tokens": 16000,
-                "messages": [{"role": "user", "content": question}],
-            },
+            body,
         )
 
-    def text(self, raw):
-        blocks = raw.get("content") or []
-        return "".join(b.get("text", "") for b in blocks if b.get("type") == "text").strip()
+    def call(self, question, key, search):
+        url, headers, body = self.request(question, key, search)
+        turns = [self._post(url, headers, body, self.timeout)]
+        while turns[-1].get("stop_reason") == "pause_turn" and len(turns) <= self.max_continuations:
+            body = {
+                **body,
+                "messages": [
+                    *body["messages"],
+                    {"role": "assistant", "content": turns[-1].get("content") or []},
+                ],
+            }
+            turns.append(self._post(url, headers, body, self.timeout))
+        return turns[0] if len(turns) == 1 else {"turns": turns}
+
+    def parse(self, raw):
+        turns = raw.get("turns") or [raw]
+        parts: list[str] = []
+        sources: list[Source] = []
+        queries: list[str] = []
+        for turn in turns:
+            for block in turn.get("content") or []:
+                kind = block.get("type")
+                if kind == "text":
+                    parts.append(block.get("text", ""))
+                    for cite in block.get("citations") or []:
+                        if cite.get("url"):
+                            sources.append(Source(cite["url"], cite.get("title") or ""))
+                elif kind == "server_tool_use" and block.get("name") == "web_search":
+                    queries.append((block.get("input") or {}).get("query", ""))
+                elif kind == "web_search_tool_result" and isinstance(block.get("content"), list):
+                    for result in block["content"]:
+                        if result.get("url"):
+                            sources.append(Source(result["url"], result.get("title") or ""))
+        return Parsed("".join(parts).strip(), sources, queries)
 
 
-PROVIDERS: tuple[type[Provider], ...] = (OpenAI, Gemini, Anthropic)
+class Perplexity(Provider):
+    """Sonar models search by default; `disable_search` turns that off."""
+
+    name = "perplexity"
+    key_vars = ("PERPLEXITY_API_KEY",)
+    default_model = "sonar"
+
+    def request(self, question, key, search):
+        body: dict[str, Any] = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": question}],
+        }
+        if not search:
+            body["disable_search"] = True
+        return (
+            "https://api.perplexity.ai/chat/completions",
+            {"Authorization": f"Bearer {key}"},
+            body,
+        )
+
+    def parse(self, raw):
+        choices = raw.get("choices") or []
+        text = ((choices[0].get("message") or {}).get("content") or "") if choices else ""
+        results = raw.get("search_results") or []
+        if results:
+            sources = [Source(r.get("url", ""), r.get("title") or "") for r in results]
+        else:
+            sources = [Source(url) for url in raw.get("citations") or []]
+        return Parsed(text.strip(), sources)
+
+
+PROVIDERS: tuple[type[Provider], ...] = (OpenAI, Gemini, Anthropic, Perplexity)
 
 
 def all_providers(post: PostJson = post_json) -> list[Provider]:

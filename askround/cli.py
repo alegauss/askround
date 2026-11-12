@@ -1,10 +1,11 @@
 """The `askround` command.
 
-    askround ask "<question>" [--provider NAME ...] [--out DIR] [--json]
+    askround ask "<question>" [--provider NAME ...] [--no-search] [--out DIR] [--json]
 
 Sends the question to every provider whose API key is in the environment (or the
-ones named with --provider), prints each answer under its provider's heading, and
-saves the round under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
+ones named with --provider), with web search on unless --no-search, prints each
+answer under its provider's heading with the sources it cited, and saves the round
+under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
 """
 
 from __future__ import annotations
@@ -16,8 +17,8 @@ import sys
 from pathlib import Path
 
 from askround import __version__
-from askround.providers import all_providers, by_name
-from askround.round import Round, run_round, save_round
+from askround.providers import Answer, all_providers, by_name
+from askround.round import Round, run_round, save_round, summary
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
         dest="providers",
         metavar="NAME",
         help="ask only this provider (repeatable)",
+    )
+    ask.add_argument(
+        "--no-search",
+        dest="search",
+        action="store_false",
+        help="ask without web search, to compare with a searched round",
     )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
@@ -52,12 +59,12 @@ def main(argv: list[str] | None = None, post=None) -> int:
     if not providers:
         print(
             "askround: no provider has an API key in the environment "
-            "(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY)",
+            "(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY)",
             file=sys.stderr,
         )
         return 2
     out = args.out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
-    round_ = run_round(args.question, providers)
+    round_ = run_round(args.question, providers, search=args.search)
     directory = save_round(round_, out)
     if args.json:
         print(json.dumps(as_json(round_, directory), ensure_ascii=False, indent=2))
@@ -68,26 +75,23 @@ def main(argv: list[str] | None = None, post=None) -> int:
 
 def render(round_: Round, directory: Path) -> str:
     lines = [f"Q: {round_.question}", ""]
+    if not round_.search:
+        lines[0] += "  (web search off)"
     for r in round_.results:
         lines.append(f"=== {r.provider} ({r.model}) ===")
-        lines.append(r.answer.text if r.answer else f"[error] {r.error}")
+        lines.extend(_answer_lines(r.answer) if r.answer else [f"[error] {r.error}"])
         lines.append("")
     lines.append(f"saved: {directory}")
     return "\n".join(lines)
 
 
+def _answer_lines(answer: Answer) -> list[str]:
+    lines = [answer.text]
+    if answer.sources:
+        lines += ["", "sources:"]
+        lines += [f"  - {s.title} <{s.url}>" if s.title else f"  - {s.url}" for s in answer.sources]
+    return lines
+
+
 def as_json(round_: Round, directory: Path) -> dict:
-    return {
-        "question": round_.question,
-        "asked_at": round_.asked_at.isoformat(),
-        "saved": str(directory),
-        "results": [
-            {
-                "provider": r.provider,
-                "model": r.model,
-                "text": r.answer.text if r.answer else None,
-                "error": r.error,
-            }
-            for r in round_.results
-        ],
-    }
+    return {**summary(round_), "saved": str(directory)}

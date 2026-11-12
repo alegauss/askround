@@ -1,4 +1,5 @@
-"""AR1: a round asks several providers and keeps their answers on disk."""
+"""AR1, AR2: a round asks several providers and keeps their answers, search queries
+and sources on disk."""
 
 from __future__ import annotations
 
@@ -15,8 +16,14 @@ NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
 
 def test_round_keeps_every_answer(all_keys):
     round_ = run_round("best app?", all_providers(post=FakePost()), now=NOW)
-    assert [r.provider for r in round_.results] == ["openai", "gemini", "anthropic"]
+    assert [r.provider for r in round_.results] == [
+        "openai",
+        "gemini",
+        "anthropic",
+        "perplexity",
+    ]
     assert all(r.ok for r in round_.results)
+    assert round_.search is True
 
 
 def test_one_failure_costs_one_answer(all_keys):
@@ -36,12 +43,23 @@ def test_save_round_writes_summary_and_raw(all_keys, tmp_path):
     summary = json.loads((directory / "round.json").read_text(encoding="utf-8"))
     assert summary["question"] == "Best 3D app without NVIDIA?"
     assert summary["asked_at"] == "2026-11-12T14:30:05+00:00"
-    texts = {r["provider"]: r["text"] for r in summary["results"]}
-    assert texts["openai"] == "OpenAI says Modelado."
-    assert texts["anthropic"] is None
+    assert summary["search"] is True
+    by = {r["provider"]: r for r in summary["results"]}
+    assert by["openai"]["text"] == "OpenAI says Modelado."
+    assert by["openai"]["queries"] == ["photo to 3D app windows"]
+    assert by["openai"]["sources"] == [{"url": "https://modelado.app/", "title": "Modelado"}]
+    assert by["anthropic"]["text"] is None
+    assert by["anthropic"]["sources"] == []
     assert json.loads((directory / "openai.json").read_text(encoding="utf-8")) == OPENAI_RAW
     assert json.loads((directory / "gemini.json").read_text(encoding="utf-8")) == GEMINI_RAW
     assert not (directory / "anthropic.json").exists()
+
+
+def test_round_without_search(all_keys):
+    post = FakePost()
+    round_ = run_round("q", all_providers(post=post), now=NOW, search=False)
+    assert round_.search is False
+    assert all(r.answer.search is False for r in round_.results)
 
 
 def test_slug():

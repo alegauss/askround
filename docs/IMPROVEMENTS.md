@@ -2,20 +2,6 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR2 Web search on every provider
-
-The app ChatGPT recommended had existed for two weeks. A model answering from its
-weights alone could not know it; the assistant found it through web search and linked
-its site. A round that does not search measures something no user sees.
-
-Each adapter turns search on with the provider's own tool: OpenAI's Responses API web
-search tool, Gemini's grounding with Google Search, Anthropic's web search tool, and
-Perplexity's Sonar models, which search by default. The answer keeps the search queries
-and sources the provider reports.
-
-Done when every adapter returns an answer with its cited sources for a question about a
-product released this month, and a round can be run with search off to compare.
-
 ### §AR3 askround doctor
 
 Before proposing a round, the agent had to list environment variables one by one
@@ -118,6 +104,12 @@ the answer.
 Each answer's citations (from the provider's search metadata and from the links in the
 text) are stored, and those on the product's own domains are classified (site,
 repository, store, docs); third-party pages are counted per rival.
+
+AR2 already keeps each answer's sources in `round.json`, as the provider reports them,
+and two shapes need normalising before a URL can be classified: OpenAI appends
+`?utm_source=openai` to the links it cites, and Gemini's grounding chunks are
+`vertexaisearch.cloud.google.com/grounding-api-redirect/...` links whose title is the
+domain, so its real page needs the redirect followed or the domain read from the title.
 
 Done when a report shows, per provider, which of the product's pages were cited and how
 often.
@@ -367,6 +359,12 @@ Each adapter is tested against recorded responses (with keys and identifying hea
 stripped), including the answers from 12/11/2026 as fixtures for the extraction tests; a
 separate, opt-in live test checks each adapter against its real API with the smallest
 call. CI runs only the recorded tests.
+
+Today `tests/conftest.py` holds hand-written responses shaped from each provider's
+documentation, not recordings. OpenAI and Gemini were run live when AR2 shipped; the
+Anthropic and Perplexity adapters (web search tool, `pause_turn` resume, Sonar's
+`search_results`) have never answered a live call, because no key was present, so their
+first live run is the one most likely to find a wrong field.
 
 Done when the test suite runs with no key and no network, and the live tests run when
 keys are present and are asked for.

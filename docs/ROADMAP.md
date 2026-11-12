@@ -6,11 +6,10 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-- 🛠 **AR2** (deps: AR1 ✅) **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Assistants recommend apps through search with links; a plain completion never names a two-week-old app that ChatGPT sends people to. → §AR2
 - 📋 **AR3** (deps: AR1 ✅) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
 - 📋 **AR4** (deps: AR1 ✅) **One answer is taken as the answer, though the same question gives a different list on the next run** — Assistants vary run to run, so 'it named the app first' means nothing until it is 'first in 3 of 3 runs'. → §AR4
-- 📋 **AR5** (deps: AR2) **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Providers update models and search silently; a product dropping out of answers must be traceable to a new model or to the product itself. → §AR5
-- 📋 **AR6** (deps: AR2) **A question cannot be asked as someone in a given country and language would ask it** — A Portuguese question about running on the CPU also put the app first; country and language change which products search finds. → §AR6
+- 📋 **AR5** (deps: AR2 ✅) **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Providers update models and search silently; a product dropping out of answers must be traceable to a new model or to the product itself. → §AR5
+- 📋 **AR6** (deps: AR2 ✅) **A question cannot be asked as someone in a given country and language would ask it** — A Portuguese question about running on the CPU also put the app first; country and language change which products search finds. → §AR6
 - 📋 **AR7** (deps: AR1 ✅) **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — A round makes dozens of calls across providers, and one failure should cost one answer, not the whole round. → §AR7
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
@@ -38,7 +37,7 @@
 
 - 📋 **AR20** (deps: AR8) **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — The app's audience moved on a given day; only a weekly series shows when an assistant started or stopped naming it. → §AR20
 - 📋 **AR21** (deps: AR9, AR20) **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — The change between two rounds is what someone needs to act on, and the full report hides it. → §AR21
-- 📋 **AR22** (deps: AR2) **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A round is dozens of searched calls; without an estimate and a cap a weekly habit can cost more than it is worth. → §AR22
+- 📋 **AR22** (deps: AR2 ✅) **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A round is dozens of searched calls; without an estimate and a cap a weekly habit can cost more than it is worth. → §AR22
 - 📋 **AR23** (deps: AR20) **A round cannot be exported to a dashboard or another project's data** — The visibility work that needs it keeps daily numbers per product; askround's rows should land there without a manual copy. → §AR23
 
 ## Block F — For agents: an MCP server, a skill and research across assistants

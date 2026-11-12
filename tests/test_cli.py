@@ -1,4 +1,5 @@
-"""AR1: `askround ask` returns the answers of several providers and saves them."""
+"""AR1, AR2: `askround ask` returns the answers of several providers, with their
+sources, and saves them."""
 
 from __future__ import annotations
 
@@ -17,8 +18,20 @@ def test_ask_prints_answers_side_by_side(all_keys, tmp_path, capsys):
     assert "OpenAI says Modelado." in out
     assert "Gemini says Blender." in out
     assert "Claude says Meshy." in out
+    assert "Perplexity says Tripo." in out
+    assert "  - Modelado <https://modelado.app/>" in out
+    assert "web search off" not in out
     assert "saved:" in out
     assert len(list(tmp_path.glob("*/*/round.json"))) == 1
+
+
+def test_no_search_flag(all_keys, tmp_path, capsys):
+    post = FakePost()
+    code = main(["ask", "q", "--no-search", "--out", str(tmp_path)], post=post)
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "(web search off)" in out
+    assert all("tools" not in body for _, _, body in post.calls)
 
 
 def test_only_providers_with_keys_are_asked(no_keys, monkeypatch, tmp_path, capsys):
@@ -49,7 +62,12 @@ def test_no_keys_is_an_error(no_keys, tmp_path, capsys):
 
 def test_all_failing_exits_one(all_keys, tmp_path, capsys):
     post = FakePost(
-        fail={"api.openai.com", "generativelanguage.googleapis.com", "api.anthropic.com"}
+        fail={
+            "api.openai.com",
+            "generativelanguage.googleapis.com",
+            "api.anthropic.com",
+            "api.perplexity.ai",
+        }
     )
     code = main(["ask", "q", "--out", str(tmp_path)], post=post)
     assert code == 1
