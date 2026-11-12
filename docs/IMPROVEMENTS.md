@@ -22,8 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block F — For agents: an MCP server, a skill and research across assistants
-
 ## Block G — Shipping: package, tests and the first screen
 
 ### §AR28 Package and first screen
