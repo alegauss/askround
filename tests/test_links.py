@@ -6,7 +6,7 @@ illustrated with a Microsoft Store page of another app. The Store ids are made u
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from conftest import FakePost
 
@@ -16,7 +16,7 @@ from askround.providers import Answer
 from askround.report import build, find_round, load_round, markdown
 from askround.round import Result, Round
 
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 PRODUCT = ["Modelado", "alegauss.github.io/modelado", "apps.microsoft.com/detail/9own"]
 
 ROW = (

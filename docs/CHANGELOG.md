@@ -22,6 +22,7 @@
 
 - ✅ **AR13** **A product an answer names may not exist, like two Windows apps no search could find** — askround lookup and --check-rivals check a rival on GitHub, then a searched call; both 12/11 'invented' names exist (design superseded: they exist).
 - ✅ **AR14** **A cited link or picture may belong to another product, like a Store page of a different app shown for Modelado** — --check-links follows each link and image an answer gives beside a product and flags those landing on another product's page or broken; Modelado's real Store, site and repo pass.
+- ✅ **AR15** **Claims about the product are not checked against what is true, so a wrong 'needs NVIDIA' goes unnoticed** — A product file holds a product's facts and pages; with --extract the answers' claims are judged against them, and a contradicted or doubted fact is reported with the page that should say it.
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 

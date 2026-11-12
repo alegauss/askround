@@ -153,20 +153,25 @@ class Extractor:
     def configured(self) -> bool:
         return self._source.configured()
 
-    def read(self, answer_text: str) -> Reading:
+    def ask_json(self, prompt: str, schema: dict[str, Any]) -> dict[str, Any]:
+        """One structured-output call: the prompt in, an object of `schema` out."""
         key = self._source.api_key()
         if key is None:
             raise RuntimeError(f"{self.name}: no API key for the extraction pass")
-        prompt = f"{INSTRUCTIONS}\n\n<answer>\n{answer_text}\n</answer>"
-        url, headers, body = self.request(prompt, key)
+        url, headers, body = self.request(prompt, key, schema)
         raw = self._post(url, headers, body, self.timeout)
-        data = json.loads(self.json_text(raw))
+        return json.loads(self.json_text(raw))
+
+    def read(self, answer_text: str) -> Reading:
+        data = self.ask_json(f"{INSTRUCTIONS}\n\n<answer>\n{answer_text}\n</answer>", SCHEMA)
         return Reading(
             verify(answer_text, data.get("recommendations") or []),
             verify_claims(answer_text, data.get("claims") or []),
         )
 
-    def request(self, prompt: str, key: str) -> tuple[str, dict[str, str], dict[str, Any]]:
+    def request(
+        self, prompt: str, key: str, schema: dict[str, Any] = SCHEMA
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
         raise NotImplementedError
 
     def json_text(self, raw: dict[str, Any]) -> str:
@@ -177,7 +182,7 @@ class OpenAIExtractor(Extractor):
     provider = OpenAI
     default_model = "gpt-5-mini"
 
-    def request(self, prompt, key):
+    def request(self, prompt, key, schema=SCHEMA):
         return (
             "https://api.openai.com/v1/responses",
             {"Authorization": f"Bearer {key}"},
@@ -187,8 +192,8 @@ class OpenAIExtractor(Extractor):
                 "text": {
                     "format": {
                         "type": "json_schema",
-                        "name": "recommendations",
-                        "schema": SCHEMA,
+                        "name": "reading",
+                        "schema": schema,
                         "strict": True,
                     }
                 },
@@ -203,7 +208,7 @@ class GeminiExtractor(Extractor):
     provider = Gemini
     default_model = "gemini-2.5-flash"
 
-    def request(self, prompt, key):
+    def request(self, prompt, key, schema=SCHEMA):
         return (
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
             {"x-goog-api-key": key},
@@ -211,7 +216,7 @@ class GeminiExtractor(Extractor):
                 "contents": [{"role": "user", "parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "responseMimeType": "application/json",
-                    "responseJsonSchema": SCHEMA,
+                    "responseJsonSchema": schema,
                 },
             },
         )
@@ -224,7 +229,7 @@ class AnthropicExtractor(Extractor):
     provider = Anthropic
     default_model = "claude-haiku-5-5"
 
-    def request(self, prompt, key):
+    def request(self, prompt, key, schema=SCHEMA):
         return (
             "https://api.anthropic.com/v1/messages",
             {"x-api-key": key, "anthropic-version": "2026-10-21"},
@@ -232,7 +237,7 @@ class AnthropicExtractor(Extractor):
                 "model": self.model,
                 "max_tokens": 4000,
                 "messages": [{"role": "user", "content": prompt}],
-                "output_config": {"format": {"type": "json_schema", "schema": SCHEMA}},
+                "output_config": {"format": {"type": "json_schema", "schema": schema}},
             },
         )
 

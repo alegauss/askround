@@ -7,7 +7,7 @@ name = "askround"
 description = "Ask several AI assistants the same question and keep their answers side by side."
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.10"
+requires-python = ">=3.11"  # tomllib reads the product files
 authors = [{ name = "Alexandre Oliveira" }]
 # askround has NO runtime dependencies, by design: every provider is one HTTPS POST
 # through the standard library, which keeps the adapters symmetric and testable
@@ -28,7 +28,7 @@ packages = ["askround"]
 version = { attr = "askround.__version__" }
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 100
 # .claude/ holds roadkeep's installed hooks, refreshed by `roadkeep install`
 extend-exclude = [".claude"]
@@ -41,6 +41,7 @@ select = ["E", "F", "I", "UP", "C4", "B"]
 # instruction would change what it is told
 "askround/extract.py" = ["E501"]
 "askround/lookup.py" = ["E501"]
+"askround/gaps.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

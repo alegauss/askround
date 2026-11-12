@@ -8,7 +8,7 @@ that day were not kept verbatim.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from conftest import FakePost
 
@@ -18,7 +18,7 @@ from askround.extract import Claim, verify_claims
 from askround.providers import Answer
 from askround.round import Result, Round, summary
 
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 
 TABLE = """| App | NVIDIA GPU required | CPU only | Verdict |
 |---|---|---|---|

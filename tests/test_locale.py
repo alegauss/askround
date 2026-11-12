@@ -4,7 +4,7 @@ with what each provider's API ignored."""
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from conftest import FakePost
@@ -15,7 +15,7 @@ from askround.round import frequency, run_round, save_round, summary
 
 BR = Locale("BR", "pt-BR")
 US = Locale("US", "en-US")
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 
 
 def test_parse():

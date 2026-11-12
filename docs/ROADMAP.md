@@ -2,10 +2,6 @@
 
 ## Priority
 
-## Block C — Trust: checking what the answers say
-
-- 📋 **AR15** (deps: AR11 ✅) **Claims about the product are not checked against what is true, so a wrong 'needs NVIDIA' goes unnoticed** — The fix for a wrong claim is a sentence on the page the assistant reads; askround can say which claim is wrong and which page lacks it. → §AR15
-
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
 - 📋 **AR16** (deps: AR1 ✅) **Questions live in chat history; there is no prompt set per product to run again next week** — The four questions that explained the app's audience were typed once and would have to be retyped to see whether anything changed. → §AR16

@@ -20,11 +20,20 @@ from pathlib import Path
 from askround import citations
 from askround.claims import product_claims
 from askround.extract import Claim, Recommendation
+from askround.gaps import Gap
 from askround.links import LinkCheck
 from askround.lookup import Verdict
 from askround.providers import Answer, Locale, Source
 from askround.rivals import key, rivals
-from askround.round import Result, Round, exists, failures, frequency, link_checks
+from askround.round import (
+    Result,
+    Round,
+    exists,
+    fact_gaps,
+    failures,
+    frequency,
+    link_checks,
+)
 
 RIVALS_SHOWN = 10
 
@@ -75,33 +84,30 @@ def _answer(item: dict) -> Answer:
 def load_round(path: Path) -> tuple[Round, list[list[str]]]:
     """The round a round.json holds, and the products it was asked about."""
     data = json.loads(path.read_text(encoding="utf-8"))
-    results = []
-    for item in data["results"]:
-        locale = _locale(item.get("locale"))
-        if item.get("error"):
-            results.append(
-                Result(
-                    item["provider"], item["model"], item["run"], error=item["error"], locale=locale
-                )
-            )
-        else:
-            results.append(
-                Result(
-                    item["provider"],
-                    item["model"],
-                    item["run"],
-                    answer=_answer(item),
-                    locale=locale,
-                )
-            )
     round_ = Round(
         data["question"],
         datetime.fromisoformat(data["asked_at"]),
-        results,
+        [_result(item) for item in data["results"]],
         search=data.get("search", True),
         runs=data.get("runs", 1),
         locales=[_locale(x) for x in data.get("locales") or []],
     )
+    _restore_checks(round_, data)
+    products = [p["names"] for p in data.get("products") or []]
+    return round_, products
+
+
+def _result(item: dict) -> Result:
+    locale = _locale(item.get("locale"))
+    if item.get("error"):
+        return Result(
+            item["provider"], item["model"], item["run"], error=item["error"], locale=locale
+        )
+    return Result(item["provider"], item["model"], item["run"], answer=_answer(item), locale=locale)
+
+
+def _restore_checks(round_: Round, data: dict) -> None:
+    """What the passes after the round found: rival lookups, links followed, fact gaps."""
     for rival in (data.get("rivals") or {}).get("products") or []:
         verdict = rival.get("exists")
         if verdict:
@@ -109,8 +115,8 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
     for product in data.get("products") or []:
         if product.get("links") is not None:
             round_.links[product["product"]] = [LinkCheck(**c) for c in product["links"]]
-    products = [p["names"] for p in data.get("products") or []]
-    return round_, products
+        if product.get("gaps") is not None:
+            round_.gaps[product["product"]] = [Gap(**g) for g in product["gaps"]]
 
 
 def build(round_: Round, products: list[list[str]], source: str = "") -> dict:
@@ -193,6 +199,7 @@ def _product(round_: Round, names: list[str]) -> dict:
         if citations.places(names)
         else None,
         "links": link_checks(round_, names[0]),
+        "gaps": fact_gaps(round_, names[0]),
     }
 
 
@@ -267,7 +274,32 @@ def _product_markdown(product: dict, report: dict) -> list[str]:
             pages = "<br>".join(f"{n}x {url}" for url, n in c["pages"].items()) or "-"
             lines.append(f"| {c['provider']} | {c['citing']}/{c['answers']} | {kinds} | {pages} |")
         lines.append("")
+    lines += _gaps_markdown(product["gaps"])
     lines += _links_markdown(product["links"])
+    return lines
+
+
+def _gaps_markdown(gaps: list[dict] | None) -> list[str]:
+    if gaps is None:
+        return []
+    if not gaps:
+        return ["Fact gaps: none. Every claim compared agrees with the product file.", ""]
+    lines = [
+        "**Fact gaps** - what the answers get wrong or leave in doubt:",
+        "",
+        "| claim | providers | verdict | the fact | say it plainly on |",
+        "|---|---|---|---|---|",
+    ]
+    for g in gaps:
+        by = ", ".join(f"{p} {n}" for p, n in g["providers"].items())
+        claim = f"{_cell(g['attribute'])}: {_cell(g['value'])}"
+        lines.append(
+            f"| {claim} | {by} | {g['verdict']} | {_cell(g['fact'])} | {_cell(g['page']) or '-'} |"
+        )
+    cited = sorted({page for g in gaps for page in g["cited"]})
+    lines.append("")
+    lines.append("The answers cited of its pages: " + (", ".join(cited) if cited else "none") + ".")
+    lines.append("")
     return lines
 
 

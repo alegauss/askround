@@ -27,7 +27,7 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations, links, lookup
+from askround import __version__, citations, gaps, links, lookup, product
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
@@ -120,6 +120,15 @@ def build_parser() -> argparse.ArgumentParser:
         "searched call each; needs --extract",
     )
     ask.add_argument(
+        "--product-file",
+        action="append",
+        dest="product_files",
+        type=Path,
+        metavar="PATH",
+        help="a product file (TOML: names, places, facts); with --extract, the answers' "
+        "claims are compared with its facts (repeatable)",
+    )
+    ask.add_argument(
         "--check-links",
         action="store_true",
         help="follow the links each answer gives beside a --product, and flag the ones "
@@ -209,37 +218,42 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     return run_ask(args, providers, post, fetch)
 
 
-def run_ask(args, providers, post, fetch=None) -> int:
+class Refused(Exception):
+    """A run stopped before anything was paid for (law L2)."""
+
+
+def _preflight(args, providers, post):
+    """Everything that could refuse, decided before the round: the providers that can
+    run, the product files, the products and the extractor."""
     providers = [p for p in providers if p.configured()]
     if not providers:
-        print(
-            "askround: no provider has an API key in the environment "
-            "(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY)",
-            file=sys.stderr,
+        raise Refused(
+            "no provider has an API key in the environment "
+            "(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY)"
         )
-        return 2
-    out = _rounds_dir(args.out)
-    products = args.products or []
-    extractor = None
-    # everything that could refuse is decided before the round, so nothing is paid for
-    # a run that was going to stop anyway (law L2)
+    try:
+        files = [product.load(path) for path in args.product_files or []]
+    except (OSError, ValueError) as error:
+        raise Refused(str(error)) from None
+    products = [*(args.products or []), *(f.names for f in files)]
     if args.check_rivals and not args.extract:
-        print("askround: --check-rivals reads the rivals from --extract; add it", file=sys.stderr)
-        return 2
+        raise Refused("--check-rivals reads the rivals from --extract; add it")
     if args.check_links and not products:
-        print("askround: --check-links follows a --product's links; name one", file=sys.stderr)
-        return 2
-    if args.extract:
-        try:
-            extractor = choose(args.extract, **_post(post))
-        except ValueError as error:
-            print(f"askround: {error}", file=sys.stderr)
-            return 2
-    round_ = run_round(
-        args.question, providers, search=args.search, runs=args.runs, locales=args.locales
-    )
+        raise Refused("--check-links follows a --product's links; name one")
+    try:
+        extractor = choose(args.extract, **_post(post)) if args.extract else None
+    except ValueError as error:
+        raise Refused(str(error)) from None
+    return providers, files, products, extractor
+
+
+def _after(args, round_, files, products, extractor, post, fetch) -> None:
+    """The passes over a round that already answered."""
     if extractor is not None:
         extract_round(round_, extractor)
+        for f in files:
+            if f.facts:
+                round_.gaps[f.name] = gaps.compare(round_, f, extractor)
     if args.check_rivals:
         top = rivals(round_, products).rivals[: args.check_rivals]
         web = lookup.web_lookup(**_post(post))
@@ -248,7 +262,19 @@ def run_ask(args, providers, post, fetch=None) -> int:
     if args.check_links:
         for names in products:
             round_.links[names[0]] = links.check_links(round_, names, **_fetch(fetch))
-    directory = save_round(round_, out, products)
+
+
+def run_ask(args, providers, post, fetch=None) -> int:
+    try:
+        providers, files, products, extractor = _preflight(args, providers, post)
+    except Refused as refusal:
+        print(f"askround: {refusal}", file=sys.stderr)
+        return 2
+    round_ = run_round(
+        args.question, providers, search=args.search, runs=args.runs, locales=args.locales
+    )
+    _after(args, round_, files, products, extractor, post, fetch)
+    directory = save_round(round_, _rounds_dir(args.out), products)
     if args.json:
         data = {**summary(round_, products), "saved": str(directory)}
         print(json.dumps(data, ensure_ascii=False, indent=2))
@@ -415,7 +441,24 @@ def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
         lines.append("  * ranked by the extraction pass")
     lines.extend(_claim_lines(round_, names))
     lines.extend(_cited_lines(round_, names))
+    lines.extend(_gap_lines(round_, names[0]))
     lines.extend(_link_lines(round_, names[0]))
+    return lines
+
+
+def _gap_lines(round_: Round, product: str) -> list[str]:
+    found = round_.gaps.get(product)
+    if found is None:
+        return []
+    if not found:
+        return [f"{product}: no fact gaps; every claim compared agrees with its facts"]
+    lines = [f"{product}: fact gaps"]
+    for g in found:
+        by = ", ".join(f"{p} {n}" for p, n in g.providers.items())
+        lines.append(f'  {g.attribute}: {g.value}   ({by})  {g.verdict} "{g.fact}"')
+        lines.append(f"      {g.why}")
+        if g.page:
+            lines.append(f"      say it plainly on {g.page}")
     return lines
 
 

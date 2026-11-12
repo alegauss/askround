@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from askround.http import ATTEMPTS, PostJson, post_json, with_retries
@@ -182,7 +182,7 @@ class Provider:
             queries=list(dict.fromkeys(q for q in parsed.queries if q)),
             served_model=self.served_model(raw) or self.model,
             settings=settings,
-            answered_at=datetime.now(timezone.utc),
+            answered_at=datetime.now(UTC),
             locale=locale,
             locale_ignored=self.locale_ignored(locale, search),
         )

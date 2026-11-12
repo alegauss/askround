@@ -22,7 +22,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from askround import citations, mention
@@ -61,6 +61,8 @@ class Round:
     checks: dict = field(default_factory=dict)
     # the product's attributed links, followed, by product name, when --check-links ran
     links: dict = field(default_factory=dict)
+    # claims that contradict or doubt a product file's facts, by product name (gaps.py)
+    gaps: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -95,7 +97,7 @@ def run_round(
     A failure costs its answer only."""
     if runs < 1:
         raise ValueError("runs must be at least 1")
-    asked_at = now or datetime.now(timezone.utc)
+    asked_at = now or datetime.now(UTC)
     places: list[Locale | None] = list(locales) if locales else [None]
     jobs = [
         (provider, place, run)
@@ -167,7 +169,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
     """The round as `round.json` holds it: everything but the raw responses."""
     data = {
         "question": round_.question,
-        "asked_at": round_.asked_at.astimezone(timezone.utc).isoformat(),
+        "asked_at": round_.asked_at.astimezone(UTC).isoformat(),
         "search": round_.search,
         "runs": round_.runs,
         "locales": [_locale(place) for place in round_.locales],
@@ -205,6 +207,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                     for c in product_claims(round_, names)
                 ],
                 "links": link_checks(round_, names[0]),
+                "gaps": fact_gaps(round_, names[0]),
                 "places": citations.places(names),
                 "cited": [
                     {
@@ -239,6 +242,12 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         ],
     }
     return data
+
+
+def fact_gaps(round_: Round, product: str) -> list[dict] | None:
+    """The product's fact gaps, or None where no product file was compared."""
+    gaps = round_.gaps.get(product)
+    return None if gaps is None else [dict(g.__dict__) for g in gaps]
 
 
 def link_checks(round_: Round, product: str) -> list[dict] | None:
@@ -358,7 +367,7 @@ def slug(text: str, limit: int = 40) -> str:
 
 
 def save_round(round_: Round, out: Path, products: list[list[str]] | None = None) -> Path:
-    stamp = round_.asked_at.astimezone(timezone.utc)
+    stamp = round_.asked_at.astimezone(UTC)
     directory = (
         out / stamp.strftime("%Y-%m-%d") / f"{stamp.strftime('%H%M%S')}-{slug(round_.question)}"
     )

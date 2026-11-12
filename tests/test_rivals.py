@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from askround.extract import verify
 from askround.providers import Answer
 from askround.rivals import key, rivals
 from askround.round import Result, Round, summary
 
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 
 # SYNTHETIC answers in the shape the 12/11/2026 notes describe for the general question
 GENERAL = "1. Modly (open-source desktop app)\n2. Trellis Studio\n3. Meshroom\n"

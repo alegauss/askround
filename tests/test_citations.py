@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from conftest import FakePost
 
@@ -11,7 +11,7 @@ from askround.cli import main
 from askround.providers import Answer, Source
 from askround.round import Result, Round, summary
 
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 PRODUCT = [
     "Modelado",
     "modelado.app",

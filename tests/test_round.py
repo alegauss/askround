@@ -5,7 +5,7 @@ each product was named."""
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from conftest import GEMINI_RAW, OPENAI_RAW, FakePost
@@ -13,7 +13,7 @@ from conftest import GEMINI_RAW, OPENAI_RAW, FakePost
 from askround.providers import Answer, all_providers, by_name
 from askround.round import Result, Round, frequency, run_round, save_round, slug, summary
 
-NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 
 
 def test_round_keeps_every_answer(all_keys):

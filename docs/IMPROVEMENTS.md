@@ -22,22 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block C — Trust: checking what the answers say
-
-### §AR15 Fact gaps
-
-Modelado runs on the CPU and the README said so on line 96; the assistant still answered
-'Check build', because no first screen said it. That gap became a task in the product's
-roadmap only because a person compared the answer with the facts.
-
-A product file lists its facts (runs without an NVIDIA GPU, price, licence, platforms),
-each with the page that states it. askround compares the extracted claims with those
-facts and reports each mismatch or doubt, with the pages the assistant cited and the
-page that should carry the fact more plainly.
-
-Done when the recorded answers produce the 'CPU only' gap pointing at the README and
-site first screens.
-
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
 ### §AR16 Prompt sets
@@ -45,8 +29,9 @@ site first screens.
 The questions of 12/11/2026 (the generic one, without NVIDIA, the relief for printing,
 and the Portuguese CPU-only one) exist only in a chat transcript.
 
-A prompt set is a file per product: its names and domains, and its questions, each with
-a purpose (generic, constraint, use case, language), a locale and the number of runs.
+A prompt set is a file per product: AR15's product file (askround/product.py, TOML with
+[product] name, aliases, places and [[fact]]) gains [[question]] entries, each with a
+purpose (generic, constraint, use case, language), a locale and the number of runs.
 `askround run <set>` runs the whole set as one round.
 
 Done when the four questions of 12/11/2026 live in a prompt set and run as one round.

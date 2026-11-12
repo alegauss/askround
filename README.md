@@ -86,6 +86,26 @@ on, and the report lists the failures at the end.
 The model per provider is overridden with `ASKROUND_OPENAI_MODEL`,
 `ASKROUND_GEMINI_MODEL`, `ASKROUND_ANTHROPIC_MODEL` and `ASKROUND_PERPLEXITY_MODEL`.
 
+## A product file, and the facts the answers get wrong
+
+```toml
+# modelado.toml
+[product]
+name = "Modelado"
+places = ["alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+
+[[fact]]
+attribute = "Runs without an NVIDIA GPU"
+value = "Yes: any DirectX 12 GPU through DirectML, or the CPU"
+page = "https://alegauss.github.io/modelado/"   # where it should be said plainly
+```
+
+`askround ask "..." --product-file modelado.toml --extract` asks about the product the
+file describes and compares what the answers claim with its facts, in one more call: a
+claim that contradicts a fact, or doubts it ('CPU only: Check build'), is reported as a
+fact gap with the page that should state the fact plainly and the product's pages the
+answers did cite.
+
 ## Does a recommended product exist?
 
 ```
