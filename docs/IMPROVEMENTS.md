@@ -2,21 +2,6 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR1 The first round
-
-askround starts from a session on 12/11/2026, analysing why a small Windows app
-(Modelado) was getting downloads with no known source. The hypothesis was that ChatGPT
-recommends it. The agent doing the analysis had no way to ask ChatGPT, Gemini or Claude;
-the user typed each question into ChatGPT and pasted the answer back, four times, before
-the question that leads to the app was found.
-
-The first slice is a Python package and CLI, like the author's roadkeep and commitclerk:
-`askround ask "<question>"` sends the question to every configured provider, prints the
-answers side by side, and saves each raw response as JSON with the date.
-
-Done when one command returns the answers of at least two providers to the same question
-and keeps them on disk.
-
 ### §AR2 Web search on every provider
 
 The app ChatGPT recommended had existed for two weeks. A model answering from its

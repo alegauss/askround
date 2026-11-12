@@ -2,13 +2,12 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-- 📋 **AR1** (deps: —) **No code exists to send one question to several assistants and keep their answers side by side** — On 12/11/2026 an agent needed ChatGPT's answers for an analysis and could not get them: the user asked by hand and pasted each one back. → §AR1
-- 📋 **AR2** (deps: AR1) **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Assistants recommend apps through search with links; a plain completion never names a two-week-old app that ChatGPT sends people to. → §AR2
-- 📋 **AR3** (deps: AR1) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
-- 📋 **AR4** (deps: AR1) **One answer is taken as the answer, though the same question gives a different list on the next run** — Assistants vary run to run, so 'it named the app first' means nothing until it is 'first in 3 of 3 runs'. → §AR4
+- 📋 **AR2** (deps: AR1 ✅) **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Assistants recommend apps through search with links; a plain completion never names a two-week-old app that ChatGPT sends people to. → §AR2
+- 📋 **AR3** (deps: AR1 ✅) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
+- 📋 **AR4** (deps: AR1 ✅) **One answer is taken as the answer, though the same question gives a different list on the next run** — Assistants vary run to run, so 'it named the app first' means nothing until it is 'first in 3 of 3 runs'. → §AR4
 - 📋 **AR5** (deps: AR2) **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Providers update models and search silently; a product dropping out of answers must be traceable to a new model or to the product itself. → §AR5
 - 📋 **AR6** (deps: AR2) **A question cannot be asked as someone in a given country and language would ask it** — A Portuguese question about running on the CPU also put the app first; country and language change which products search finds. → §AR6
-- 📋 **AR7** (deps: AR1) **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — A round makes dozens of calls across providers, and one failure should cost one answer, not the whole round. → §AR7
+- 📋 **AR7** (deps: AR1 ✅) **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — A round makes dozens of calls across providers, and one failure should cost one answer, not the whole round. → §AR7
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
@@ -26,7 +25,7 @@
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
-- 📋 **AR16** (deps: AR1) **Questions live in chat history; there is no prompt set per product to run again next week** — The four questions that explained the app's audience were typed once and would have to be retyped to see whether anything changed. → §AR16
+- 📋 **AR16** (deps: AR1 ✅) **Questions live in chat history; there is no prompt set per product to run again next week** — The four questions that explained the app's audience were typed once and would have to be retyped to see whether anything changed. → §AR16
 - 📋 **AR17** (deps: AR8, AR16) **Finding which question leads an assistant to a product took four manual tries** — The generic question never named the app; only the 'without NVIDIA' one did, which explained its audience and set its messaging. → §AR17
 - 📋 **AR18** (deps: AR16) **Nothing warns when a question names the product it tests, which makes its answer worthless** — A question that mentions the product, or its domain, steers the assistant toward it and measures nothing. → §AR18
 - 📋 **AR19** (deps: AR16) **A question could carry personal data, an email or a person's name, to every provider at once** — One round sends the same text to four companies; a slip in a prompt is a leak to all of them. → §AR19
@@ -40,15 +39,15 @@
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-- 📋 **AR24** (deps: AR1) **An agent in Claude Code cannot ask other assistants mid-analysis; it has to stop and ask the user** — On 12/11/2026 the analysis paused four times for the user to run a question in ChatGPT; an MCP tool lets the agent run it itself. → §AR24
+- 📋 **AR24** (deps: AR1 ✅) **An agent in Claude Code cannot ask other assistants mid-analysis; it has to stop and ask the user** — On 12/11/2026 the analysis paused four times for the user to run a question in ChatGPT; an MCP tool lets the agent run it itself. → §AR24
 - 📋 **AR25** (deps: AR24) **Researching a question across assistants means reading each answer and merging the sources by hand** — The same session researched model licences and competitors; asking several assistants with search and merging their sources would have cut that work. → §AR25
 - 📋 **AR26** (deps: AR25) **Disagreements between assistants on a fact, such as a model's licence, are not flagged for a check at the source** — Where assistants disagree is where a decision is at risk; a third-party page on 12/11/2026 had called an Apache-2.0 model non-commercial. → §AR26
 - 📋 **AR27** (deps: AR24) **No Claude Code skill tells an agent when to use askround instead of asking the user to test a prompt** — A tool an agent does not know to reach for is a tool it does not use; the skill is what turns the MCP server into a habit. → §AR27
 
 ## Block G — Shipping: package, tests and the first screen
 
-- 📋 **AR28** (deps: AR1) **askround cannot be installed: there is no package, no release and no README first screen** — Someone with the same pain needs pip install askround and a first screen that says what a round tells them. → §AR28
-- 📋 **AR29** (deps: AR1) **Tests would call live APIs, costing money and breaking on every provider change** — An adapter test that pays for a search on every run is skipped, and then the adapters rot. → §AR29
+- 📋 **AR28** (deps: AR1 ✅) **askround cannot be installed: there is no package, no release and no README first screen** — Someone with the same pain needs pip install askround and a first screen that says what a round tells them. → §AR28
+- 📋 **AR29** (deps: AR1 ✅) **Tests would call live APIs, costing money and breaking on every provider change** — An adapter test that pays for a search on every run is skipped, and then the adapters rot. → §AR29
 
 ## Non-goals
 

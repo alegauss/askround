@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "askround"
+description = "Ask several AI assistants the same question and keep their answers side by side."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [{ name = "Alexandre Oliveira" }]
+# askround has NO runtime dependencies, by design: every provider is one HTTPS POST
+# through the standard library, which keeps the adapters symmetric and testable
+# without a network.
+dependencies = []
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+askround = "askround.cli:main"
+
+[tool.setuptools]
+packages = ["askround"]
+
+[tool.setuptools.dynamic]
+version = { attr = "askround.__version__" }
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+# .claude/ holds roadkeep's installed hooks, refreshed by `roadkeep install`
+extend-exclude = [".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "C4", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

@@ -55,9 +55,12 @@ Validated means the project's own build and test were run, not that the edit loo
 | Command         | What it holds                                               | When                           |
 | --------------- | ----------------------------------------------------------- | ------------------------------ |
 | `roadkeep lint` | The governed files. Non-zero exit is the whole point of it. | Every task, without exception. |
+| `python -m pytest` | The package's behaviour; no test touches the network. | Every task that touches code. |
+| `python -m ruff check .` | Lint (`.claude/` is excluded: roadkeep's installed hooks). | Every task that touches code. |
+| `python -m ruff format --check .` | Formatting. | Every task that touches code. |
 
-The project has no build or test toolchain yet. When one lands, add its commands to this
-table in the same commit — and do not borrow commands from a sibling repo.
+Tests replace `askround.http.post_json` (or pass `post=` to a provider), so a gate run
+never spends money on an API call.
 
 **Name EVERY task id an assertion holds, not just the one you are working**, once tests
 exist: a test that names no id is a test nobody can trace back to what it was for.

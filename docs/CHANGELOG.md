@@ -2,6 +2,8 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
+- ✅ **AR1** **No code exists to send one question to several assistants and keep their answers side by side** — askround ask sends one question to every provider with a key (OpenAI, Gemini, Anthropic) in parallel, prints the answers together and saves each raw response with the date.
+
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
 ## Block C — Trust: checking what the answers say
