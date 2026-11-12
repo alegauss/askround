@@ -34,11 +34,11 @@ jobs:
     name: build (the gate)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The page's round is askround's own reading of the recordings; no package to install,
       # askround has no dependencies beyond pytest for the test itself.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: The round on the page matches the recordings
@@ -50,7 +50,7 @@ jobs:
       - name: Fonts for the social card
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-dejavu-core
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -69,7 +69,7 @@ jobs:
 
       - name: Keep the built site for the deploy
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 
@@ -85,6 +85,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
