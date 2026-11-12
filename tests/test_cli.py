@@ -1,5 +1,5 @@
-"""AR1, AR2: `askround ask` returns the answers of several providers, with their
-sources, and saves them."""
+"""AR1, AR2, AR4: `askround ask` returns the answers of several providers, with their
+sources, over several runs, and saves them."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from askround.cli import main
 
 
 def test_ask_prints_answers_side_by_side(all_keys, tmp_path, capsys):
-    code = main(["ask", "best app?", "--out", str(tmp_path)], post=FakePost())
+    code = main(["ask", "best app?", "--runs", "1", "--out", str(tmp_path)], post=FakePost())
     out = capsys.readouterr().out
     assert code == 0
     assert "=== openai (gpt-5) ===" in out
@@ -38,7 +38,7 @@ def test_only_providers_with_keys_are_asked(no_keys, monkeypatch, tmp_path, caps
     monkeypatch.setenv("OPENAI_API_KEY", "sk")
     monkeypatch.setenv("GEMINI_API_KEY", "g")
     post = FakePost()
-    code = main(["ask", "q", "--out", str(tmp_path), "--json"], post=post)
+    code = main(["ask", "q", "--runs", "1", "--out", str(tmp_path), "--json"], post=post)
     data = json.loads(capsys.readouterr().out)
     assert code == 0
     assert [r["provider"] for r in data["results"]] == ["openai", "gemini"]
@@ -51,7 +51,32 @@ def test_provider_flag_narrows(all_keys, tmp_path, capsys):
     )
     data = json.loads(capsys.readouterr().out)
     assert code == 0
-    assert [r["provider"] for r in data["results"]] == ["gemini"]
+    assert [(r["provider"], r["run"]) for r in data["results"]] == [
+        ("gemini", 1),
+        ("gemini", 2),
+        ("gemini", 3),
+    ]
+
+
+def test_product_frequency_after_the_answers(all_keys, tmp_path, capsys):
+    argv = ["ask", "q", "--provider", "openai", "--provider", "gemini"]
+    argv += ["--product", "Modelado,modelado.app", "--out", str(tmp_path)]
+    code = main(argv, post=FakePost())
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "=== openai (gpt-5, run 2/3) ===" in out
+    assert "Modelado: named in" in out
+    assert "openai      3/3 runs   positions: -, -, -" in out
+    assert "gemini      0/3 runs" in out
+
+
+def test_runs_must_be_positive(all_keys, tmp_path, capsys):
+    try:
+        main(["ask", "q", "--runs", "0", "--out", str(tmp_path)], post=FakePost())
+    except SystemExit as exit_:
+        assert exit_.code == 2
+    else:
+        raise AssertionError("--runs 0 was accepted")
 
 
 def test_no_keys_is_an_error(no_keys, tmp_path, capsys):

@@ -1,12 +1,14 @@
 """The `askround` command.
 
-    askround ask "<question>" [--provider NAME ...] [--no-search] [--out DIR] [--json]
+    askround ask "<question>" [--provider NAME ...] [--runs N] [--product NAME[,ALIAS...]]
+                 [--no-search] [--out DIR] [--json]
     askround doctor [--provider NAME ...] [--no-check] [--json]
 
 `ask` sends the question to every provider whose API key is in the environment (or the
-ones named with --provider), with web search on unless --no-search, prints each
-answer under its provider's heading with the sources it cited, and saves the round
-under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
+ones named with --provider), --runs times each (default 3), with web search on unless
+--no-search, prints each answer under its provider's heading with the sources it
+cited, then for each --product the share of runs that named it and its positions, and
+saves the round under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
 
 `doctor` says which providers can run here: key variable (never the value), model,
 search tool and a free check call. It exits 2 when no provider can run.
@@ -23,7 +25,7 @@ from pathlib import Path
 from askround import __version__
 from askround.doctor import Status, diagnose
 from askround.providers import Answer, all_providers, by_name
-from askround.round import Round, run_round, save_round, summary
+from askround.round import DEFAULT_RUNS, Round, frequency, run_round, save_round, summary
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,6 +49,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="ask without web search, to compare with a searched round",
     )
+    ask.add_argument(
+        "--runs",
+        type=_positive,
+        default=DEFAULT_RUNS,
+        help=f"times each provider is asked, in fresh conversations (default {DEFAULT_RUNS})",
+    )
+    ask.add_argument(
+        "--product",
+        action="append",
+        dest="products",
+        type=_names,
+        metavar="NAME[,ALIAS...]",
+        help="report how often this product is named and where (repeatable)",
+    )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
     doctor = commands.add_parser("doctor", help="say which providers can run here")
@@ -58,6 +74,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     doctor.add_argument("--json", action="store_true", help="print the report as JSON")
     return parser
+
+
+def _positive(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return number
+
+
+def _names(value: str) -> list[str]:
+    names = [n.strip() for n in value.split(",") if n.strip()]
+    if not names:
+        raise argparse.ArgumentTypeError("a product needs a name")
+    return names
 
 
 def main(argv: list[str] | None = None, post=None) -> int:
@@ -79,12 +109,14 @@ def main(argv: list[str] | None = None, post=None) -> int:
         )
         return 2
     out = args.out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
-    round_ = run_round(args.question, providers, search=args.search)
-    directory = save_round(round_, out)
+    products = args.products or []
+    round_ = run_round(args.question, providers, search=args.search, runs=args.runs)
+    directory = save_round(round_, out, products)
     if args.json:
-        print(json.dumps(as_json(round_, directory), ensure_ascii=False, indent=2))
+        data = {**summary(round_, products), "saved": str(directory)}
+        print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
-        print(render(round_, directory))
+        print(render(round_, directory, products))
     return 0 if any(r.ok for r in round_.results) else 1
 
 
@@ -127,16 +159,28 @@ def render_doctor(statuses: list[Status]) -> str:
     return "\n".join(lines)
 
 
-def render(round_: Round, directory: Path) -> str:
+def render(round_: Round, directory: Path, products: list[list[str]] | None = None) -> str:
     lines = [f"Q: {round_.question}", ""]
     if not round_.search:
         lines[0] += "  (web search off)"
     for r in round_.results:
-        lines.append(f"=== {r.provider} ({r.model}) ===")
+        run = f", run {r.run}/{round_.runs}" if round_.runs > 1 else ""
+        lines.append(f"=== {r.provider} ({r.model}{run}) ===")
         lines.extend(_answer_lines(r.answer) if r.answer else [f"[error] {r.error}"])
+        lines.append("")
+    for names in products or []:
+        lines.extend(_frequency_lines(round_, names))
         lines.append("")
     lines.append(f"saved: {directory}")
     return "\n".join(lines)
+
+
+def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
+    lines = [f"{names[0]}: named in"]
+    for f in frequency(round_, names):
+        places = ", ".join("-" if p is None else f"#{p}" for p in f.positions)
+        lines.append(f"  {f.provider:<11} {f.share} runs   positions: {places or '-'}")
+    return lines
 
 
 def _answer_lines(answer: Answer) -> list[str]:
@@ -145,7 +189,3 @@ def _answer_lines(answer: Answer) -> list[str]:
         lines += ["", "sources:"]
         lines += [f"  - {s.title} <{s.url}>" if s.title else f"  - {s.url}" for s in answer.sources]
     return lines
-
-
-def as_json(round_: Round, directory: Path) -> dict:
-    return {**summary(round_), "saved": str(directory)}

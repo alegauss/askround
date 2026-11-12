@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR4 Repeated runs and frequency
-
-On 12/11/2026 the question that put Modelado first was asked again in a fresh chat to
-tell a pattern from luck. Every answer from a sampled model can change: the order, the
-products, the links.
-
-A round runs each question several times per provider (default 3, configurable), in
-fresh conversations, and reports for each product how often it appeared and at which
-positions, alongside the raw answers.
-
-Done when a round of three runs reports, per provider, the share of runs naming the
-product and its positions, and the raw answers stay available.
-
 ### §AR5 Record what produced each answer
 
 An API answer is not what a person sees in the ChatGPT or Gemini app: the app adds
@@ -87,7 +74,11 @@ follow-up questions.
 For a target product, defined by its names, aliases and domains, askround finds each
 mention and the product's rank in the answer's recommendations, using a structured
 extraction pass (a model call with a JSON schema, checked against plain text matching)
-so that 'Best fit' in a table and 'my first choice' in prose both count.
+so that 'Best fit' in a table and 'my first choice' in prose both count. The plain-text
+half shipped with AR4 as `askround/mention.py`: names and aliases matched on word
+boundaries, position as the index among top-level list items, numbered headings and
+table rows; `round.frequency` reads it, and the extraction pass should feed the same
+`Frequency` rows.
 
 Done when, on recorded answers from 12/11/2026, it reports the app as first where it was
 first and absent where it was absent.

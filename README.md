@@ -19,13 +19,16 @@ cited. `--no-search` asks the same question without search, to compare.
 
 Each round is saved under `.askround/rounds/<date>/<time>-<question>/` (change it with
 `--out` or `ASKROUND_DIR`): `round.json` holds the question and each provider's answer,
-search queries and sources, and `<provider>.json` the raw response as the provider sent
-it.
+search queries and sources, and `<provider>-<run>.json` the raw response as the provider
+sent it. Assistants answer differently from one run to the next, so a product is
+reported as "named in 2/3 runs, positions #1, #3, -", never from a single answer.
 
 | Option              | What it does                                        |
 | ------------------- | --------------------------------------------------- |
 | `--provider NAME`   | ask only this provider (`openai`, `gemini`, `anthropic`, `perplexity`), repeatable |
 | `--no-search`       | ask without web search                              |
+| `--runs N`          | ask each provider N times, in fresh conversations (default 3) |
+| `--product NAME[,ALIAS...]` | report how many runs named the product and its position in each, repeatable |
 | `--out DIR`         | where the round is saved                            |
 | `--json`            | print the round as JSON                             |
 
