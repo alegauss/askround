@@ -34,6 +34,7 @@
 ## Block E — Over time: the series, the diff, the cost and the export
 
 - ✅ **AR20** **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — Every saved round appends a row per answer to series.jsonl, rebuildable from the rounds; askround series gives a product's share per week, day or month per provider.
+- ✅ **AR21** **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — askround diff compares two rounds or set runs per question and provider, naming share and rank changes, rivals and cited pages that appeared or left, and claims made or dropped.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 

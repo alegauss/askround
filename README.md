@@ -170,6 +170,11 @@ askround series --product Modelado                     # answers naming it, per 
 askround series --product Modelado --by day --question nvidia
 ```
 
+`askround diff` compares the latest two runs of the same questions (or two you name)
+and lists only what changed, per question and provider: the product's share and best
+position, rivals that appeared or left, its pages newly cited or no longer cited, and
+claims made or dropped.
+
 ## The report
 
 ```

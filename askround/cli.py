@@ -32,6 +32,7 @@ from pathlib import Path
 from askround import (
     __version__,
     citations,
+    diff,
     discover,
     gaps,
     leading,
@@ -196,6 +197,12 @@ def build_parser() -> argparse.ArgumentParser:
     find.add_argument("--context", default="", help="what they were recommended for")
     find.add_argument("--no-web", dest="web", action="store_false", help="GitHub only, free")
     find.add_argument("--json", action="store_true", help="print the verdicts as JSON")
+    dif = commands.add_parser("diff", help="what changed between two rounds or prompt set runs")
+    dif.add_argument("old", nargs="?", type=Path, help="the earlier round or set (directory)")
+    dif.add_argument("new", nargs="?", type=Path, help="the later one")
+    dif.add_argument("--product", type=_names, metavar="NAME[,ALIAS...]", help="compare for it")
+    dif.add_argument("--out", type=Path, help="where rounds are saved")
+    dif.add_argument("--json", action="store_true", help="print the changes as JSON")
     serie = commands.add_parser(
         "series", help="a product's share of answers over time, from every round kept"
     )
@@ -274,6 +281,8 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_lookup(args, post)
     if args.command == "series":
         return run_series(args)
+    if args.command == "diff":
+        return run_diff(args)
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
@@ -498,6 +507,35 @@ def run_lookup(args, post) -> int:
             print(f"{v.name}: {v.status.replace('_', ' ')}{where}")
             if v.evidence:
                 print(f"    {v.evidence} ({v.via or 'no lookup'})")
+    return 0
+
+
+def run_diff(args) -> int:
+    out = _rounds_dir(args.out)
+    try:
+        if args.old and args.new:
+            old = report_.find_round(args.old, out)
+            new = report_.find_round(args.new, out)
+        elif args.old or args.new:
+            raise FileNotFoundError("give both rounds to compare, or neither for the latest two")
+        else:
+            old, new = diff.latest_pair(out)
+        changes = diff.compare(old, new, args.product)
+        only = diff.unmatched(old, new)
+    except (FileNotFoundError, KeyError, ValueError) as error:
+        print(f"askround: {error}", file=sys.stderr)
+        return 2
+    if args.json:
+        data = {
+            "old": str(old),
+            "new": str(new),
+            "changes": [c.__dict__ for c in changes],
+            "only_old": only[0],
+            "only_new": only[1],
+        }
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        print(diff.markdown(changes, old, new, only), end="")
     return 0
 
 

@@ -4,7 +4,6 @@
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
-- 📋 **AR21** (deps: AR9 ✅, AR20 ✅) **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — The change between two rounds is what someone needs to act on, and the full report hides it. → §AR21
 - 📋 **AR22** (deps: AR2 ✅) **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A round is dozens of searched calls; without an estimate and a cap a weekly habit can cost more than it is worth. → §AR22
 - 📋 **AR23** (deps: AR20 ✅) **A round cannot be exported to a dashboard or another project's data** — The visibility work that needs it keeps daily numbers per product; askround's rows should land there without a manual copy. → §AR23
 

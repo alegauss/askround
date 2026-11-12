@@ -24,18 +24,6 @@ context on what a command could have answered.
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
-### §AR21 The diff
-
-A weekly review wants to know what changed: a rival that appeared (as Modly did), a rank
-lost on one provider, a page that stopped being cited, a claim that became correct after
-the product's page changed.
-
-`askround diff` compares two rounds of the same set and lists those changes, per
-question and provider, in Markdown and JSON.
-
-Done when two stored rounds that differ in rank, rivals and citations produce a diff
-naming each change.
-
 ### §AR22 Cost estimate and budget
 
 Proposing a weekly round on 12/11/2026, the agent could only say 'cents to a few dollars
