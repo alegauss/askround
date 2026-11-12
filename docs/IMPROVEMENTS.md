@@ -37,28 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR38 Wired like roadkeep
-
-roadkeep installs with two commands at project scope, which write the marketplace and
-the plugin into the repository's .claude/settings.json, so every clone is wired with no
-step per machine. What arrives is the MCP server, slash commands, a skill loaded only
-when relevant, and a hook; install writes the same into a project from a checkout,
-install --check tells CI whether they are still in step, and a committed launcher covers
-Claude Code on the web, which never installs a marketplace plugin.
-
-askround ships the same way: a marketplace with the plugin at project scope, its MCP
-tools, slash commands (ask, run, report, diff), the skill, install and install --check
-from a checkout, and the launcher for the web. AR27 shipped the first piece:
-.claude-plugin/marketplace.json and plugin/ (plugin.json, the askround skill, an MCP
-config running the installed askround mcp); the package now lives in plugin/src/askround
-and plugin/scripts/askround.py runs it with nothing installed; the four commands and
-askround install (--check) landed too. Left: the launcher for the web, and the project's
-own values in the schemas. Its MCP schemas carry the project's own prompt sets,
-providers and budget, as roadkeep's carry its limits.
-
-Done when a repository that commits the settings gets askround's tools, commands and
-skill on a fresh clone, and on Claude Code on the web through the launcher.
-
 ### §AR39 Zero runtime dependencies
 
 roadkeep needs a Python 3.11+ interpreter and nothing else: zero runtime dependencies,

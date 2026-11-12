@@ -60,7 +60,7 @@
 - ✅ **AR35** **A round takes minutes of searched calls, longer than an MCP call should block the agent** — With background: true a round or set starts as a job and returns at once with its estimate; askround_job reads its progress and result, and each answer is kept as it lands.
 - ✅ **AR36** **An agent asking the same question again the same day pays for the same round twice** — A question asked again the same way within the day returns the stored round with its age and calls no provider; --fresh asks anew, and a round with failures is asked again.
 - ✅ **AR37** **Nothing measures how many tokens each MCP response costs the agent, so outputs grow unnoticed** — Every MCP tool's response is counted on the recorded rounds against a budget in budgets/mcp-tokens.json, and askround_run returns one brief per question.
-- ✅ **AR38 (plugin carries askround, install)** **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — The plugin runs askround with nothing installed.
+- ✅ **AR38** **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — The plugin, askround install and a vendored copy for the web wire every clone.
 
 ## Block I — The site at alegauss.github.io/askround
 

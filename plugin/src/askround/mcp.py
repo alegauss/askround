@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 from typing import Any, TextIO
 
-from askround import __version__, budget, jobs
+from askround import __version__, budget, jobs, product
 from askround import report as report_
 from askround.providers import all_providers
 from askround.refusals import QUESTION_LIMIT
@@ -185,11 +185,50 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
-def tools() -> list[dict[str, Any]]:
-    """The tools as this machine can run them: a question's length limit, and only the
-    providers that have a key, declared in the schemas so that a call that would be
-    refused fails at the schema, before askround runs (law L2)."""
+_NOT_PRODUCTS = {"pyproject.toml", "roadkeep.toml"}
+
+
+def product_files(project: Path, limit: int = 10) -> list[str]:
+    """The project's own prompt sets: product files at its top or one directory down,
+    as paths relative to it, with their question counts."""
+    found = []
+    for path in sorted([*project.glob("*.toml"), *project.glob("*/*.toml")]):
+        if path.name in _NOT_PRODUCTS or len(found) >= limit:
+            continue
+        try:
+            if "[product]" not in path.read_text(encoding="utf-8"):
+                continue
+            questions = len(product.load(path).questions)
+        except (OSError, ValueError):  # a TOML that is not a product file, or unreadable
+            continue
+        found.append(f"{path.relative_to(project).as_posix()} ({questions} questions)")
+    return found
+
+
+def _money(amount: float) -> str:
+    return f"${amount:.2f}"
+
+
+def _budget_note(out: str | None) -> str:
+    """The person's budget and what is spent, for the max_cost description (law L5)."""
+    state = budget.status(_rounds(out))
+    limits, parts = state["budget"], []
+    if limits["day"] is not None:
+        parts.append(f"{_money(limits['day'])} a day ({_money(state['today'])} spent today)")
+    if limits["month"] is not None:
+        month = _money(state["month"])
+        parts.append(f"{_money(limits['month'])} a month ({month} spent this month)")
+    return f"; the person's budget: {', '.join(parts)}" if parts else ""
+
+
+def tools(out: str | None = None, project: Path | None = None) -> list[dict[str, Any]]:
+    """The tools as this project and machine can run them, declared in the schemas so
+    that a call that would be refused fails at the schema, before askround runs (law L2):
+    a question's length limit, only the providers that have a key, the project's own
+    product files, and the person's budget beside max_cost."""
     usable = [p.name for p in all_providers() if p.configured()]
+    files = product_files(project or Path.cwd())
+    note = _budget_note(out)
     listed = copy.deepcopy(TOOLS)
     for tool in listed:
         props = tool["inputSchema"]["properties"]
@@ -201,6 +240,10 @@ def tools() -> list[dict[str, Any]]:
             props["providers"]["description"] = (
                 f"only these providers (with a key here: {', '.join(usable)})"
             )
+        if "file" in props and files:
+            props["file"]["description"] += f"; in this project: {', '.join(files)}"
+        if "max_cost" in props and note:
+            props["max_cost"]["description"] += note
     return listed
 
 
@@ -261,8 +304,8 @@ def _common(args: dict, argv: list[str]) -> list[str]:
 
 def _ask_argv(args: dict) -> list[str]:
     argv = _common(args, ["ask", args["question"]])
-    for product in args.get("products") or []:
-        argv += ["--product", product]
+    for name in args.get("products") or []:
+        argv += ["--product", name]
     for locale in args.get("locales") or []:
         argv += ["--locale", locale]
     if args.get("search") is False:
@@ -463,7 +506,7 @@ def handle(message: dict, out: str | None = None, post=None) -> dict | None:
     elif method == "ping":
         result = {}
     elif method == "tools/list":
-        result = {"tools": tools()}
+        result = {"tools": tools(out)}
     elif method == "tools/call":
         params = message.get("params") or {}
         result = call(params.get("name", ""), params.get("arguments") or {}, out, post)

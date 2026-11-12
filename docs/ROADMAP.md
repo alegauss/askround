@@ -6,7 +6,6 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- ⏳ **AR38** (deps: AR24 ✅, AR27 ✅) **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — Claude Code on the web still needs a committed launcher, and the MCP schemas do not yet carry the project's own prompt sets, providers and budget. → §AR38
 - 📋 **AR39** (deps: AR1 ✅) **Running askround would mean installing provider SDKs and their dependency trees** — roadkeep is Python 3.11+ with zero runtime dependencies and runs under uvx with no install; askround should start as easily. → §AR39
 
 ## Block I — The site at alegauss.github.io/askround
@@ -21,15 +20,6 @@
 - **pip install askround installs the published package on Windows, macOS and Linux**
   Checked by installing from PyPI into a fresh virtual environment on each system and
   running askround doctor --no-check.
-
-## Done when — AR38
-
-- **A fresh clone of a wired project gets the tools, commands and skill**
-  tests/test_wiring.py runs the plugin's launcher with nothing installed and checks
-  install writes and checks the settings.
-- **Claude Code on the web gets the tools through a committed launcher** A session with
-  no marketplace plugin starts the askround MCP server from the launcher the project
-  commits.
 
 ## Non-goals
 

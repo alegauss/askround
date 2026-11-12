@@ -282,6 +282,11 @@ def build_parser() -> argparse.ArgumentParser:
     wire.add_argument(
         "--check", action="store_true", help="write nothing; exit 1 when it is not wired"
     )
+    wire.add_argument(
+        "--vendor",
+        action="store_true",
+        help="also commit a copy of askround and its .mcp.json entry, for Claude Code on the web",
+    )
     exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
     exp.add_argument("--product", required=True, metavar="NAME", help="the product to export")
     exp.add_argument("--from", dest="since", metavar="YYYY-MM-DD", default="", help="first day")
@@ -416,21 +421,24 @@ def run_mcp(args) -> int:
 
 def run_install(args) -> int:
     """Write the marketplace and the plugin into the project's settings, or check them."""
+    steps = [wiring.install] + ([wiring.vendor] if args.vendor else [])
     try:
-        path, gaps = wiring.install(args.project, check=args.check)
+        done = [step(args.project, check=args.check) for step in steps]
     except (ValueError, OSError) as error:
         print(f"askround: {error}", file=sys.stderr)
         return REFUSED
-    if not gaps:
-        print(f"wired: {path} names the askround marketplace and enables {wiring.PLUGIN}")
-        return OK
-    if args.check:
-        print(f"not wired: {path}", file=sys.stderr)
+    gaps = [gap for _, found in done for gap in found]
+    if args.check and gaps:
+        print("not wired:", file=sys.stderr)
         for gap in gaps:
             print(f"  {gap}", file=sys.stderr)
-        print("  askround install writes them", file=sys.stderr)
+        command = "askround install --vendor" if args.vendor else "askround install"
+        print(f"  {command} writes them", file=sys.stderr)
         return FAILED
-    print(f"wired: wrote {path}; commit it and every clone gets the askround plugin")
+    for path, found in done:
+        print(f"{'wrote' if found and not args.check else 'in step'}: {path}")
+    if gaps:
+        print("commit them, and every clone gets askround")
     return OK
 
 

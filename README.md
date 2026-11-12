@@ -312,7 +312,10 @@ To wire a project for everyone who clones it, run `askround install` in it (or
 `.claude/settings.json`: it names the marketplace and enables the plugin, keeping every
 other setting, so each clone is offered the plugin on its first session.
 `askround install --check` writes nothing and exits 1 when the entries are missing, for
-CI. The server alone: `claude mcp add askround -- askround mcp`. Either serves:
+CI. Claude Code on the web installs no plugin, so `askround install --vendor` also copies
+askround into `.claude/askround/` with a launcher and names it in the project's
+`.mcp.json`; commit both, and `--vendor --check` says when the copy is behind. The server
+alone: `claude mcp add askround -- askround mcp`. Either serves:
 
 | Tool | What it does |
 | --- | --- |
@@ -327,7 +330,10 @@ CI. The server alone: `claude mcp add askround -- askround mcp`. Either serves:
 
 The same refusals hold for an agent: personal data, a question naming its product, and
 a run estimated above `max_cost` (or `ASKROUND_MAX_COST`) stop before anything is
-paid for.
+paid for. The tool schemas are written for the project the server runs in: only the
+providers with a key, the product files found at its top or one directory down (with
+their question counts) under `askround_run`'s `file`, and your day and month budget, with
+what is already spent, beside `max_cost`.
 
 `askround_ask` returns a brief: a few hundred tokens for a whole round (a real 2x2 round
 with extraction: 614 characters, against 12,253 of answers). Each fact in it carries the
