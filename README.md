@@ -288,8 +288,13 @@ or the server alone: `claude mcp add askround -- askround mcp`. Either serves:
 
 The same refusals hold for an agent: personal data, a question naming its product, and
 a run estimated above `max_cost` (or `ASKROUND_MAX_COST`) stop before anything is
-paid for. An answer's text is returned only by `askround_answer`, so an agent reads
-the report first and the answers it needs.
+paid for.
+
+`askround_ask` returns a brief: a few hundred tokens for a whole round (a real 2x2 round
+with extraction: 614 characters, against 12,253 of answers). Each fact in it carries the
+ids of the answers it came from (`openai#2`, `openai@BR#2`); `askround_answer` with an
+id returns that answer, or with `around: "<quote>"` only the passage behind the fact.
+`detail: true` returns the full report. On the command line: `askround report --brief`.
 
 ## Development
 

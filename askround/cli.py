@@ -270,6 +270,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report.add_argument("--out", type=Path, help="where rounds are saved")
     report.add_argument("--json", action="store_true", help="print the report as JSON")
+    report.add_argument(
+        "--brief",
+        action="store_true",
+        help="the round in a few hundred tokens, each fact with its answers' ids (JSON)",
+    )
     doctor = commands.add_parser(
         "doctor", parents=[common], help="say which providers can run here"
     )
@@ -699,6 +704,10 @@ def run_report(args) -> int:
             text = report_.set_markdown(data)
         else:
             round_, asked = report_.load_round(path)
+            if args.brief:
+                found = report_.brief(round_, args.products or asked, str(path.parent))
+                print(json.dumps(found, ensure_ascii=False, separators=(",", ":")))
+                return 0
             data = report_.build(round_, args.products or asked, str(path))
             text = report_.markdown(data)
     except (FileNotFoundError, KeyError, ValueError) as error:

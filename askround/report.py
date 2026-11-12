@@ -17,7 +17,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from askround import citations
+from askround import citations, mention
 from askround.claims import product_claims
 from askround.extract import Claim, Recommendation
 from askround.gaps import Gap
@@ -205,6 +205,76 @@ def _restore_checks(round_: Round, data: dict) -> None:
             round_.links[product["product"]] = [LinkCheck(**c) for c in product["links"]]
         if product.get("gaps") is not None:
             round_.gaps[product["product"]] = [Gap(**g) for g in product["gaps"]]
+
+
+TOP = 5
+
+
+def answer_id(r) -> str:
+    """'openai#2', or 'openai@BR#2' in a locale: how a fact points at its answer."""
+    place = f"@{r.locale.country}" if r.locale else ""
+    return f"{r.provider}{place}#{r.run}"
+
+
+def brief(round_: Round, products: list[list[str]], source: str = "") -> dict:
+    """The round in a few hundred tokens (law L1): what was found, each fact with the
+    ids of the answers it came from; the text stays behind askround_answer."""
+    answered = [r for r in round_.results if r.answer is not None]
+    out: dict = {
+        "q": round_.question,
+        "round": source,
+        "answers": len(answered),
+        "failed": [answer_id(r) for r in failures(round_)],
+        "cost": cost(round_)["total"],
+        "products": [_brief_product(round_, answered, names) for names in products],
+    }
+    found = rivals(round_, products)
+    if found.read:
+        out["rivals"] = [
+            {"name": v.name, "n": f"{v.answers}/{found.read}", "best": v.best}
+            for v in found.rivals[:TOP]
+        ]
+    return out
+
+
+def _brief_product(round_: Round, answered: list, names: list[str]) -> dict:
+    by_provider: dict[str, dict] = {}
+    naming: list[str] = []
+    for r in answered:
+        seen = mention.locate(r.answer, names)
+        row = by_provider.setdefault(r.provider, {"named": 0, "of": 0, "best": None})
+        row["of"] += 1
+        if seen.named:
+            row["named"] += 1
+            naming.append(answer_id(r))
+        if seen.position is not None:
+            row["best"] = seen.position if row["best"] is None else min(row["best"], seen.position)
+    ranked = _brief_claims(answered, names)
+    product: dict = {
+        "name": names[0],
+        "named": {
+            p: f"{v['named']}/{v['of']}" + (f" #{v['best']}" if v["best"] else "")
+            for p, v in by_provider.items()
+        },
+        "in": naming,
+    }
+    if ranked:
+        product["claims"] = [{"c": text, "in": ids} for text, ids in ranked]
+    gaps = round_.gaps.get(names[0])
+    if gaps:
+        product["gaps"] = [f"{g.attribute}: {g.value} ({g.verdict} '{g.fact}')" for g in gaps[:TOP]]
+    return product
+
+
+def _brief_claims(answered: list, names: list[str]) -> list[tuple[str, list[str]]]:
+    """The product's verified claims, most made first, each with its answers' ids."""
+    target = mention.pattern(names)
+    claims: dict[str, list[str]] = {}
+    for r in answered:
+        for c in r.answer.claims or []:
+            if c.verified and target.search(c.product):
+                claims.setdefault(f"{c.attribute}: {c.value}", []).append(answer_id(r))
+    return sorted(claims.items(), key=lambda kv: -len(kv[1]))[:TOP]
 
 
 def build(round_: Round, products: list[list[str]], source: str = "") -> dict:

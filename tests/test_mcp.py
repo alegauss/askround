@@ -58,19 +58,27 @@ def test_an_agent_asks_two_providers_and_reads_an_answer(all_keys, tmp_path):
     failed, text = _call("askround_ask", arguments, tmp_path, FakePost())
     assert not failed
     data = json.loads(text)
-    assert [(a["provider"], a["run"]) for a in data["answers"]] == [("openai", 1), ("gemini", 1)]
-    # the answers' text is not in the result (law L1), only their length
+    # the answers' text is not in the brief (law L1)
     assert "OpenAI says Modelado." not in text
-    assert data["answers"][0]["chars"] == len("OpenAI says Modelado.")
-    frequency = data["report"]["products"][0]["frequency"]
-    assert {(f["provider"], f["named"]) for f in frequency} == {("openai", 1), ("gemini", 0)}
+    assert data["answers"] == 2
+    product = data["products"][0]
+    assert product["named"] == {"openai": "1/1", "gemini": "0/1"}
+    assert product["in"] == ["openai#1"]
     failed, text = _call(
-        "askround_answer", {"round": data["round"], "provider": "openai", "run": 1}, tmp_path
+        "askround_answer", {"round": data["round"], "answer": product["in"][0]}, tmp_path
     )
     assert not failed
     one = json.loads(text)
+    assert one["answer"] == "openai#1"
     assert one["text"] == "OpenAI says Modelado."
     assert one["sources"][0]["url"] == "https://modelado.app/"
+    # the old way, by provider and run, still works
+    failed, text = _call(
+        "askround_answer", {"round": data["round"], "provider": "gemini", "run": 1}, tmp_path
+    )
+    assert json.loads(text)["text"] == "Gemini says Blender."
+    failed, text = _call("askround_ask", {**arguments, "detail": True}, tmp_path, FakePost())
+    assert "frequency" in json.loads(text)["report"]["products"][0]
 
 
 def test_refusals_hold_for_an_agent(all_keys, tmp_path):

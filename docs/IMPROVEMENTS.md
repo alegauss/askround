@@ -37,25 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR31 Ask instead of read
-
-One answer from an assistant with search runs to a few thousand tokens, with tables,
-links and follow-up questions. A round of four questions, four providers and three runs
-is 48 of them. Handing those to an agent repeats what roadkeep was built against: a
-roadmap whose words the agent reads again every turn. roadkeep answers with pick, brief
-and list instead of letting the agent read the file.
-
-By default every command and MCP tool returns the extracted result only (frequency,
-ranks, rivals, cited pages, claims, failures), each item pointing to the answer it came
-from by id. A separate call returns one raw answer, or the quoted passage behind one
-claim, when the agent asks. AR24 shipped the first half in askround/mcp.py: askround_ask
-returns the report and lists the answers (provider, run, model, length) without their
-text, and askround_answer returns one answer; what is left is the size (the report still
-runs to thousands of tokens for a set) and an id on each fact that leads to its passage.
-
-Done when a full round returns to the agent in a few hundred tokens, and any fact in it
-reaches its passage with one more call.
-
 ### §AR32 --json everywhere, with provenance
 
 Every roadkeep command takes --json, which also says which file and line the answer came

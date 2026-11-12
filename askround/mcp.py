@@ -49,7 +49,7 @@ _COST = {
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "askround_ask",
-        "description": "Ask one question to several AI assistants (OpenAI, Gemini, Anthropic, Perplexity) with web search, each several times, and read what they recommend. Returns the report (for each product: share of runs naming it, positions, claims, cited pages; the rivals) and the answers listed by provider and run; read an answer's text with askround_answer. Refused before any call if the question names a product it tests, carries personal data, or is estimated above max_cost.",
+        "description": "Ask one question to several AI assistants (OpenAI, Gemini, Anthropic, Perplexity) with web search, each several times, and read what they recommend. Returns a brief of a few hundred tokens: for each product the runs naming it and its best position per provider, its top claims and the rivals, each fact with the ids of the answers it came from ('openai#2'). Read an answer, or the passage behind a fact, with askround_answer; detail: true returns the full report instead. Refused before any call if the question names a product it tests, carries personal data, or is estimated above max_cost.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -72,6 +72,7 @@ TOOLS: list[dict[str, Any]] = [
                 "locales": {"type": "array", "items": _STR, "description": "e.g. ['BR:pt-BR']"},
                 "search": {"type": "boolean", "description": "web search (default true)"},
                 "max_cost": _COST,
+                "detail": {"type": "boolean", "description": "the full report, not the brief"},
             },
             "required": ["question"],
             "additionalProperties": False,
@@ -79,19 +80,24 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "askround_answer",
-        "description": "The full text of one answer from a round already asked, with the sources it cited.",
+        "description": "One answer from a round already asked, by the id a brief gives ('openai#2'): its full text and sources, or with `around` only the passage around that quote - the cheap way to check a fact.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "round": {
                     **_STR,
-                    "description": "the round's directory, as askround_ask returned it",
+                    "description": "the round's directory, as the brief's 'round' gives it",
                 },
+                "answer": {
+                    **_STR,
+                    "description": "the answer's id, e.g. 'openai#2' or 'openai@BR#2'",
+                },
+                "around": {**_STR, "description": "a quote: return only the passage around it"},
                 "provider": _STR,
                 "run": {"type": "integer", "minimum": 1},
                 "locale": {**_STR, "description": "when the round was asked in several locales"},
             },
-            "required": ["round", "provider", "run"],
+            "required": ["round"],
             "additionalProperties": False,
         },
     },
@@ -206,43 +212,69 @@ def ask(args: dict, out: str | None, post=None) -> dict:
     data = _json(argv, post)
     path = Path(data["saved"]) / "round.json"
     round_, products = report_.load_round(path)
-    listed = [
-        {
-            "provider": r["provider"],
-            "run": r["run"],
-            "locale": (r.get("locale") or {}).get("country"),
-            "model": r.get("served_model") or r["model"],
-            "chars": len(r.get("text") or ""),
-            "error": r.get("error"),
-        }
-        for r in data["results"]
-    ]
-    return {
-        "round": data["saved"],
-        "report": report_.build(round_, products, str(path)),
-        "answers": listed,
-        "cost": data.get("cost"),
-    }
+    if args.get("detail"):
+        return {"round": data["saved"], "report": report_.build(round_, products, str(path))}
+    return report_.brief(round_, products, data["saved"])
+
+
+AROUND = 300  # characters either side of a quote in a passage
+
+
+def _parse_id(answer_id: str) -> tuple[str, str | None, int]:
+    """'openai#2' -> ('openai', None, 2); 'openai@BR#2' -> ('openai', 'BR', 2)."""
+    head, _, run = answer_id.partition("#")
+    provider, _, country = head.partition("@")
+    if not provider or not run.isdigit():
+        raise ToolError(f"{answer_id!r} is not an answer id such as 'openai#2' or 'openai@BR#2'")
+    return provider, country.upper() or None, int(run)
+
+
+def _target(args: dict) -> tuple[str, str | None, int]:
+    if args.get("answer"):
+        return _parse_id(args["answer"])
+    if args.get("provider") and args.get("run"):
+        country = (args.get("locale") or "").split(":")[0].upper() or None
+        return args["provider"], country, args["run"]
+    raise ToolError("give the answer's id ('openai#2'), or provider and run")
+
+
+def _find(results: list[dict], provider: str, country: str | None, run_: int) -> dict | None:
+    for r in results:
+        locale = ((r.get("locale") or {}).get("country") or "").upper() or None
+        same = r["provider"] == provider and r.get("run", 1) == run_
+        if same and (country is None or locale == country):
+            return r
+    return None
 
 
 def answer(args: dict, out: str | None) -> dict:
+    """One answer by its id; with `around`, only the passage around that quote."""
+    provider, country, run_ = _target(args)
     path = report_.find_round(Path(args["round"]), Path(out or "."))
-    data = json.loads(path.read_text(encoding="utf-8"))
-    for r in data["results"]:
-        locale = (r.get("locale") or {}).get("country")
-        if r["provider"] != args["provider"] or r.get("run", 1) != args["run"]:
-            continue
-        if args.get("locale") and (locale or "").upper() != args["locale"].split(":")[0].upper():
-            continue
-        return {
-            "provider": r["provider"],
-            "run": r.get("run", 1),
-            "model": r.get("served_model") or r["model"],
-            "text": r.get("text"),
-            "sources": r.get("sources") or [],
-            "error": r.get("error"),
-        }
-    raise ToolError(f"no answer from {args['provider']} run {args['run']} in {path}")
+    found = _find(json.loads(path.read_text(encoding="utf-8"))["results"], provider, country, run_)
+    if found is None:
+        raise ToolError(f"no answer {provider} run {run_} in {path}")
+    locale = (found.get("locale") or {}).get("country")
+    head = {
+        "answer": f"{provider}{'@' + locale if locale else ''}#{run_}",
+        "model": found.get("served_model") or found["model"],
+        "error": found.get("error"),
+    }
+    text = found.get("text") or ""
+    if args.get("around"):
+        return {**head, "passage": _passage(text, args["around"])}
+    return {**head, "text": text, "sources": found.get("sources") or []}
+
+
+def _passage(text: str, quote: str) -> str:
+    """The text around the quote, or a refusal naming that it is not there (law L4)."""
+    at = text.find(quote)
+    if at < 0:
+        at = text.lower().find(quote.lower())
+    if at < 0:
+        raise ToolError("that quote is not in the answer's text")
+    start, end = max(0, at - AROUND), min(len(text), at + len(quote) + AROUND)
+    return ("..." if start else "") + text[start:end] + ("..." if end < len(text) else "")
 
 
 def run(args: dict, out: str | None, post=None) -> dict:

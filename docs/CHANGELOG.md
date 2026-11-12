@@ -53,6 +53,7 @@
 ## Block H — Agent-first, with roadkeep as the reference
 
 - ✅ **AR30** **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — askround's six laws open IMPROVEMENTS.md as §0.1, from context is cost to the person sets the money, and the project skill says a rationale names the law it serves.
+- ✅ **AR31** **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — Agents get a brief: a round in a few hundred tokens with answer ids on every fact; askround_answer returns one answer or just the passage around a quote.
 
 ## Block I — The site at alegauss.github.io/askround
 
