@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import citations, mention
+from askround import citations, mention, series
 from askround.claims import product_claims
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
@@ -59,6 +59,9 @@ class Round:
     locales: list[Locale] = field(default_factory=list)
     # a brand question names the product on purpose; its rounds are reported apart
     brand: bool = False
+    # the prompt set (its product's name) and the question's purpose, when run from one
+    set: str = ""
+    purpose: str = ""
     # whether each rival exists, by rivals.key(name), when --check-rivals ran (lookup.py)
     checks: dict = field(default_factory=dict)
     # the product's attributed links, followed, by product name, when --check-links ran
@@ -175,6 +178,8 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         "search": round_.search,
         "runs": round_.runs,
         "brand": round_.brand,
+        "set": round_.set or None,
+        "purpose": round_.purpose or None,
         "locales": [_locale(place) for place in round_.locales],
         "answered": len(round_.results) - len(failures(round_)),
         "failed": len(failures(round_)),
@@ -385,6 +390,11 @@ def save_round(
     for r in round_.results:
         if r.answer is not None:
             _write(directory / raw_name(r), r.answer.raw)
+    try:
+        source = (directory / "round.json").relative_to(out).as_posix()
+    except ValueError:
+        source = (directory / "round.json").as_posix()
+    series.append(out, series.rows(round_, products or [], source))
     return directory
 
 

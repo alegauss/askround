@@ -33,6 +33,8 @@
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
+- ✅ **AR20** **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — Every saved round appends a row per answer to series.jsonl, rebuildable from the rounds; askround series gives a product's share per week, day or month per provider.
+
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
 ## Block G — Shipping: package, tests and the first screen

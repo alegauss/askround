@@ -158,6 +158,18 @@ found, ambiguous or not found with the page. A "found" whose page is not among t
 pages that search returned is downgraded to ambiguous. `--no-web` keeps it to GitHub.
 The report marks each checked rival, and names the ones found nowhere.
 
+## The series
+
+Every round saved also appends one line per answer to `series.jsonl` beside the rounds:
+when, which question and set, which provider and model, and what was read (each
+tracked product's mention and position, the recommendations, the cited pages, the
+claims). It is an index of the rounds, so `--rebuild` writes it again from them.
+
+```
+askround series --product Modelado                     # answers naming it, per week
+askround series --product Modelado --by day --question nvidia
+```
+
 ## The report
 
 ```

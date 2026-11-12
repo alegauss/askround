@@ -173,6 +173,8 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
         runs=data.get("runs", 1),
         locales=[_locale(x) for x in data.get("locales") or []],
         brand=bool(data.get("brand", False)),
+        set=data.get("set") or "",
+        purpose=data.get("purpose") or "",
     )
     _restore_checks(round_, data)
     products = [p["names"] for p in data.get("products") or []]
@@ -180,12 +182,13 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
 
 
 def _result(item: dict) -> Result:
+    """One answer of a round.json; a field an older askround did not write yet takes the
+    value it had then (one run, no locale)."""
     locale = _locale(item.get("locale"))
+    run = item.get("run", 1)
     if item.get("error"):
-        return Result(
-            item["provider"], item["model"], item["run"], error=item["error"], locale=locale
-        )
-    return Result(item["provider"], item["model"], item["run"], answer=_answer(item), locale=locale)
+        return Result(item["provider"], item["model"], run, error=item["error"], locale=locale)
+    return Result(item["provider"], item["model"], run, answer=_answer(item), locale=locale)
 
 
 def _restore_checks(round_: Round, data: dict) -> None:

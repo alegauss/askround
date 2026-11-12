@@ -73,6 +73,8 @@ def run_set(
             locales=[question.locale] if question.locale else None,
         )
         round_.brand = question.brand
+        round_.set = product.name
+        round_.purpose = question.purpose
         if extractor is not None:
             extract_round(round_, extractor)
             if product.facts:

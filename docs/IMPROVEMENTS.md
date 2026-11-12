@@ -24,18 +24,6 @@ context on what a command could have answered.
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
-### §AR20 The series
-
-Each test on 12/11/2026 was a snapshot. Whether Modelado stays first after its page
-changes, or whether a rival overtakes it, is a question about time.
-
-Rounds are stored append-only (SQLite or JSON Lines), keyed by date, prompt set,
-question, provider, model and run, with the extracted mentions, ranks, rivals, citations
-and claims, so any later report can be computed from them.
-
-Done when several rounds of the same set are stored and a query returns a product's
-frequency per week per provider.
-
 ### §AR21 The diff
 
 A weekly review wants to know what changed: a rival that appeared (as Modly did), a rank

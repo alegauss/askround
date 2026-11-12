@@ -39,6 +39,7 @@ from askround import (
     lookup,
     private,
     product,
+    series,
     sets,
 )
 from askround import report as report_
@@ -195,6 +196,19 @@ def build_parser() -> argparse.ArgumentParser:
     find.add_argument("--context", default="", help="what they were recommended for")
     find.add_argument("--no-web", dest="web", action="store_false", help="GitHub only, free")
     find.add_argument("--json", action="store_true", help="print the verdicts as JSON")
+    serie = commands.add_parser(
+        "series", help="a product's share of answers over time, from every round kept"
+    )
+    serie.add_argument(
+        "--product", dest="product", metavar="NAME", help="the product to follow (required)"
+    )
+    serie.add_argument("--by", choices=series.PERIODS, default="week", help="default: week")
+    serie.add_argument("--question", help="only questions containing this text")
+    serie.add_argument(
+        "--rebuild", action="store_true", help="write the series again from every round.json"
+    )
+    serie.add_argument("--out", type=Path, help="where rounds are saved")
+    serie.add_argument("--json", action="store_true", help="print the table as JSON")
     report = commands.add_parser(
         "report", help="sum a stored round up: Markdown for a person, JSON for a pipeline"
     )
@@ -258,6 +272,8 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_report(args)
     if args.command == "lookup":
         return run_lookup(args, post)
+    if args.command == "series":
+        return run_series(args)
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
@@ -482,6 +498,38 @@ def run_lookup(args, post) -> int:
             print(f"{v.name}: {v.status.replace('_', ' ')}{where}")
             if v.evidence:
                 print(f"    {v.evidence} ({v.via or 'no lookup'})")
+    return 0
+
+
+def run_series(args) -> int:
+    out = _rounds_dir(args.out)
+    if args.rebuild:
+        skipped: list[str] = []
+        print(f"series rebuilt: {series.rebuild(out, skipped)} answers from the rounds under {out}")
+        for line in skipped:
+            print(f"  skipped {line}", file=sys.stderr)
+        if not args.product:
+            return 0
+    if not args.product:
+        print("askround: name the product to follow with --product", file=sys.stderr)
+        return 2
+    table = series.frequency(series.load(out), args.product, args.by, args.question)
+    if args.json:
+        print(json.dumps(table, ensure_ascii=False, indent=2))
+        return 0
+    if not table:
+        print(f"no answers tracked {args.product} under {out}; ask with --product first")
+        return 0
+    providers = sorted({p for cells in table.values() for p in cells})
+    print(f"{args.product}: answers naming it, by {args.by}")
+    print("| " + args.by + " | " + " | ".join(providers) + " |")
+    print("|---|" + "---|" * len(providers))
+    for period, cells in table.items():
+        shown = []
+        for p in providers:
+            cell = cells.get(p)
+            shown.append(f"{cell['named']}/{cell['answers']}" if cell else "-")
+        print(f"| {period} | " + " | ".join(shown) + " |")
     return 0
 
 
