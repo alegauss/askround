@@ -10,6 +10,8 @@ askround ask "What is the best free app to turn a photo into a 3D model on Windo
 Every provider whose API key is in the environment is asked in parallel:
 `OPENAI_API_KEY`, `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), `ANTHROPIC_API_KEY` and
 `PERPLEXITY_API_KEY`. askround reads the keys at call time and never stores them.
+`askround doctor` lists which providers can run here: the key variable (never its
+value), the model, the search tool and a free check call; `--no-check` makes no call.
 
 Web search is on, through each provider's own search tool, because that is how
 assistants find and recommend products. Each answer is printed with the sources it

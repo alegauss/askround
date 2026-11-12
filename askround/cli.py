@@ -1,11 +1,15 @@
 """The `askround` command.
 
     askround ask "<question>" [--provider NAME ...] [--no-search] [--out DIR] [--json]
+    askround doctor [--provider NAME ...] [--no-check] [--json]
 
-Sends the question to every provider whose API key is in the environment (or the
+`ask` sends the question to every provider whose API key is in the environment (or the
 ones named with --provider), with web search on unless --no-search, prints each
 answer under its provider's heading with the sources it cited, and saves the round
 under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
+
+`doctor` says which providers can run here: key variable (never the value), model,
+search tool and a free check call. It exits 2 when no provider can run.
 """
 
 from __future__ import annotations
@@ -17,6 +21,7 @@ import sys
 from pathlib import Path
 
 from askround import __version__
+from askround.doctor import Status, diagnose
 from askround.providers import Answer, all_providers, by_name
 from askround.round import Round, run_round, save_round, summary
 
@@ -44,6 +49,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
+    doctor = commands.add_parser("doctor", help="say which providers can run here")
+    doctor.add_argument(
+        "--provider", action="append", dest="providers", metavar="NAME", help="repeatable"
+    )
+    doctor.add_argument(
+        "--no-check", dest="check", action="store_false", help="make no network call"
+    )
+    doctor.add_argument("--json", action="store_true", help="print the report as JSON")
     return parser
 
 
@@ -55,6 +68,8 @@ def main(argv: list[str] | None = None, post=None) -> int:
     except ValueError as error:
         print(f"askround: {error}", file=sys.stderr)
         return 2
+    if args.command == "doctor":
+        return run_doctor(providers, args.check, args.json)
     providers = [p for p in providers if p.configured()]
     if not providers:
         print(
@@ -71,6 +86,45 @@ def main(argv: list[str] | None = None, post=None) -> int:
     else:
         print(render(round_, directory))
     return 0 if any(r.ok for r in round_.results) else 1
+
+
+def run_doctor(providers, check: bool, as_json_: bool) -> int:
+    statuses = diagnose(providers, check=check)
+    if as_json_:
+        print(json.dumps([_status_json(s) for s in statuses], indent=2))
+    else:
+        print(render_doctor(statuses))
+    return 0 if any(s.can_run for s in statuses) else 2
+
+
+def _status_json(s: Status) -> dict:
+    return {
+        "provider": s.provider,
+        "model": s.model,
+        "search_tool": s.search_tool,
+        "key_var": s.key_var,
+        "checked": s.checked,
+        "ok": s.ok,
+        "can_run": s.can_run,
+        "detail": s.detail,
+    }
+
+
+def render_doctor(statuses: list[Status]) -> str:
+    rows = [("provider", "key", "model", "search", "status")]
+    for s in statuses:
+        mark = "ok" if s.ok else ("-" if not s.checked else "FAIL")
+        status = s.detail if s.detail == "ok" else f"{mark}: {s.detail}"
+        rows.append((s.provider, s.key_var or "-", s.model, s.search_tool, status))
+    widths = [max(len(row[i]) for row in rows) for i in range(4)]
+    lines = [
+        "  ".join(cell.ljust(w) for cell, w in zip(row[:4], widths, strict=True)) + "  " + row[4]
+        for row in rows
+    ]
+    can = [s.provider for s in statuses if s.can_run]
+    lines.append("")
+    lines.append(f"can run: {', '.join(can)}" if can else "no provider can run")
+    return "\n".join(lines)
 
 
 def render(round_: Round, directory: Path) -> str:

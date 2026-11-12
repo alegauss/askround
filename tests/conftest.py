@@ -117,12 +117,15 @@ KEY_VARS = (
 
 
 class FakePost:
-    """Answers each host with its canned response; `script` overrides one host with a
-    list of responses returned in order."""
+    """Answers each host with its canned response; `fail` makes a host answer HTTP 500
+    (a set) or a chosen status (a dict); `script` overrides one host with a list of
+    responses returned in order."""
 
-    def __init__(self, fail: set[str] | None = None, script: dict[str, list] | None = None):
-        self.calls: list[tuple[str, dict, dict]] = []
-        self.fail = fail or set()
+    def __init__(
+        self, fail: set[str] | dict[str, int] | None = None, script: dict[str, list] | None = None
+    ):
+        self.calls: list[tuple[str, dict, dict | None]] = []
+        self.fail = fail if isinstance(fail, dict) else dict.fromkeys(fail or (), 500)
         self.script = {host: list(answers) for host, answers in (script or {}).items()}
 
     def __call__(self, url, headers, body, timeout):
@@ -130,7 +133,7 @@ class FakePost:
         for host, raw in CANNED.items():
             if host in url:
                 if host in self.fail:
-                    raise HttpError(500, "boom")
+                    raise HttpError(self.fail[host], f"boom {headers}")
                 if self.script.get(host):
                     return self.script[host].pop(0)
                 return raw

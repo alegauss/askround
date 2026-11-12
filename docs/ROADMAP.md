@@ -4,7 +4,6 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-- 📋 **AR3** (deps: AR1 ✅) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
 - 📋 **AR4** (deps: AR1 ✅) **One answer is taken as the answer, though the same question gives a different list on the next run** — Assistants vary run to run, so 'it named the app first' means nothing until it is 'first in 3 of 3 runs'. → §AR4
 - 📋 **AR5** (deps: AR2 ✅) **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Providers update models and search silently; a product dropping out of answers must be traceable to a new model or to the product itself. → §AR5
 - 📋 **AR6** (deps: AR2 ✅) **A question cannot be asked as someone in a given country and language would ask it** — A Portuguese question about running on the CPU also put the app first; country and language change which products search finds. → §AR6

@@ -52,6 +52,8 @@ class Provider:
     name: str = ""
     key_vars: tuple[str, ...] = ()
     default_model: str = ""
+    # how the adapter searches, as `askround doctor` reports it
+    search_tool: str = ""
 
     def __init__(self, post: PostJson = post_json, timeout: float = 300.0):
         self._post = post
@@ -70,6 +72,21 @@ class Provider:
 
     def configured(self) -> bool:
         return self.api_key() is not None
+
+    def key_var(self) -> str | None:
+        """The name of the variable the key is read from, never its value."""
+        return next((var for var in self.key_vars if os.environ.get(var)), None)
+
+    def check(self) -> None:
+        """The cheapest call that proves the key and the model work; raises if not."""
+        key = self.api_key()
+        if key is None:
+            raise RuntimeError(f"{self.name}: none of {', '.join(self.key_vars)} is set")
+        url, headers, body = self.check_request(key)
+        self._post(url, headers, body, min(self.timeout, 30.0))
+
+    def check_request(self, key: str) -> tuple[str, dict[str, str], dict[str, Any] | None]:
+        raise NotImplementedError
 
     def ask(self, question: str, search: bool = True) -> Answer:
         key = self.api_key()
@@ -114,6 +131,14 @@ class OpenAI(Provider):
     name = "openai"
     key_vars = ("OPENAI_API_KEY",)
     default_model = "gpt-5"
+    search_tool = "web_search (Responses API)"
+
+    def check_request(self, key):
+        return (
+            f"https://api.openai.com/v1/models/{self.model}",
+            {"Authorization": f"Bearer {key}"},
+            None,
+        )
 
     def request(self, question, key, search):
         body: dict[str, Any] = {"model": self.model, "input": question}
@@ -151,6 +176,14 @@ class Gemini(Provider):
     name = "gemini"
     key_vars = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
     default_model = "gemini-2.5-flash"
+    search_tool = "google_search grounding"
+
+    def check_request(self, key):
+        return (
+            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}",
+            {"x-goog-api-key": key},
+            None,
+        )
 
     def request(self, question, key, search):
         body: dict[str, Any] = {"contents": [{"role": "user", "parts": [{"text": question}]}]}
@@ -182,8 +215,16 @@ class Anthropic(Provider):
     name = "anthropic"
     key_vars = ("ANTHROPIC_API_KEY",)
     default_model = "claude-opus-5-5"
+    search_tool = "web_search_20260209 server tool"
     # a searching turn can pause server-side; it is resumed by sending it back
     max_continuations = 3
+
+    def check_request(self, key):
+        return (
+            f"https://api.anthropic.com/v1/models/{self.model}",
+            {"x-api-key": key, "anthropic-version": "2026-10-21"},
+            None,
+        )
 
     def request(self, question, key, search):
         body: dict[str, Any] = {
@@ -241,6 +282,20 @@ class Perplexity(Provider):
     name = "perplexity"
     key_vars = ("PERPLEXITY_API_KEY",)
     default_model = "sonar"
+    search_tool = "built into Sonar"
+
+    def check_request(self, key):
+        # no free model lookup: one token, search off, is the cheapest proof
+        return (
+            "https://api.perplexity.ai/chat/completions",
+            {"Authorization": f"Bearer {key}"},
+            {
+                "model": self.model,
+                "messages": [{"role": "user", "content": "ping"}],
+                "max_tokens": 1,
+                "disable_search": True,
+            },
+        )
 
     def request(self, question, key, search):
         body: dict[str, Any] = {

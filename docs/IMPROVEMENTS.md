@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR3 askround doctor
-
-Before proposing a round, the agent had to list environment variables one by one
-(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY and others) to
-know what could run, taking care not to print a value.
-
-`askround doctor` lists every provider askround knows, whether its key is set (never its
-value), the model it would use, whether web search is available on that model, and the
-result of one cheap call. It exits non-zero when no provider can run.
-
-Done when doctor reports each provider correctly with keys present, absent and invalid,
-and no key ever appears in its output.
-
 ### §AR4 Repeated runs and frequency
 
 On 12/11/2026 the question that put Modelado first was asked again in a fresh chat to

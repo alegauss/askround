@@ -1,7 +1,8 @@
-"""The one network call askround makes: a JSON POST.
+"""The one network call askround makes: a JSON POST, or a GET when there is no body.
 
 Every provider goes through `post_json`, so a test replaces this one function (or
-passes its own `post` to a provider) and never touches the network.
+passes its own `post` to a provider) and never touches the network. The GET form is
+what `askround doctor` uses for the free model lookups that check a key.
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ import urllib.request
 from collections.abc import Callable
 from typing import Any
 
-PostJson = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
+PostJson = Callable[[str, dict[str, str], dict[str, Any] | None, float], dict[str, Any]]
 
 
 class HttpError(Exception):
@@ -25,14 +26,14 @@ class HttpError(Exception):
 
 
 def post_json(
-    url: str, headers: dict[str, str], body: dict[str, Any], timeout: float
+    url: str, headers: dict[str, str], body: dict[str, Any] | None, timeout: float
 ) -> dict[str, Any]:
-    data = json.dumps(body).encode("utf-8")
+    data = None if body is None else json.dumps(body).encode("utf-8")
     request = urllib.request.Request(
         url,
         data=data,
         headers={"Content-Type": "application/json", **headers},
-        method="POST",
+        method="GET" if body is None else "POST",
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
