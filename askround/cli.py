@@ -226,6 +226,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serie.add_argument("--out", type=Path, help="where rounds are saved")
     serie.add_argument("--json", action="store_true", help="print the table as JSON")
+    serve = commands.add_parser("mcp", help="serve askround to an agent as an MCP server (stdio)")
+    serve.add_argument("--out", type=Path, help="where rounds are saved")
     exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
     exp.add_argument("--product", required=True, metavar="NAME", help="the product to export")
     exp.add_argument("--from", dest="since", metavar="YYYY-MM-DD", default="", help="first day")
@@ -303,6 +305,11 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_diff(args)
     if args.command == "export":
         return run_export(args)
+    if args.command == "mcp":
+        from askround import mcp
+
+        mcp.serve(out=str(args.out) if args.out else None)
+        return 0
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:

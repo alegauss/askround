@@ -225,6 +225,28 @@ provider by share of runs and positions, what the answers claim about it, which 
 pages they cite, then the rivals. The JSON holds the same facts and never the answers'
 text, which stays in `round.json`.
 
+## For agents: the MCP server
+
+`askround mcp` serves askround over stdio to an agent. In Claude Code:
+
+```
+claude mcp add askround -- askround mcp
+```
+
+| Tool | What it does |
+| --- | --- |
+| `askround_ask` | ask a question across providers; returns the report and lists the answers |
+| `askround_answer` | the full text of one answer, with its sources |
+| `askround_run` | run a prompt set (a product file); returns the set's report |
+| `askround_report` | the report of a stored round or set |
+| `askround_diff` | what changed between two runs of the same questions |
+| `askround_doctor` | which providers can run (key variable names, never values) |
+
+The same refusals hold for an agent: personal data, a question naming its product, and
+a run estimated above `max_cost` (or `ASKROUND_MAX_COST`) stop before anything is
+paid for. An answer's text is returned only by `askround_answer`, so an agent reads
+the report first and the answers it needs.
+
 ## Development
 
 ```

@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-### §AR24 An MCP server
-
-The agent analysing Modelado knew which question to ask next but had no tool to ask it,
-so each step waited for the user to type it into ChatGPT and paste the answer.
-
-askround runs as an MCP server (stdio) with tools to ask a question across providers,
-run a prompt set, and read a report or a diff, returning structured results the agent
-can reason over. Cost estimates and the budget cap apply to agent calls too, and the
-server never exposes keys.
-
-Done when Claude Code, with the server configured, can ask a question across two
-providers and read the answers without the user.
-
 ### §AR25 Research mode
 
 Beyond visibility, the session needed research: which open image-to-3D models allow
@@ -124,7 +111,10 @@ and list instead of letting the agent read the file.
 By default every command and MCP tool returns the extracted result only (frequency,
 ranks, rivals, cited pages, claims, failures), each item pointing to the answer it came
 from by id. A separate call returns one raw answer, or the quoted passage behind one
-claim, when the agent asks.
+claim, when the agent asks. AR24 shipped the first half in askround/mcp.py: askround_ask
+returns the report and lists the answers (provider, run, model, length) without their
+text, and askround_answer returns one answer; what is left is the size (the report still
+runs to thousands of tokens for a set) and an id on each fact that leads to its passage.
 
 Done when a full round returns to the agent in a few hundred tokens, and any fact in it
 reaches its passage with one more call.

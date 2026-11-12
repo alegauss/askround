@@ -40,6 +40,8 @@
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
+- ✅ **AR24** **An agent in Claude Code cannot ask other assistants mid-analysis; it has to stop and ask the user** — askround mcp serves ask, answer, run, report, diff and doctor over stdio with every refusal and the cost cap; a stdio client asked two providers and read an answer.
+
 ## Block G — Shipping: package, tests and the first screen
 
 ## Block H — Agent-first, with roadkeep as the reference
