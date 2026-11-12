@@ -38,6 +38,7 @@ from askround import (
     discover,
     export,
     gaps,
+    jobs,
     leading,
     links,
     lookup,
@@ -85,6 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="the person approves this run past the day or month budget (agents cannot)",
     )
+    paid.add_argument(
+        "--estimate-only",
+        action="store_true",
+        help="run every check and print the estimate; ask nothing",
+    )
+    # where a job (jobs.py) records each answer as it lands; set by the MCP server
+    paid.add_argument("--job", type=Path, help=argparse.SUPPRESS)
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
         "--provider",
@@ -357,7 +365,20 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         "research": lambda: run_research(args, providers, post),
         "ask": lambda: run_ask(args, providers, post, fetch),
     }
-    return paid[args.command]()
+    code = paid[args.command]()
+    if getattr(args, "job", None):
+        jobs.finish(args.job, code)
+    return code
+
+
+def _estimate_only(args) -> int:
+    """After every check passed: the estimate, and nothing asked."""
+    print(json.dumps({"schema": schema("estimate"), "estimate": args.estimate}, indent=2))
+    return OK
+
+
+def _recorder(args):
+    return jobs.Recorder(args.job) if getattr(args, "job", None) else None
 
 
 def run_explain(args) -> int:
@@ -396,6 +417,7 @@ def _budget(checks, est, args) -> None:
     """Print the estimate; a run above the cap, or past the person's day or month budget
     without their approval, is a problem to refuse (law L5)."""
     print(f"askround: {costs.describe(est)}", file=sys.stderr)
+    args.estimate = costs.as_dict(est)
     limit = costs.cap(args.max_cost)
     if limit is not None and est.total > limit:
         checks.add("cost.over-cap", f"the estimate ${est.total:.4f} is above the cap ${limit:.4f}")
@@ -416,7 +438,9 @@ def run_research(args, providers, post) -> int:
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return REFUSED
-    round_ = run_round(args.question, providers, runs=args.runs)
+    if args.estimate_only:
+        return _estimate_only(args)
+    round_ = run_round(args.question, providers, runs=args.runs, on_answer=_recorder(args))
     before = reader.spent
     found = research.merge(args.question, research.read(round_, reader), reader)
     round_.extraction_cost = reader.spent - before
@@ -465,6 +489,8 @@ def run_discover(args, providers, post) -> int:
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return REFUSED
+    if args.estimate_only:
+        return _estimate_only(args)
     variants, dropped = discover.generate(seed, item, writer, args.variants)
     questions = [product.Question(seed, "seed"), *variants]
     trial = dataclasses.replace(item, questions=questions)
@@ -549,6 +575,8 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return REFUSED
+    if args.estimate_only:
+        return _estimate_only(args)
     get = (fetch or links.fetch) if args.check_links else None
     directory, rounds = sets.run_set(
         item,
@@ -559,6 +587,7 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
         extractor=extractor,
         get=get,
         source=str(args.file),
+        on_answer=_recorder(args),
     )
     data = report_.build_set(directory / "set.json")
     if args.json:
@@ -680,9 +709,16 @@ def run_ask(args, providers, post, fetch=None) -> int:
         providers, files, products, extractor = _preflight(args, providers, post)
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
-        return 2
+        return REFUSED
+    if args.estimate_only:
+        return _estimate_only(args)
     round_ = run_round(
-        args.question, providers, search=args.search, runs=args.runs, locales=args.locales
+        args.question,
+        providers,
+        search=args.search,
+        runs=args.runs,
+        locales=args.locales,
+        on_answer=_recorder(args),
     )
     round_.brand = args.brand
     round_.estimate = args.estimate

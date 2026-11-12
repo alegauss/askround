@@ -300,6 +300,7 @@ or the server alone: `claude mcp add askround -- askround mcp`. Either serves:
 | `askround_answer` | the full text of one answer, with its sources |
 | `askround_run` | run a prompt set (a product file); returns the set's report |
 | `askround_research` | a research question everywhere, its claims merged by support |
+| `askround_job` | a round started with `background: true`: its progress, then its result |
 | `askround_report` | the report of a stored round or set |
 | `askround_diff` | what changed between two runs of the same questions |
 | `askround_doctor` | which providers can run (key variable names, never values) |
@@ -313,6 +314,14 @@ with extraction: 614 characters, against 12,253 of answers). Each fact in it car
 ids of the answers it came from (`openai#2`, `openai@BR#2`); `askround_answer` with an
 id returns that answer, or with `around: "<quote>"` only the passage behind the fact.
 `detail: true` returns the full report. On the command line: `askround report --brief`.
+
+A round takes minutes. With `background: true`, `askround_ask` and `askround_run` check
+and estimate it, start it in a process of its own and return a job id at once; the
+agent keeps working and reads it with `askround_job`: running (with how many answers
+are in), done (with its brief), refused, failed, or interrupted. Each answer is written
+the moment it lands, so an interrupted job keeps every answer it finished. The jobs
+live in `jobs/` beside the rounds; `--estimate-only` on the command line runs the same
+checks and prints the estimate without asking anything.
 
 ## Refused before it is paid for
 

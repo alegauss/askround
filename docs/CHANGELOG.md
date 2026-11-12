@@ -57,6 +57,7 @@
 - ✅ **AR32** **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every command's JSON names a versioned schema published in schema/ and validated in tests; each fact carries its answer id and passage range; exit codes are documented.
 - ✅ **AR33** **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — Every pre-call check runs first and a refusal lists all problems with a code and its fix; askround explain covers each code, and MCP schemas carry the limits.
 - ✅ **AR34** **An agent could spend the user's API money on rounds without the user ever agreeing to the amount** — The person sets a day and month budget in a config no tool writes; a run past it is refused before any call as an approval request, and spending comes with every paid result.
+- ✅ **AR35** **A round takes minutes of searched calls, longer than an MCP call should block the agent** — With background: true a round or set starts as a job and returns at once with its estimate; askround_job reads its progress and result, and each answer is kept as it lands.
 
 ## Block I — The site at alegauss.github.io/askround
 

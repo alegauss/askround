@@ -107,9 +107,11 @@ def run_round(
     search: bool = True,
     runs: int = DEFAULT_RUNS,
     locales: list[Locale] | None = None,
+    on_answer=None,
 ) -> Round:
     """Ask every provider `runs` times in each locale (or once with none), in parallel.
-    A failure costs its answer only."""
+    A failure costs its answer only. `on_answer(result)` is called as each answer (or
+    failure) lands, from the thread that got it - how a job keeps what it finished."""
     if runs < 1:
         raise ValueError("runs must be at least 1")
     asked_at = now or datetime.now(UTC)
@@ -126,8 +128,12 @@ def run_round(
         try:
             answer = provider.ask(question, search=search, locale=place)
         except Exception as error:  # noqa: BLE001 - any failure is recorded, never raised
-            return Result(provider.name, provider.model, run, error=describe(error), locale=place)
-        return Result(provider.name, answer.model, run, answer=answer, locale=place)
+            result = Result(provider.name, provider.model, run, error=describe(error), locale=place)
+        else:
+            result = Result(provider.name, answer.model, run, answer=answer, locale=place)
+        if on_answer is not None:
+            on_answer(result)
+        return result
 
     with ThreadPoolExecutor(max_workers=max(1, min(len(jobs), MAX_PARALLEL))) as pool:
         results = list(pool.map(ask, jobs))

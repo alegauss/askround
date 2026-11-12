@@ -40,6 +40,7 @@ def test_initialize_and_list_the_tools():
         "askround_ask",
         "askround_answer",
         "askround_run",
+        "askround_job",
         "askround_research",
         "askround_report",
         "askround_diff",

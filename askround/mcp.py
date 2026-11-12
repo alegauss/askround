@@ -8,6 +8,7 @@ stdio (newline-delimited JSON-RPC 2.0, the MCP stdio transport), with no depende
     askround_answer  one answer's full text, from a round already asked
     askround_run     run a prompt set (a product file); the set's report
     askround_research  a research question everywhere, its claims merged by support
+    askround_job     a round started with background: true - its progress, or its result
     askround_report  the report of a stored round or set
     askround_diff    what changed between two runs of the same questions
     askround_doctor  which providers can run (key variable names, never values)
@@ -31,7 +32,7 @@ import sys
 from pathlib import Path
 from typing import Any, TextIO
 
-from askround import __version__, budget
+from askround import __version__, budget, jobs
 from askround import report as report_
 from askround.providers import all_providers
 from askround.refusals import QUESTION_LIMIT
@@ -76,6 +77,10 @@ TOOLS: list[dict[str, Any]] = [
                 "search": {"type": "boolean", "description": "web search (default true)"},
                 "max_cost": _COST,
                 "detail": {"type": "boolean", "description": "the full report, not the brief"},
+                "background": {
+                    "type": "boolean",
+                    "description": "start it as a job and return at once (a round takes minutes); read it with askround_job",
+                },
             },
             "required": ["question"],
             "additionalProperties": False,
@@ -115,8 +120,22 @@ TOOLS: list[dict[str, Any]] = [
                 "runs": {"type": "integer", "minimum": 1},
                 "extract": {"type": "boolean"},
                 "max_cost": _COST,
+                "background": {
+                    "type": "boolean",
+                    "description": "start it as a job and return at once; read it with askround_job",
+                },
             },
             "required": ["file"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "askround_job",
+        "description": "A round or prompt set started with background: true - running (with how many answers are in), done (with its brief or report), refused, failed, or interrupted (with the answers it finished, which are kept).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"job": {**_STR, "description": "the id the start returned"}},
+            "required": ["job"],
             "additionalProperties": False,
         },
     },
@@ -196,11 +215,25 @@ def _cli(argv: list[str], post=None) -> tuple[int, str, str]:
     return code, out.getvalue(), err.getvalue()
 
 
+ANSWERED = (0, 3)  # every answer, or a partial round: both are results
+
+
 def _json(argv: list[str], post=None) -> Any:
     code, out, err = _cli(argv, post)
-    if code != 0:
+    if code not in ANSWERED:
         raise ToolError(_reason(err) or out.strip() or f"askround exited {code}")
     return json.loads(out)
+
+
+def job(args: dict, out: str | None) -> dict:
+    """A job's state; when an ask is done, its brief rather than the whole round (L1)."""
+    found = jobs.status(args["job"], _rounds(out))
+    result = found.get("result")
+    if isinstance(result, dict) and result.get("schema") == "askround/round@1":
+        path = Path(result["saved"]) / "round.json"
+        round_, products = report_.load_round(path)
+        found["result"] = report_.brief(round_, products, result["saved"])
+    return found
 
 
 def _reason(err: str) -> str:
@@ -221,17 +254,36 @@ def _common(args: dict, argv: list[str]) -> list[str]:
     return argv
 
 
-def ask(args: dict, out: str | None, post=None) -> dict:
-    argv = _common(args, ["ask", args["question"], "--json"])
+def _ask_argv(args: dict) -> list[str]:
+    argv = _common(args, ["ask", args["question"]])
     for product in args.get("products") or []:
         argv += ["--product", product]
     for locale in args.get("locales") or []:
         argv += ["--locale", locale]
     if args.get("search") is False:
         argv.append("--no-search")
-    if out:
-        argv += ["--out", out]
-    data = _json(argv, post)
+    return argv
+
+
+def _background(argv: list[str], out: str | None, post=None) -> dict:
+    """Check and estimate now, refusing what would be refused (law L2); then start the
+    run as a job and return at once."""
+    where = ["--out", out] if out else []
+    estimate = _json([*argv, "--estimate-only", *where], post)
+    job = jobs.start(argv, _rounds(out))
+    return {
+        "job": job,
+        "state": "running",
+        "estimate": estimate["estimate"],
+        "next": "askround_job with this id reads its progress, and its result when done",
+    }
+
+
+def ask(args: dict, out: str | None, post=None) -> dict:
+    argv = _ask_argv(args)
+    if args.get("background"):
+        return _background(argv, out, post)
+    data = _json([*argv, "--json", *(["--out", out] if out else [])], post)
     path = Path(data["saved"]) / "round.json"
     round_, products = report_.load_round(path)
     if args.get("detail"):
@@ -301,10 +353,12 @@ def _passage(text: str, quote: str) -> str:
 
 def run(args: dict, out: str | None, post=None) -> dict:
     argv = _common(args, ["run", args["file"]])
+    if args.get("background"):
+        return _background(argv, out, post)
     if out:
         argv += ["--out", out]
     code, text, err = _cli(argv, post)
-    if code != 0:
+    if code not in ANSWERED:
         raise ToolError(_reason(err) or f"askround exited {code}")
     saved = [
         line.removeprefix("saved: ") for line in text.splitlines() if line.startswith("saved: ")
@@ -346,6 +400,7 @@ def call(name: str, args: dict, out: str | None = None, post=None) -> dict:
         "askround_answer": lambda: answer(args, out),
         "askround_run": lambda: run(args, out, post),
         "askround_research": lambda: research_(args, out, post),
+        "askround_job": lambda: job(args, out),
         "askround_report": lambda: report(args, out),
         "askround_diff": lambda: diff(args, out),
         "askround_doctor": lambda: doctor(args, out, post),

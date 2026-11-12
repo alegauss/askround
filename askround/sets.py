@@ -61,6 +61,7 @@ def run_set(
     get=None,
     now: datetime | None = None,
     source: str = "",
+    on_answer=None,
 ) -> tuple[Path, list[Round]]:
     """Ask every question of the product file; `runs` overrides each question's own."""
     if not product.questions:
@@ -77,6 +78,7 @@ def run_set(
             search=search,
             runs=runs or question.runs or DEFAULT_RUNS,
             locales=[question.locale] if question.locale else None,
+            on_answer=on_answer,
         )
         round_.brand = question.brand
         round_.set = product.name

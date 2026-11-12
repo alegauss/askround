@@ -37,20 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR35 Rounds as jobs
-
-Dozens of calls with web search, each taking seconds to tens of seconds, make a round of
-several minutes. roadkeep's tools answer in milliseconds; askround's cannot, and an MCP
-tool that blocks that long freezes the agent and risks a client timeout that throws away
-results already paid for.
-
-A round can start as a job: the tool returns a job id and the estimate at once, progress
-can be read, and the result is fetched when done, with finished answers kept if the job
-is interrupted. A single question stays synchronous.
-
-Done when an agent starts a round, keeps working, and reads the finished result later
-through the MCP server, and an interrupted job keeps what it finished.
-
 ### §AR36 Reuse a recent round
 
 An agent that lost a result from its context, or a second session on the same task, asks

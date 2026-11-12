@@ -79,6 +79,7 @@ select = ["E", "F", "I", "UP", "C4", "B"]
 "askround/research.py" = ["E501"]
 "askround/refusals.py" = ["E501"]
 "askround/budget.py" = ["E501"]
+"askround/jobs.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
