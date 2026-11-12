@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from askround import mention
+from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
 
 DEFAULT_RUNS = 3
@@ -99,13 +100,27 @@ def run_round(
         try:
             answer = provider.ask(question, search=search, locale=place)
         except Exception as error:  # noqa: BLE001 - any failure is recorded, never raised
-            failure = f"{type(error).__name__}: {error}"
-            return Result(provider.name, provider.model, run, error=failure, locale=place)
+            return Result(provider.name, provider.model, run, error=describe(error), locale=place)
         return Result(provider.name, answer.model, run, answer=answer, locale=place)
 
     with ThreadPoolExecutor(max_workers=max(1, min(len(jobs), MAX_PARALLEL))) as pool:
         results = list(pool.map(ask, jobs))
     return Round(question, asked_at, results, search=search, runs=runs, locales=list(locales or []))
+
+
+def describe(error: BaseException) -> str:
+    """The error as a round records it, with the attempts it took when retried.
+    An HTTP error's body is cut short: some providers echo part of the request."""
+    if isinstance(error, HttpError):
+        text = f"HttpError: HTTP {error.status}: {' '.join(error.body.split())[:200]}"
+    else:
+        text = f"{type(error).__name__}: {error}"
+    attempts = getattr(error, "attempts", 1)
+    return f"{text} (after {attempts} attempts)" if attempts > 1 else text
+
+
+def failures(round_: Round) -> list[Result]:
+    return [r for r in round_.results if r.answer is None]
 
 
 def frequency(round_: Round, names: list[str]) -> list[Frequency]:
@@ -145,6 +160,8 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         "search": round_.search,
         "runs": round_.runs,
         "locales": [_locale(place) for place in round_.locales],
+        "answered": len(round_.results) - len(failures(round_)),
+        "failed": len(failures(round_)),
         "results": [_result(r) for r in round_.results],
     }
     if products:

@@ -46,6 +46,11 @@ question in the language you are testing: that is still the strongest signal.
 | `--out DIR`         | where the round is saved                            |
 | `--json`            | print the round as JSON                             |
 
+A rate limit, a server error, a timeout or a dropped connection is retried up to three
+times with backoff (honouring `Retry-After`); a rejected key or a missing model is not.
+An answer that still fails is recorded with its error, the rest of the round carries
+on, and the report lists the failures at the end.
+
 The model per provider is overridden with `ASKROUND_OPENAI_MODEL`,
 `ASKROUND_GEMINI_MODEL`, `ASKROUND_ANTHROPIC_MODEL` and `ASKROUND_PERPLEXITY_MODEL`.
 

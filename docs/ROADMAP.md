@@ -2,10 +2,6 @@
 
 ## Priority
 
-## Block A — The round: one question to every assistant, with web search
-
-- 📋 **AR7** (deps: AR1 ✅) **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — A round makes dozens of calls across providers, and one failure should cost one answer, not the whole round. → §AR7
-
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
 - 📋 **AR8** (deps: AR4 ✅) **Whether a product is named, and in which position, is read by eye in each answer** — On 12/11/2026 every answer was read in full to find where the app ranked; at three runs and four providers that does not scale. → §AR8

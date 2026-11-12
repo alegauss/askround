@@ -1,7 +1,5 @@
 # Strategy
 
-## Block A — The round: one question to every assistant, with web search
-
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
 ## Block C — Trust: checking what the answers say

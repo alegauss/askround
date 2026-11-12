@@ -26,7 +26,15 @@ from pathlib import Path
 from askround import __version__
 from askround.doctor import Status, diagnose
 from askround.providers import Answer, Locale, all_providers, by_name
-from askround.round import DEFAULT_RUNS, Round, frequency, run_round, save_round, summary
+from askround.round import (
+    DEFAULT_RUNS,
+    Round,
+    failures,
+    frequency,
+    run_round,
+    save_round,
+    summary,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -207,6 +215,13 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
         lines.append("")
     for names in products or []:
         lines.extend(_frequency_lines(round_, names))
+        lines.append("")
+    failed = failures(round_)
+    if failed:
+        lines.append(f"failed: {len(failed)} of {len(round_.results)} answers")
+        for r in failed:
+            where = f" {r.locale}" if r.locale else ""
+            lines.append(f"  {r.provider}{where} run {r.run}: {r.error}")
         lines.append("")
     lines.append(f"saved: {directory}")
     return "\n".join(lines)

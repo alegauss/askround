@@ -143,6 +143,14 @@ class FakePost:
         raise AssertionError(f"unexpected url {url}")
 
 
+@pytest.fixture(autouse=True)
+def no_waiting(monkeypatch):
+    """Retries back off with `askround.http.sleep`; a test records the delays instead."""
+    delays: list[float] = []
+    monkeypatch.setattr("askround.http.sleep", delays.append)
+    return delays
+
+
 @pytest.fixture
 def no_keys(monkeypatch):
     for var in KEY_VARS:

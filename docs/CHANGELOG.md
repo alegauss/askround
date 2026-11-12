@@ -8,6 +8,7 @@
 - ✅ **AR4** **One answer is taken as the answer, though the same question gives a different list on the next run** — A round asks each provider three times by default (--runs) and --product reports per provider the share of runs naming it and its position in each, raw answers kept.
 - ✅ **AR5** **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Every answer records the requested and served model id, search tool, temperature, locale, settings, run and time; --model pins a model and frequency groups by served model.
 - ✅ **AR6** **A question cannot be asked as someone in a given country and language would ask it** — --locale COUNTRY:LANG asks each provider as that locale through its search settings, records what its API ignored, and repeated locales are compared side by side.
+- ✅ **AR7** **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — Rate limits, server errors and timeouts are retried with backoff and Retry-After; a call that still fails is recorded with its attempts and the round finishes, listing failures.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 

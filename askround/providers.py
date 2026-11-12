@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from askround.http import PostJson, post_json
+from askround.http import ATTEMPTS, PostJson, post_json, with_retries
 
 
 @dataclass(frozen=True)
@@ -103,9 +103,14 @@ class Provider:
     locale_fields: tuple[str, ...] = ()
 
     def __init__(
-        self, post: PostJson = post_json, timeout: float = 300.0, model: str | None = None
+        self,
+        post: PostJson = post_json,
+        timeout: float = 300.0,
+        model: str | None = None,
+        attempts: int = ATTEMPTS,
     ):
-        self._post = post
+        # every call is retried on a rate limit, a server error or a timeout
+        self._post = with_retries(post, attempts)
         self.timeout = timeout
         self._model = model
 

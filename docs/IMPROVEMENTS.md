@@ -22,20 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block A — The round: one question to every assistant, with web search
-
-### §AR7 Retries and partial rounds
-
-A round of ten questions, four providers and three runs is 120 calls with web search,
-each slow and each able to fail.
-
-Calls are retried with backoff on rate limits and transient errors, with a timeout per
-call; a call that still fails is recorded as failed with its error, and the round
-completes with what it has. The report shows the failures.
-
-Done when a round with a provider forced to fail still finishes, reports that provider's
-failures, and keeps the other answers.
-
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
 ### §AR8 Mentions and rank
