@@ -55,6 +55,7 @@
 - ✅ **AR30** **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — askround's six laws open IMPROVEMENTS.md as §0.1, from context is cost to the person sets the money, and the project skill says a rationale names the law it serves.
 - ✅ **AR31** **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — Agents get a brief: a round in a few hundred tokens with answer ids on every fact; askround_answer returns one answer or just the passage around a quote.
 - ✅ **AR32** **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every command's JSON names a versioned schema published in schema/ and validated in tests; each fact carries its answer id and passage range; exit codes are documented.
+- ✅ **AR33** **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — Every pre-call check runs first and a refusal lists all problems with a code and its fix; askround explain covers each code, and MCP schemas carry the limits.
 
 ## Block I — The site at alegauss.github.io/askround
 

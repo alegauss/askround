@@ -6,7 +6,6 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- 📋 **AR33** (deps: AR18 ✅, AR19 ✅, AR22 ✅, AR24 ✅) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33
 - 📋 **AR34** (deps: AR22 ✅, AR24 ✅) **An agent could spend the user's API money on rounds without the user ever agreeing to the amount** — A tool an agent can call in a loop needs a spending limit the person sets, and a stop that asks before going past it. → §AR34
 - 📋 **AR35** (deps: AR24 ✅) **A round takes minutes of searched calls, longer than an MCP call should block the agent** — An agent waiting on one tool call for minutes stalls its session, or times out and loses a round it already paid for. → §AR35
 - 📋 **AR36** (deps: AR20 ✅) **An agent asking the same question again the same day pays for the same round twice** — Agents repeat themselves across turns and sessions; a repeated round should cost nothing unless a fresh answer is asked for. → §AR36

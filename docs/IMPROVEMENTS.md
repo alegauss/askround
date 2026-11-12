@@ -37,23 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR33 Refused before it is paid for
-
-roadkeep puts its limits in its MCP input schemas, so a field that would be refused
-fails before anything is written; every finding names the command that closes it, and
-roadkeep explain says what a code means. A round has the same kind of mistake, except
-each one costs money: a question that names the product, an email in a prompt, a
-provider without a key, a cost above the budget.
-
-Every check that can run before a call runs first: limits declared as maxLength and
-enums in the MCP schemas (questions, providers that have keys, prompt sets that exist),
-leading questions, personal data, missing keys, the estimate against the budget. A
-refusal lists every problem at once, each with a code and the change that passes it, and
-askround explain <code> describes the code.
-
-Done when each of those cases is refused with no provider called, every refusal names
-its fix, and explain covers every code.
-
 ### §AR34 Money needs the person's consent
 
 The session that started askround could only estimate the cost of a weekly round. An

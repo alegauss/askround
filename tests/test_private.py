@@ -56,7 +56,7 @@ def test_ask_stops_before_any_call_and_says_why(all_keys, tmp_path, capsys):
     assert post.calls == []
     err = capsys.readouterr().err
     assert "the question carries an email address" in err
-    assert "nothing was sent" in err
+    assert "refused before anything was sent" in err
 
 
 def test_a_set_with_personal_data_is_refused(all_keys, tmp_path, capsys):

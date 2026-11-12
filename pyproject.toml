@@ -77,6 +77,7 @@ select = ["E", "F", "I", "UP", "C4", "B"]
 # tool descriptions are prose an agent reads
 "askround/mcp.py" = ["E501"]
 "askround/research.py" = ["E501"]
+"askround/refusals.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

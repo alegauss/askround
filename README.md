@@ -296,6 +296,23 @@ ids of the answers it came from (`openai#2`, `openai@BR#2`); `askround_answer` w
 id returns that answer, or with `around: "<quote>"` only the passage behind the fact.
 `detail: true` returns the full report. On the command line: `askround report --brief`.
 
+## Refused before it is paid for
+
+Every check that needs no call runs before the first one, and a refusal lists every
+problem at once, each with a code and the change that passes it:
+
+```
+askround: refused before anything was sent: 2 problem(s)
+  [question.leading] the question names the product it tests (Modelado): 'Is Modelado good?'
+      fix: Reword it as a person who does not know the product would ask; or ...
+  [cost.over-cap] the estimate $0.2972 is above the cap $0.0010
+      fix: Ask fewer providers or fewer runs, drop --extract, or raise the cap ...
+```
+
+`askround explain <code>` says what a code means; `askround explain` lists them. For an
+agent, the MCP schemas carry the same limits (a question's length, the providers that
+have a key), so a call that would be refused fails at the schema.
+
 ## The output contract
 
 Every command takes `--json` (`export` takes `--format json`). Each JSON object names

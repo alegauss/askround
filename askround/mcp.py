@@ -24,6 +24,7 @@ Register it with Claude Code: `claude mcp add askround -- askround mcp`.
 from __future__ import annotations
 
 import contextlib
+import copy
 import io
 import json
 import sys
@@ -32,6 +33,8 @@ from typing import Any, TextIO
 
 from askround import __version__
 from askround import report as report_
+from askround.providers import all_providers
+from askround.refusals import QUESTION_LIMIT
 
 PROTOCOL = "2025-06-18"
 
@@ -156,6 +159,25 @@ TOOLS: list[dict[str, Any]] = [
         "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
 ]
+
+
+def tools() -> list[dict[str, Any]]:
+    """The tools as this machine can run them: a question's length limit, and only the
+    providers that have a key, declared in the schemas so that a call that would be
+    refused fails at the schema, before askround runs (law L2)."""
+    usable = [p.name for p in all_providers() if p.configured()]
+    listed = copy.deepcopy(TOOLS)
+    for tool in listed:
+        props = tool["inputSchema"]["properties"]
+        if "question" in props:
+            props["question"]["maxLength"] = QUESTION_LIMIT
+            props["question"]["minLength"] = 1
+        if "providers" in props and usable:
+            props["providers"]["items"]["enum"] = usable
+            props["providers"]["description"] = (
+                f"only these providers (with a key here: {', '.join(usable)})"
+            )
+    return listed
 
 
 class ToolError(Exception):
@@ -356,7 +378,7 @@ def handle(message: dict, out: str | None = None, post=None) -> dict | None:
     elif method == "ping":
         result = {}
     elif method == "tools/list":
-        result = {"tools": TOOLS}
+        result = {"tools": tools()}
     elif method == "tools/call":
         params = message.get("params") or {}
         result = call(params.get("name", ""), params.get("arguments") or {}, out, post)

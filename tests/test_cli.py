@@ -104,7 +104,7 @@ def test_runs_must_be_positive(all_keys, tmp_path, capsys):
 def test_no_keys_is_an_error(no_keys, tmp_path, capsys):
     code = main(["ask", "q", "--out", str(tmp_path)], post=FakePost())
     assert code == 2
-    assert "no provider has an API key" in capsys.readouterr().err
+    assert "[provider.no-key]" in capsys.readouterr().err
 
 
 def test_all_failing_exits_one(all_keys, tmp_path, capsys):

@@ -42,6 +42,7 @@ from askround import (
     lookup,
     private,
     product,
+    refusals,
     research,
     series,
     sets,
@@ -244,6 +245,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     research_.add_argument("--out", type=Path, help="where rounds are saved")
     research_.add_argument("--json", action="store_true", help="print the merged claims as JSON")
+    why = commands.add_parser("explain", help="what a refusal code means and how to pass it")
+    why.add_argument("code", nargs="?", help="e.g. question.leading (default: list them)")
     serve = commands.add_parser("mcp", help="serve askround to an agent as an MCP server (stdio)")
     serve.add_argument("--out", type=Path, help="where rounds are saved")
     exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
@@ -320,6 +323,13 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "report":
         return run_report(args)
+    if args.command == "explain":
+        if not args.code:
+            for code, (meaning, _) in sorted(refusals.CODES.items()):
+                print(f"{code:28} {meaning}")
+            return OK
+        print(refusals.explain(args.code))
+        return OK if args.code in refusals.CODES else REFUSED
     if args.command == "lookup":
         return run_lookup(args, post)
     if args.command == "series":
@@ -351,33 +361,26 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     return run_ask(args, providers, post, fetch)
 
 
-def _budget(est, max_cost: float | None) -> None:
-    """Print the estimate; refuse, before anything is paid, a run above the cap (L5)."""
+def _budget(checks, est, max_cost: float | None) -> None:
+    """Print the estimate; a run above the cap is a problem to refuse (law L5)."""
     print(f"askround: {costs.describe(est)}", file=sys.stderr)
     limit = costs.cap(max_cost)
     if limit is not None and est.total > limit:
-        raise Refused(
-            f"the estimate ${est.total:.4f} is above the cap ${limit:.4f} "
-            "(--max-cost or ASKROUND_MAX_COST); nothing was sent"
-        )
+        checks.add("cost.over-cap", f"the estimate ${est.total:.4f} is above the cap ${limit:.4f}")
 
 
 def run_research(args, providers, post) -> int:
-    providers = [p for p in providers if p.configured()]
+    checks = refusals.Checks()
+    providers = _usable(checks, providers)
+    _text(checks, args.question, "the question")
+    reader = _reader(checks, args.extract, post)
+    if providers:
+        _budget(checks, costs.estimate(providers, args.runs, True, reader), args.max_cost)
     try:
-        if not providers:
-            raise Refused("no provider has an API key in the environment")
-        found = private.scan(args.question)
-        if found:
-            raise Refused(private.refusal("the question", args.question, found))
-        try:
-            reader = choose(args.extract, **_post(post))
-        except ValueError as error:
-            raise Refused(str(error)) from None
-        _budget(costs.estimate(providers, args.runs, True, reader), args.max_cost)
+        _refuse(checks)
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
-        return 2
+        return REFUSED
     round_ = run_round(args.question, providers, runs=args.runs)
     before = reader.spent
     found = research.merge(args.question, research.read(round_, reader), reader)
@@ -403,32 +406,30 @@ def run_research(args, providers, post) -> int:
     return 0
 
 
-def run_discover(args, providers, post) -> int:
-    providers = [p for p in providers if p.configured()]
-    try:
-        if not providers:
-            raise Refused("no provider has an API key in the environment")
-        try:
-            item = product.load(args.file)
-            writer = choose(args.extract or "auto", **_post(post))
-        except (OSError, ValueError) as error:
-            raise Refused(str(error)) from None
-        seed = args.seed or (item.questions[0].text if item.questions else "")
-        if not seed:
-            raise Refused(f"{args.file} has no [[question]]; give a --seed")
-        hits = leading.leads(seed, item.names, item.phrases)
-        if hits:
-            raise Refused(leading.refusal(seed, hits))
-        found = private.scan(seed)
-        if found:
-            raise Refused(private.refusal("the seed", seed, found))
+def _discover_preflight(args, providers, post):
+    checks = refusals.Checks()
+    providers = _usable(checks, providers)
+    item = _load(checks, args.file)
+    writer = _reader(checks, args.extract or "auto", post)
+    seed = args.seed or (item.questions[0].text if item and item.questions else "")
+    if item and not seed:
+        checks.add("product-file.no-questions", f"{args.file} has no [[question]] and no --seed")
+    if item and seed:
+        _text(checks, seed, "the seed", [item.names], item.phrases)
+    if providers:
         calls = args.runs * (args.variants + 1)
-        _budget(
-            costs.estimate(providers, calls, True, writer if args.extract else None), args.max_cost
-        )
+        extractor = writer if args.extract else None
+        _budget(checks, costs.estimate(providers, calls, True, extractor), args.max_cost)
+    _refuse(checks)
+    return providers, item, writer, seed
+
+
+def run_discover(args, providers, post) -> int:
+    try:
+        providers, item, writer, seed = _discover_preflight(args, providers, post)
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
-        return 2
+        return REFUSED
     variants, dropped = discover.generate(seed, item, writer, args.variants)
     questions = [product.Question(seed, "seed"), *variants]
     trial = dataclasses.replace(item, questions=questions)
@@ -491,29 +492,28 @@ def run_discover(args, providers, post) -> int:
     return outcome([r for round_ in rounds for r in round_.results])
 
 
+def _set_preflight(args, providers, post):
+    checks = refusals.Checks()
+    providers = _usable(checks, providers)
+    item = _load(checks, args.file)
+    if item and not item.questions:
+        checks.add("product-file.no-questions", f"{args.file} has no [[question]] to ask")
+    for n, q in enumerate(item.questions if item else [], start=1):
+        _text(checks, q.text, f"question {n}", [item.names], item.phrases, q.brand)
+    extractor = _reader(checks, args.extract, post) if args.extract else None
+    if providers and item:
+        est = sets.estimate(item, providers, args.runs, args.search, extractor)
+        _budget(checks, est, args.max_cost)
+    _refuse(checks)
+    return providers, item, extractor
+
+
 def run_prompt_set(args, providers, post, fetch=None) -> int:
-    providers = [p for p in providers if p.configured()]
     try:
-        if not providers:
-            raise Refused("no provider has an API key in the environment")
-        try:
-            item = product.load(args.file)
-        except (OSError, ValueError) as error:
-            raise Refused(str(error)) from None
-        if not item.questions:
-            raise Refused(f"{args.file} has no [[question]] to ask")
-        try:
-            sets.check(item)
-        except ValueError as error:
-            raise Refused(str(error)) from None
-        try:
-            extractor = choose(args.extract, **_post(post)) if args.extract else None
-        except ValueError as error:
-            raise Refused(str(error)) from None
-        _budget(sets.estimate(item, providers, args.runs, args.search, extractor), args.max_cost)
+        providers, item, extractor = _set_preflight(args, providers, post)
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
-        return 2
+        return REFUSED
     get = (fetch or links.fetch) if args.check_links else None
     directory, rounds = sets.run_set(
         item,
@@ -550,46 +550,75 @@ def outcome(results) -> int:
     return PARTIAL if answered else FAILED
 
 
-def _preflight(args, providers, post):
-    """Everything that could refuse, decided before the round: the providers that can
-    run, the product files, the products and the extractor."""
-    providers = [p for p in providers if p.configured()]
-    if not providers:
-        raise Refused(
-            "no provider has an API key in the environment "
-            "(OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY)"
-        )
-    try:
-        files = [product.load(path) for path in args.product_files or []]
-    except (OSError, ValueError) as error:
-        raise Refused(str(error)) from None
-    products = [*(args.products or []), *(f.names for f in files)]
-    _check_question(args.question, products, [p for f in files for p in f.phrases], args.brand)
-    if args.check_rivals and not args.extract:
-        raise Refused("--check-rivals reads the rivals from --extract; add it")
-    if args.check_links and not products:
-        raise Refused("--check-links follows a --product's links; name one")
-    try:
-        extractor = choose(args.extract, **_post(post)) if args.extract else None
-    except ValueError as error:
-        raise Refused(str(error)) from None
-    calls = args.runs * max(1, len(args.locales or []))
-    est = costs.estimate(providers, calls, args.search, extractor)
-    _budget(est, args.max_cost)
-    args.estimate = costs.as_dict(est)
-    return providers, files, products, extractor
+def _refuse(checks: refusals.Checks) -> None:
+    if checks:
+        raise Refused(checks.report())
 
 
-def _check_question(question: str, products, phrases, brand: bool) -> None:
-    """No personal data (private.py), and no naming the product unless on purpose."""
-    found = private.scan(question)
-    if found:
-        raise Refused(private.refusal("the question", question, found))
-    if brand:
+def _usable(checks: refusals.Checks, providers) -> list:
+    usable = [p for p in providers if p.configured()]
+    if not usable:
+        checks.add("provider.no-key", "no provider here has an API key in the environment")
+    return usable
+
+
+def _text(checks, text: str, where: str, products=(), phrases=(), brand: bool = False) -> None:
+    """A question that is empty, too long, carries personal data, or names its product."""
+    if not text.strip():
+        checks.add("question.empty", f"{where} is empty")
         return
-    hits = [t for names in products for t in leading.leads(question, names, phrases)]
-    if hits:
-        raise Refused(leading.refusal(question, list(dict.fromkeys(hits))))
+    if len(text) > refusals.QUESTION_LIMIT:
+        checks.add("question.too-long", f"{where} is {len(text)} characters")
+    found = private.scan(text)
+    if found:
+        checks.add("question.personal-data", f"{where} carries {', '.join(found)}: {text!r}")
+    if not brand:
+        hits = [t for names in products for t in leading.leads(text, names, phrases)]
+        if hits:
+            named = ", ".join(dict.fromkeys(hits))
+            checks.add(
+                "question.leading", f"{where} names the product it tests ({named}): {text!r}"
+            )
+
+
+def _reader(checks, name: str, post):
+    try:
+        return choose(name, **_post(post))
+    except ValueError as error:
+        checks.add("extract.no-reader", str(error))
+        return None
+
+
+def _load(checks, path: Path):
+    try:
+        return product.load(path)
+    except (OSError, ValueError) as error:
+        checks.add("product-file.invalid", str(error))
+        return None
+
+
+def _preflight(args, providers, post):
+    """Everything that could refuse, decided before the round, every problem at once:
+    the providers that can run, the product files, the question, the extractor and the
+    budget."""
+    checks = refusals.Checks()
+    providers = _usable(checks, providers)
+    files = [f for f in (_load(checks, path) for path in args.product_files or []) if f]
+    products = [*(args.products or []), *(f.names for f in files)]
+    phrases = [p for f in files for p in f.phrases]
+    _text(checks, args.question, "the question", products, phrases, args.brand)
+    if args.check_rivals and not args.extract:
+        checks.add("extract.needed", "--check-rivals reads the rivals from --extract")
+    if args.check_links and not products:
+        checks.add("product.needed", "--check-links follows a product's links")
+    extractor = _reader(checks, args.extract, post) if args.extract else None
+    if providers:
+        calls = args.runs * max(1, len(args.locales or []))
+        est = costs.estimate(providers, calls, args.search, extractor)
+        _budget(checks, est, args.max_cost)
+        args.estimate = costs.as_dict(est)
+    _refuse(checks)
+    return providers, files, products, extractor
 
 
 def _after(args, round_, files, products, extractor, post, fetch) -> None:
@@ -645,11 +674,16 @@ def _fetch(fetch) -> dict:
 
 
 def run_lookup(args, post) -> int:
+    checks = refusals.Checks()
     for text in [*args.names, args.context]:
         found = private.scan(text)
         if found:
-            print(f"askround: {private.refusal('the lookup', text, found)}", file=sys.stderr)
-            return 2
+            checks.add("question.personal-data", f"the lookup carries {', '.join(found)}: {text!r}")
+    try:
+        _refuse(checks)
+    except Refused as refusal:
+        print(f"askround: {refusal}", file=sys.stderr)
+        return REFUSED
     web = lookup.web_lookup(**_post(post)) if args.web else None
     verdicts = lookup.check(args.names, args.context, web=web, **_post(post))
     if args.json:

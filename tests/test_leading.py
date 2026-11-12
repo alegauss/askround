@@ -84,7 +84,7 @@ def test_a_set_with_an_unmarked_leading_question_is_refused(all_keys, tmp_path, 
     post = FakePost()
     assert main(["run", str(path), "--out", str(tmp_path)], post=post) == 2
     assert post.calls == []
-    assert "question 2: the question names the product" in capsys.readouterr().err
+    assert "[question.leading] question 2 names the product" in capsys.readouterr().err
 
 
 def test_discover_refuses_a_leading_seed(all_keys, tmp_path, capsys):
