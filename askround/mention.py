@@ -36,7 +36,7 @@ class Mention:
     evidence: str = ""
 
 
-def _pattern(names: list[str]) -> re.Pattern[str]:
+def pattern(names: list[str]) -> re.Pattern[str]:
     alternatives = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
     return re.compile(rf"(?<!\w)(?:{alternatives})(?!\w)", re.IGNORECASE)
 
@@ -68,20 +68,33 @@ def recommendation_lines(text: str) -> list[str]:
 def find(text: str, names: list[str]) -> Mention:
     if not names:
         raise ValueError("a product needs at least one name")
-    pattern = _pattern(names)
-    if not pattern.search(text):
+    names_re = pattern(names)
+    if not names_re.search(text):
         return Mention(False)
     for index, line in enumerate(recommendation_lines(text), start=1):
-        if pattern.search(line):
+        if names_re.search(line):
             return Mention(True, index)
     return Mention(True)
 
 
+_PAREN = re.compile(r"[(\[][^)\]]*[)\]]")
+# "Name: note", "Name - note", "Name — note"; a hyphen inside a name ("Stable-Fast") stays
+_TAIL = re.compile(r" ?[:–—] .*$| - .*$")
+
+
+def core(name: str) -> str:
+    """A product name without the notes a model adds to it:
+    'Modly (open-source desktop app)' -> 'Modly', 'Reallusion CC — faces' -> 'Reallusion CC'."""
+    bare = _TAIL.sub("", _PAREN.sub("", name)).strip(" .*_`\"'")
+    return " ".join(bare.split()) or name.strip()
+
+
 def standing(text: str, recommendations: list) -> list:
     """The extracted recommendations whose name is in the answer, in order; the
-    others were added by the extracting model and do not rank."""
-    folded = text.lower()
-    return [rec for rec in recommendations if rec.name.lower() in folded]
+    others were added by the extracting model and do not rank. The name is checked
+    without the notes the model may have added to it."""
+    folded = " ".join(text.lower().split())
+    return [rec for rec in recommendations if core(rec.name).lower() in folded]
 
 
 def locate(answer, names: list[str]) -> Mention:
@@ -89,10 +102,10 @@ def locate(answer, names: list[str]) -> Mention:
     plain = find(answer.text, names)
     if answer.recommendations is None or not plain.named:
         return plain
-    pattern = _pattern(names)
+    names_re = pattern(names)
     ranked = standing(answer.text, answer.recommendations)
     for index, rec in enumerate(ranked, start=1):
-        if pattern.search(rec.name):
+        if names_re.search(rec.name):
             evidence = rec.quote if rec.verified else ""
             return Mention(True, index, "extraction", evidence)
     # named in the text, but not among what the answer recommends

@@ -28,6 +28,7 @@ from pathlib import Path
 from askround import mention
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
+from askround.rivals import rivals
 
 DEFAULT_RUNS = 3
 MAX_PARALLEL = 12
@@ -190,6 +191,21 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
             }
             for names in products
         ]
+    found = rivals(round_, products)
+    data["rivals"] = {
+        "read": found.read,
+        "missing": found.missing or None,
+        "products": [
+            {
+                "name": rival.name,
+                "answers": rival.answers,
+                "ranks": rival.ranks,
+                "providers": rival.providers,
+                "reason": rival.reason,
+            }
+            for rival in found.rivals
+        ],
+    }
     return data
 
 

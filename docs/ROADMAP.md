@@ -4,14 +4,13 @@
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-- 📋 **AR9** (deps: AR8 ✅) **The rivals an answer recommends are not listed, so a competitor like Modly is found only by reading** — The strongest competitor of the app surfaced only because the agent read a pasted answer; it was missing from the product's own notes. → §AR9
 - 📋 **AR10** (deps: AR8 ✅) **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Knowing that an assistant cites the product's site and not its GitHub or Store page tells which page to improve first. → §AR10
 - 📋 **AR11** (deps: AR8 ✅) **What an answer claims about the product is not captured, such as 'CPU only: Check build' in a table** — The answer that ranked the app first also doubted its CPU support, a claim that decides a reader's choice and that the product can fix. → §AR11
 - 📋 **AR12** (deps: AR8 ✅) **There is no short report of a round; reading it means opening every raw answer** — The person deciding needs one table: question by provider, with rank, frequency and the rivals around the product. → §AR12
 
 ## Block C — Trust: checking what the answers say
 
-- 📋 **AR13** (deps: AR9) **A product an answer names may not exist, like two Windows apps no search could find** — An answer recommended 'Presidium Shape Studio' and 'MeshForge3D' as apps; research could not find either, so an invented rival could steer a decision. → §AR13
+- 📋 **AR13** (deps: AR9 ✅) **A product an answer names may not exist, like two Windows apps no search could find** — An answer recommended 'Presidium Shape Studio' and 'MeshForge3D' as apps; research could not find either, so an invented rival could steer a decision. → §AR13
 - 📋 **AR14** (deps: AR10) **A cited link or picture may belong to another product, like a Store page of a different app shown for Modelado** — A reader who clicks the picture beside the recommended app can install a rival; the product owner never learns it happened. → §AR14
 - 📋 **AR15** (deps: AR11) **Claims about the product are not checked against what is true, so a wrong 'needs NVIDIA' goes unnoticed** — The fix for a wrong claim is a sentence on the page the assistant reads; askround can say which claim is wrong and which page lacks it. → §AR15
 
@@ -25,7 +24,7 @@
 ## Block E — Over time: the series, the diff, the cost and the export
 
 - 📋 **AR20** (deps: AR8 ✅) **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — The app's audience moved on a given day; only a weekly series shows when an assistant started or stopped naming it. → §AR20
-- 📋 **AR21** (deps: AR9, AR20) **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — The change between two rounds is what someone needs to act on, and the full report hides it. → §AR21
+- 📋 **AR21** (deps: AR9 ✅, AR20) **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — The change between two rounds is what someone needs to act on, and the full report hides it. → §AR21
 - 📋 **AR22** (deps: AR2 ✅) **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A round is dozens of searched calls; without an estimate and a cap a weekly habit can cost more than it is worth. → §AR22
 - 📋 **AR23** (deps: AR20) **A round cannot be exported to a dashboard or another project's data** — The visibility work that needs it keeps daily numbers per product; askround's rows should land there without a manual copy. → §AR23
 

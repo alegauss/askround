@@ -27,6 +27,7 @@ from askround import __version__
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
 from askround.providers import Answer, Locale, all_providers, by_name
+from askround.rivals import rivals
 from askround.round import (
     DEFAULT_RUNS,
     Round,
@@ -240,6 +241,7 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
     for names in products or []:
         lines.extend(_frequency_lines(round_, names))
         lines.append("")
+    lines.extend(_rival_lines(round_, products or []))
     failed = failures(round_)
     if failed:
         lines.append(f"failed: {len(failed)} of {len(round_.results)} answers")
@@ -249,6 +251,26 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
         lines.append("")
     lines.append(f"saved: {directory}")
     return "\n".join(lines)
+
+
+RIVALS_SHOWN = 10
+
+
+def _rival_lines(round_: Round, products: list[list[str]]) -> list[str]:
+    found = rivals(round_, products)
+    if not found.read or not found.rivals:
+        return []
+    title = "rivals" if products else "recommended"
+    lines = [f"{title} (in {found.read} answers read):"]
+    for rival in found.rivals[:RIVALS_SHOWN]:
+        ranks = ", ".join(f"#{rank}" for rank in rival.ranks)
+        by = ", ".join(f"{p} {n}" for p, n in rival.providers.items())
+        lines.append(f"  {rival.name:<24} {rival.answers}/{found.read}   ranks: {ranks}   ({by})")
+    hidden = len(found.rivals) - RIVALS_SHOWN
+    if hidden > 0:
+        lines.append(f"  ... and {hidden} more in round.json")
+    lines.append("")
+    return lines
 
 
 def _model(r) -> str:

@@ -24,22 +24,6 @@ context on what a command could have answered.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-### §AR9 Competitors named in answers
-
-The generic question on 12/11/2026 recommended Modly first, a rival with thousands of
-stars that the product's notes did not mention. It was found by reading.
-
-Every product an answer recommends is extracted with its rank and the reason given, and
-a round aggregates them across runs and providers: how often each rival appears, where,
-and for which questions. AR8's extraction pass already stores each answer's ordered
-`recommendations` (name, verbatim quote, verified) in round.json; rivals are those
-entries minus the target's names, kept only where `mention.standing` finds the name in
-the answer. The 12/11 answers were not kept verbatim, so the check is a live
-generic-question round.
-
-Done when a round reports the list of rivals with counts and ranks, and the recorded
-answers from 12/11/2026 yield Modly at the top of the generic question.
-
 ### §AR10 Citations and which page was cited
 
 The answers on 12/11/2026 cited the app's site, its GitHub repository and, wrongly,

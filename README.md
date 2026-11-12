@@ -48,6 +48,11 @@ quote. The text stays the check: a product counts as named only if its name is i
 answer, and a quote not found in the answer is marked `(?)`. Positions ranked this way
 show a `*`.
 
+With `--extract`, the report also lists the rivals: every other product the answers
+recommend, with how many answers named it, its rank in each and which providers did
+(the first ten in the report, all of them in `round.json`, each with the quote that
+recommends it).
+
 Each API takes a different part of a locale, and only for its search: OpenAI,
 Anthropic and Perplexity an approximate country, Gemini a language. What a provider
 cannot take is recorded on the answer and shown as "ignored by the API". Write the
