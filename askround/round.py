@@ -7,10 +7,12 @@ answer's verdict.
 
 A round is saved as one directory, `<out>/<YYYY-MM-DD>/<HHMMSS>-<slug>/`, holding
 `round.json` (the question, when it was asked, whether search was on, how many runs,
-per answer its provider, run, model, text, search queries and sources or error, and
-the frequency of each product asked about) and one `<provider>-<run>.json` per answer
-with the raw response exactly as the provider returned it. The raw file is the
-evidence: everything askround later reads out of an answer is re-derivable from it.
+per answer what produced it - provider, run, requested and served model, search tool,
+temperature, locale, the request settings and when it answered - then its text, search
+queries and sources or its error, and the frequency of each product asked about) and
+one `<provider>-<run>.json` per answer with the raw response exactly as the provider
+returned it. The raw file is the evidence: everything askround later reads out of an
+answer is re-derivable from it.
 """
 
 from __future__ import annotations
@@ -53,9 +55,10 @@ class Round:
 
 @dataclass
 class Frequency:
-    """How one provider's runs named one product."""
+    """How one provider's runs, answered by one model, named one product."""
 
     provider: str
+    model: str
     runs: int
     named: int
     positions: list[int | None]
@@ -94,19 +97,28 @@ def run_round(
 
 
 def frequency(round_: Round, names: list[str]) -> list[Frequency]:
-    """Per provider, in the round's order: the runs that answered, how many named the
-    product, and its position in each (None where unnamed or named outside a list).
-    A failed run is not counted, so 2/2 after a failure is not passed off as 2/3."""
-    table: dict[str, Frequency] = {}
+    """Per provider and served model, in the round's order: the runs that answered,
+    how many named the product, and its position in each (None where unnamed or named
+    outside a list). Grouping by the model that answered keeps a silent model update
+    apart from a change in the product. A failed run is not counted, so 2/2 after a
+    failure is not passed off as 2/3; a provider with no answer gets one 0/0 row."""
+    table: dict[tuple[str, str], Frequency] = {}
+    providers: dict[str, str] = {}
     for r in round_.results:
-        row = table.setdefault(r.provider, Frequency(r.provider, 0, 0, []))
+        providers.setdefault(r.provider, r.model)
         if r.answer is None:
             continue
+        served = r.answer.served_model or r.answer.model
+        row = table.setdefault((r.provider, served), Frequency(r.provider, served, 0, 0, []))
         found = mention.find(r.answer.text, names)
         row.runs += 1
         row.named += found.named
         row.positions.append(found.position)
-    return list(table.values())
+    for provider, model in providers.items():
+        if not any(key[0] == provider for key in table):
+            table[(provider, model)] = Frequency(provider, model, 0, 0, [])
+    order = list(providers)
+    return sorted(table.values(), key=lambda f: order.index(f.provider))
 
 
 def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
@@ -126,6 +138,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                 "providers": [
                     {
                         "provider": f.provider,
+                        "model": f.model,
                         "runs": f.runs,
                         "named": f.named,
                         "positions": f.positions,
@@ -139,15 +152,43 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
 
 
 def _result(r: Result) -> dict:
+    """One answer and what produced it. `temperature` and `locale` are null where
+    askround left them to the provider's default."""
     answer = r.answer
+    if answer is None:
+        # the same keys as an answer, so a reader never branches on their presence
+        return {
+            "provider": r.provider,
+            "run": r.run,
+            "model": r.model,
+            "served_model": None,
+            "answered_at": None,
+            "search": None,
+            "search_tool": None,
+            "temperature": None,
+            "locale": None,
+            "settings": {},
+            "text": None,
+            "queries": [],
+            "sources": [],
+            "error": r.error,
+        }
+    settings = answer.settings
     return {
         "provider": r.provider,
         "run": r.run,
         "model": r.model,
-        "text": answer.text if answer else None,
-        "queries": answer.queries if answer else [],
-        "sources": [{"url": s.url, "title": s.title} for s in answer.sources] if answer else [],
-        "error": r.error,
+        "served_model": answer.served_model,
+        "answered_at": answer.answered_at.isoformat() if answer.answered_at else None,
+        "search": answer.search,
+        "search_tool": settings.get("tools"),
+        "temperature": settings.get("temperature"),
+        "locale": settings.get("locale"),
+        "settings": settings,
+        "text": answer.text,
+        "queries": answer.queries,
+        "sources": [{"url": s.url, "title": s.title} for s in answer.sources],
+        "error": None,
     }
 
 

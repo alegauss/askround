@@ -6,6 +6,7 @@
 - ✅ **AR2** **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Every adapter searches with its provider's own tool and keeps queries and cited sources, with --no-search to compare; OpenAI and Gemini were checked live.
 - ✅ **AR3** **Which providers can run depends on keys in the environment, and nothing says which ones are there** — askround doctor lists each provider's key variable (never its value), model, search tool and a free check call, telling rejected keys from missing models.
 - ✅ **AR4** **One answer is taken as the answer, though the same question gives a different list on the next run** — A round asks each provider three times by default (--runs) and --product reports per provider the share of runs naming it and its position in each, raw answers kept.
+- ✅ **AR5** **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Every answer records the requested and served model id, search tool, temperature, locale, settings, run and time; --model pins a model and frequency groups by served model.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 

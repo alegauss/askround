@@ -1,5 +1,6 @@
-"""AR1, AR2, AR4: a round asks several providers, several times each, and keeps their
-answers, search queries and sources on disk, with how often each product was named."""
+"""AR1, AR2, AR4, AR5: a round asks several providers, several times each, and keeps
+their answers, what produced them, search queries and sources on disk, with how often
+each product was named."""
 
 from __future__ import annotations
 
@@ -82,7 +83,55 @@ def test_save_round_writes_summary_and_raw(all_keys, tmp_path):
     product = data["products"][0]
     assert product["product"] == "Modelado"
     openai = next(p for p in product["providers"] if p["provider"] == "openai")
-    assert openai == {"provider": "openai", "runs": 2, "named": 2, "positions": [None, None]}
+    assert openai == {
+        "provider": "openai",
+        "model": "gpt-5-2025-08-07",
+        "runs": 2,
+        "named": 2,
+        "positions": [None, None],
+    }
+
+
+def test_every_answer_records_what_produced_it(all_keys, tmp_path):
+    round_ = run_round("q", all_providers(post=FakePost()), now=NOW, runs=1)
+    data = summary(round_)
+    by = {r["provider"]: r for r in data["results"]}
+    openai = by["openai"]
+    assert openai["model"] == "gpt-5"
+    assert openai["served_model"] == "gpt-5-2025-08-07"
+    assert openai["search_tool"] == [{"type": "web_search"}]
+    assert openai["temperature"] is None  # left to the provider's default
+    assert openai["locale"] is None
+    assert openai["settings"]["include"] == ["web_search_call.action.sources"]
+    assert "input" not in openai["settings"]  # the question is not a setting
+    assert openai["answered_at"].endswith("+00:00")
+    assert openai["run"] == 1
+    assert by["gemini"]["served_model"] == "gemini-2.5-flash"
+    assert "contents" not in by["gemini"]["settings"]
+    assert "messages" not in by["anthropic"]["settings"]
+    assert by["anthropic"]["settings"]["max_tokens"] == 16000
+    assert by["perplexity"]["served_model"] == "sonar"
+
+
+def test_frequency_groups_by_served_model():
+    a = Answer("openai", "gpt-5", "1. Modelado", {}, served_model="gpt-5-old")
+    b = Answer("openai", "gpt-5", "1. Blender", {}, served_model="gpt-5-new")
+    round_ = Round(
+        "q",
+        NOW,
+        [
+            Result("openai", "gpt-5", 1, answer=a),
+            Result("openai", "gpt-5", 2, answer=b),
+            Result("gemini", "g", 1, error="HttpError: HTTP 500"),
+        ],
+        runs=2,
+    )
+    rows = [(f.provider, f.model, f.share) for f in frequency(round_, ["Modelado"])]
+    assert rows == [
+        ("openai", "gpt-5-old", "1/1"),
+        ("openai", "gpt-5-new", "0/1"),
+        ("gemini", "g", "0/0"),
+    ]
 
 
 def _round(texts: dict[str, list[str | None]]) -> Round:

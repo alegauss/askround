@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 from askround.http import PostJson, post_json
@@ -32,6 +33,14 @@ class Source:
 
 @dataclass
 class Answer:
+    """One answer and what produced it.
+
+    `model` is the id askround asked for and `served_model` the id the API says
+    answered, which is where a silent model update shows. `settings` is the request
+    as sent minus the question (model, tools, include, max_tokens, ...), so a change
+    in how askround asks can be told from a change in what the provider answers.
+    """
+
     provider: str
     model: str
     text: str
@@ -39,6 +48,9 @@ class Answer:
     search: bool = True
     sources: list[Source] = field(default_factory=list)
     queries: list[str] = field(default_factory=list)
+    served_model: str = ""
+    settings: dict[str, Any] = field(default_factory=dict)
+    answered_at: datetime | None = None
 
 
 @dataclass
@@ -48,6 +60,10 @@ class Parsed:
     queries: list[str] = field(default_factory=list)
 
 
+# the request fields that carry the question, left out of an answer's recorded settings
+QUESTION_FIELDS = ("input", "messages", "contents")
+
+
 class Provider:
     name: str = ""
     key_vars: tuple[str, ...] = ()
@@ -55,13 +71,25 @@ class Provider:
     # how the adapter searches, as `askround doctor` reports it
     search_tool: str = ""
 
-    def __init__(self, post: PostJson = post_json, timeout: float = 300.0):
+    def __init__(
+        self, post: PostJson = post_json, timeout: float = 300.0, model: str | None = None
+    ):
         self._post = post
         self.timeout = timeout
+        self._model = model
 
     @property
     def model(self) -> str:
-        return os.environ.get(f"ASKROUND_{self.name.upper()}_MODEL") or self.default_model
+        """Pinned with `model=`, else `ASKROUND_<NAME>_MODEL`, else the default."""
+        return (
+            self._model
+            or os.environ.get(f"ASKROUND_{self.name.upper()}_MODEL")
+            or self.default_model
+        )
+
+    def served_model(self, raw: dict[str, Any]) -> str:
+        """The model id the response says answered; most APIs call the field `model`."""
+        return str(raw.get("model") or "")
 
     def api_key(self) -> str | None:
         for var in self.key_vars:
@@ -92,6 +120,8 @@ class Provider:
         key = self.api_key()
         if key is None:
             raise RuntimeError(f"{self.name}: none of {', '.join(self.key_vars)} is set")
+        _, _, body = self.request(question, key, search)
+        settings = {k: v for k, v in body.items() if k not in QUESTION_FIELDS}
         raw = self.call(question, key, search)
         parsed = self.parse(raw)
         return Answer(
@@ -102,6 +132,9 @@ class Provider:
             search=search,
             sources=_unique(parsed.sources),
             queries=list(dict.fromkeys(q for q in parsed.queries if q)),
+            served_model=self.served_model(raw) or self.model,
+            settings=settings,
+            answered_at=datetime.now(timezone.utc),
         )
 
     def call(self, question: str, key: str, search: bool) -> dict[str, Any]:
@@ -195,6 +228,9 @@ class Gemini(Provider):
             body,
         )
 
+    def served_model(self, raw):
+        return str(raw.get("modelVersion") or "")
+
     def parse(self, raw):
         candidates = raw.get("candidates") or []
         if not candidates:
@@ -253,6 +289,10 @@ class Anthropic(Provider):
             }
             turns.append(self._post(url, headers, body, self.timeout))
         return turns[0] if len(turns) == 1 else {"turns": turns}
+
+    def served_model(self, raw):
+        last = (raw.get("turns") or [raw])[-1]
+        return str(last.get("model") or "")
 
     def parse(self, raw):
         turns = raw.get("turns") or [raw]
@@ -324,13 +364,25 @@ class Perplexity(Provider):
 PROVIDERS: tuple[type[Provider], ...] = (OpenAI, Gemini, Anthropic, Perplexity)
 
 
-def all_providers(post: PostJson = post_json) -> list[Provider]:
-    return [cls(post=post) for cls in PROVIDERS]
-
-
-def by_name(names: list[str], post: PostJson = post_json) -> list[Provider]:
-    known = {cls.name: cls for cls in PROVIDERS}
+def _check_names(names) -> None:
+    known = [cls.name for cls in PROVIDERS]
     unknown = [n for n in names if n not in known]
     if unknown:
         raise ValueError(f"unknown provider(s): {', '.join(unknown)}; known: {', '.join(known)}")
-    return [known[n](post=post) for n in names]
+
+
+def all_providers(
+    post: PostJson = post_json, models: dict[str, str] | None = None
+) -> list[Provider]:
+    """Every provider; `models` pins a model id per provider name."""
+    models = models or {}
+    _check_names(models)
+    return [cls(post=post, model=models.get(cls.name)) for cls in PROVIDERS]
+
+
+def by_name(
+    names: list[str], post: PostJson = post_json, models: dict[str, str] | None = None
+) -> list[Provider]:
+    _check_names([*names, *(models or {})])
+    chosen = [p for p in all_providers(post, models) if p.name in names]
+    return sorted(chosen, key=lambda p: names.index(p.name))

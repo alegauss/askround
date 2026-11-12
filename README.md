@@ -2,6 +2,13 @@
 
 Ask several AI assistants the same question and keep their answers side by side.
 
+**askround measures the APIs, not the apps.** An answer from the OpenAI, Gemini,
+Anthropic or Perplexity API, with web search on, is close to what their chat apps say
+but is not the same page: the apps add memory, personalisation and their own choice of
+model. askround cannot close that gap, so it records exactly what produced each answer
+(the model asked for and the model that answered, the search tool, the settings, the
+time) and every report is about the API.
+
 ```
 pip install -e .
 askround ask "What is the best free app to turn a photo into a 3D model on Windows?"
@@ -26,6 +33,7 @@ reported as "named in 2/3 runs, positions #1, #3, -", never from a single answer
 | Option              | What it does                                        |
 | ------------------- | --------------------------------------------------- |
 | `--provider NAME`   | ask only this provider (`openai`, `gemini`, `anthropic`, `perplexity`), repeatable |
+| `--model PROVIDER=MODEL` | pin the model one provider uses, e.g. `openai=gpt-5-2025-08-07`, repeatable |
 | `--no-search`       | ask without web search                              |
 | `--runs N`          | ask each provider N times, in fresh conversations (default 3) |
 | `--product NAME[,ALIAS...]` | report how many runs named the product and its position in each, repeatable |

@@ -24,20 +24,6 @@ context on what a command could have answered.
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR5 Record what produced each answer
-
-An API answer is not what a person sees in the ChatGPT or Gemini app: the app adds
-memory, personalisation and its own model choice. That gap cannot be closed, only
-recorded, so each answer has to say exactly what produced it.
-
-Each stored answer keeps the provider, the exact model id the API reports, the search
-tool and its settings, the locale, the temperature, the run number and the timestamp.
-Models can be pinned per provider. The README states plainly that askround measures the
-APIs, not the apps.
-
-Done when every stored answer carries these fields and a report can group answers by
-model id.
-
 ### §AR6 Locale and location
 
 One of the tests on 12/11/2026 was asked in Brazilian Portuguese, because the Microsoft

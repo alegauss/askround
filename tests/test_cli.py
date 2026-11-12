@@ -1,5 +1,5 @@
-"""AR1, AR2, AR4: `askround ask` returns the answers of several providers, with their
-sources, over several runs, and saves them."""
+"""AR1, AR2, AR4, AR5: `askround ask` returns the answers of several providers, with
+their sources, over several runs, with the model that answered, and saves them."""
 
 from __future__ import annotations
 
@@ -14,7 +14,8 @@ def test_ask_prints_answers_side_by_side(all_keys, tmp_path, capsys):
     code = main(["ask", "best app?", "--runs", "1", "--out", str(tmp_path)], post=FakePost())
     out = capsys.readouterr().out
     assert code == 0
-    assert "=== openai (gpt-5) ===" in out
+    assert "=== openai (gpt-5 -> gpt-5-2025-08-07) ===" in out
+    assert "=== gemini (gemini-2.5-flash) ===" in out
     assert "OpenAI says Modelado." in out
     assert "Gemini says Blender." in out
     assert "Claude says Meshy." in out
@@ -64,10 +65,31 @@ def test_product_frequency_after_the_answers(all_keys, tmp_path, capsys):
     code = main(argv, post=FakePost())
     out = capsys.readouterr().out
     assert code == 0
-    assert "=== openai (gpt-5, run 2/3) ===" in out
+    assert "=== openai (gpt-5 -> gpt-5-2025-08-07, run 2/3) ===" in out
     assert "Modelado: named in" in out
-    assert "openai      3/3 runs   positions: -, -, -" in out
+    assert "openai      3/3 runs   positions: -, -, -   (gpt-5-2025-08-07)" in out
     assert "gemini      0/3 runs" in out
+
+
+def test_model_pinned_per_provider(all_keys, tmp_path, capsys):
+    post = FakePost()
+    argv = ["ask", "q", "--provider", "openai", "--model", "openai=gpt-5-2025-08-07"]
+    code = main([*argv, "--runs", "1", "--out", str(tmp_path), "--json"], post=post)
+    data = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert post.calls[0][2]["model"] == "gpt-5-2025-08-07"
+    assert data["results"][0]["model"] == "gpt-5-2025-08-07"
+
+
+def test_model_pin_rejects_unknown_provider_and_bad_shape(all_keys, tmp_path, capsys):
+    assert main(["ask", "q", "--model", "nope=x", "--out", str(tmp_path)], post=FakePost()) == 2
+    assert "unknown provider" in capsys.readouterr().err
+    try:
+        main(["ask", "q", "--model", "openai", "--out", str(tmp_path)], post=FakePost())
+    except SystemExit as exit_:
+        assert exit_.code == 2
+    else:
+        raise AssertionError("--model without = was accepted")
 
 
 def test_runs_must_be_positive(all_keys, tmp_path, capsys):

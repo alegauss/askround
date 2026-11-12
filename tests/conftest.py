@@ -12,7 +12,7 @@ import pytest
 from askround.http import HttpError
 
 OPENAI_RAW = {
-    "model": "gpt-5",
+    "model": "gpt-5-2025-08-07",
     "output": [
         {"type": "reasoning", "summary": []},
         {
@@ -46,6 +46,7 @@ OPENAI_RAW = {
     ],
 }
 GEMINI_RAW = {
+    "modelVersion": "gemini-2.5-flash",
     "candidates": [
         {
             "content": {
@@ -62,9 +63,10 @@ GEMINI_RAW = {
                 ],
             },
         }
-    ]
+    ],
 }
 ANTHROPIC_RAW = {
+    "model": "claude-opus-5-5",
     "stop_reason": "end_turn",
     "content": [
         {
@@ -95,6 +97,7 @@ ANTHROPIC_RAW = {
     ],
 }
 PERPLEXITY_RAW = {
+    "model": "sonar",
     "choices": [{"message": {"role": "assistant", "content": "Perplexity says Tripo."}}],
     "citations": ["https://tripo3d.ai/"],
     "search_results": [{"title": "Tripo", "url": "https://tripo3d.ai/", "date": "2026-11-01"}],

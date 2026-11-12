@@ -1,8 +1,8 @@
 """The `askround` command.
 
-    askround ask "<question>" [--provider NAME ...] [--runs N] [--product NAME[,ALIAS...]]
-                 [--no-search] [--out DIR] [--json]
-    askround doctor [--provider NAME ...] [--no-check] [--json]
+    askround ask "<question>" [--provider NAME ...] [--model PROVIDER=MODEL ...]
+                 [--runs N] [--product NAME[,ALIAS...]] [--no-search] [--out DIR] [--json]
+    askround doctor [--provider NAME ...] [--model PROVIDER=MODEL ...] [--no-check] [--json]
 
 `ask` sends the question to every provider whose API key is in the environment (or the
 ones named with --provider), --runs times each (default 3), with web search on unless
@@ -33,16 +33,27 @@ def build_parser() -> argparse.ArgumentParser:
         prog="askround", description="Ask several AI assistants the same question."
     )
     parser.add_argument("--version", action="version", version=f"askround {__version__}")
-    commands = parser.add_subparsers(dest="command", required=True)
-    ask = commands.add_parser("ask", help="send one question to every configured provider")
-    ask.add_argument("question")
-    ask.add_argument(
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
         "--provider",
         action="append",
         dest="providers",
         metavar="NAME",
-        help="ask only this provider (repeatable)",
+        help="only this provider (repeatable)",
     )
+    common.add_argument(
+        "--model",
+        action="append",
+        dest="models",
+        type=_pin,
+        metavar="PROVIDER=MODEL",
+        help="pin the model one provider uses (repeatable)",
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+    ask = commands.add_parser(
+        "ask", parents=[common], help="send one question to every configured provider"
+    )
+    ask.add_argument("question")
     ask.add_argument(
         "--no-search",
         dest="search",
@@ -65,9 +76,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
-    doctor = commands.add_parser("doctor", help="say which providers can run here")
-    doctor.add_argument(
-        "--provider", action="append", dest="providers", metavar="NAME", help="repeatable"
+    doctor = commands.add_parser(
+        "doctor", parents=[common], help="say which providers can run here"
     )
     doctor.add_argument(
         "--no-check", dest="check", action="store_false", help="make no network call"
@@ -83,6 +93,13 @@ def _positive(value: str) -> int:
     return number
 
 
+def _pin(value: str) -> tuple[str, str]:
+    provider, sep, model = value.partition("=")
+    if not sep or not provider.strip() or not model.strip():
+        raise argparse.ArgumentTypeError("expected PROVIDER=MODEL, e.g. openai=gpt-5")
+    return provider.strip(), model.strip()
+
+
 def _names(value: str) -> list[str]:
     names = [n.strip() for n in value.split(",") if n.strip()]
     if not names:
@@ -93,6 +110,7 @@ def _names(value: str) -> list[str]:
 def main(argv: list[str] | None = None, post=None) -> int:
     args = build_parser().parse_args(argv)
     kwargs = {"post": post} if post is not None else {}
+    kwargs["models"] = dict(args.models or [])
     try:
         providers = by_name(args.providers, **kwargs) if args.providers else all_providers(**kwargs)
     except ValueError as error:
@@ -165,7 +183,10 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
         lines[0] += "  (web search off)"
     for r in round_.results:
         run = f", run {r.run}/{round_.runs}" if round_.runs > 1 else ""
-        lines.append(f"=== {r.provider} ({r.model}{run}) ===")
+        model = r.model
+        if r.answer and r.answer.served_model and r.answer.served_model != r.model:
+            model = f"{r.model} -> {r.answer.served_model}"
+        lines.append(f"=== {r.provider} ({model}{run}) ===")
         lines.extend(_answer_lines(r.answer) if r.answer else [f"[error] {r.error}"])
         lines.append("")
     for names in products or []:
@@ -179,7 +200,9 @@ def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
     lines = [f"{names[0]}: named in"]
     for f in frequency(round_, names):
         places = ", ".join("-" if p is None else f"#{p}" for p in f.positions)
-        lines.append(f"  {f.provider:<11} {f.share} runs   positions: {places or '-'}")
+        lines.append(
+            f"  {f.provider:<11} {f.share} runs   positions: {places or '-'}   ({f.model})"
+        )
     return lines
 
 
