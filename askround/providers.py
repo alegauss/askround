@@ -80,6 +80,10 @@ class Answer:
     locale: Locale | None = None
     # the parts of `locale` this provider's API could not take, e.g. ["language"]
     locale_ignored: list[str] = field(default_factory=list)
+    # filled by the extraction pass (extract.py); None where it did not run
+    recommendations: list[Any] | None = None
+    extracted_by: str = ""
+    extraction_error: str | None = None
 
 
 @dataclass

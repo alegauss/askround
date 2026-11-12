@@ -12,6 +12,8 @@
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
+- ✅ **AR8** **Whether a product is named, and in which position, is read by eye in each answer** — --extract lists each answer's recommendations in order with quotes, checked against its text, so a product ranks by "Best fit" or prose; live and synthetic answers checked, 12/11 originals not kept.
+
 ## Block C — Trust: checking what the answers say
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product

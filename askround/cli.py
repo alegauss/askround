@@ -25,6 +25,7 @@ from pathlib import Path
 
 from askround import __version__
 from askround.doctor import Status, diagnose
+from askround.extract import choose, extract_round
 from askround.providers import Answer, Locale, all_providers, by_name
 from askround.round import (
     DEFAULT_RUNS,
@@ -92,6 +93,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="ask as someone in this country, e.g. BR:pt-BR; repeat to compare (each "
         "locale is a full set of runs)",
     )
+    ask.add_argument(
+        "--extract",
+        nargs="?",
+        const="auto",
+        metavar="PROVIDER",
+        help="read each answer's recommendations in order with a model (one extra call "
+        "per answer), so a product's rank counts tables and prose; default extractor: the "
+        "first of openai, gemini, anthropic with a key",
+    )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
     doctor = commands.add_parser(
@@ -143,6 +153,10 @@ def main(argv: list[str] | None = None, post=None) -> int:
         return 2
     if args.command == "doctor":
         return run_doctor(providers, args.check, args.json)
+    return run_ask(args, providers, post)
+
+
+def run_ask(args, providers, post) -> int:
     providers = [p for p in providers if p.configured()]
     if not providers:
         print(
@@ -153,9 +167,19 @@ def main(argv: list[str] | None = None, post=None) -> int:
         return 2
     out = args.out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
     products = args.products or []
+    extractor = None
+    if args.extract:
+        # chosen before the round, so a missing key is refused before anything is paid
+        try:
+            extractor = choose(args.extract, **({"post": post} if post is not None else {}))
+        except ValueError as error:
+            print(f"askround: {error}", file=sys.stderr)
+            return 2
     round_ = run_round(
         args.question, providers, search=args.search, runs=args.runs, locales=args.locales
     )
+    if extractor is not None:
+        extract_round(round_, extractor)
     directory = save_round(round_, out, products)
     if args.json:
         data = {**summary(round_, products), "saved": str(directory)}
@@ -242,17 +266,29 @@ def _place(r) -> str:
 
 def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
     lines = [f"{names[0]}: named in"]
+    extracted = False
     for f in frequency(round_, names):
-        places = ", ".join("-" if p is None else f"#{p}" for p in f.positions)
+        marks = ["*" if by == "extraction" else "" for by in f.ranked_by]
+        extracted = extracted or any(marks)
+        places = ", ".join(
+            "-" if p is None else f"#{p}{mark}" for p, mark in zip(f.positions, marks, strict=True)
+        )
         where = f"{str(f.locale):<9}" if round_.locales else ""
         lines.append(
             f"  {f.provider:<11} {where}{f.share} runs   positions: {places or '-'}   ({f.model})"
         )
+    if extracted:
+        lines.append("  * ranked by the extraction pass")
     return lines
 
 
 def _answer_lines(answer: Answer) -> list[str]:
     lines = [answer.text]
+    if answer.recommendations:
+        named = [rec.name + ("" if rec.verified else " (?)") for rec in answer.recommendations]
+        lines += ["", "recommends: " + ", ".join(f"{i}. {n}" for i, n in enumerate(named, 1))]
+    elif answer.extraction_error:
+        lines += ["", f"[extraction failed] {answer.extraction_error}"]
     if answer.sources:
         lines += ["", "sources:"]
         lines += [f"  - {s.title} <{s.url}>" if s.title else f"  - {s.url}" for s in answer.sources]

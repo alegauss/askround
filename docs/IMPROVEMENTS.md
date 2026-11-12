@@ -24,24 +24,6 @@ context on what a command could have answered.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-### §AR8 Mentions and rank
-
-The analysis needed one fact per answer: is the product there, and in which position of
-the recommendation list. It was read by eye from long answers with tables, images and
-follow-up questions.
-
-For a target product, defined by its names, aliases and domains, askround finds each
-mention and the product's rank in the answer's recommendations, using a structured
-extraction pass (a model call with a JSON schema, checked against plain text matching)
-so that 'Best fit' in a table and 'my first choice' in prose both count. The plain-text
-half shipped with AR4 as `askround/mention.py`: names and aliases matched on word
-boundaries, position as the index among top-level list items, numbered headings and
-table rows; `round.frequency` reads it, and the extraction pass should feed the same
-`Frequency` rows.
-
-Done when, on recorded answers from 12/11/2026, it reports the app as first where it was
-first and absent where it was absent.
-
 ### §AR9 Competitors named in answers
 
 The generic question on 12/11/2026 recommended Modly first, a rival with thousands of
@@ -49,7 +31,11 @@ stars that the product's notes did not mention. It was found by reading.
 
 Every product an answer recommends is extracted with its rank and the reason given, and
 a round aggregates them across runs and providers: how often each rival appears, where,
-and for which questions.
+and for which questions. AR8's extraction pass already stores each answer's ordered
+`recommendations` (name, verbatim quote, verified) in round.json; rivals are those
+entries minus the target's names, kept only where `mention.standing` finds the name in
+the answer. The 12/11 answers were not kept verbatim, so the check is a live
+generic-question round.
 
 Done when a round reports the list of rivals with counts and ranks, and the recorded
 answers from 12/11/2026 yield Modly at the top of the generic question.
@@ -315,9 +301,11 @@ Every provider returns a different shape, with search metadata that changes betw
 versions.
 
 Each adapter is tested against recorded responses (with keys and identifying headers
-stripped), including the answers from 12/11/2026 as fixtures for the extraction tests; a
-separate, opt-in live test checks each adapter against its real API with the smallest
-call. CI runs only the recorded tests.
+stripped), including real answers as fixtures for the extraction tests (the 12/11/2026
+answers were never kept verbatim, only summarised in visibility/estrategia/modelado.md,
+so `tests/test_extract.py` uses synthetic answers in their shape; the first recorded
+'without NVIDIA' round should replace them); a separate, opt-in live test checks each
+adapter against its real API with the smallest call. CI runs only the recorded tests.
 
 Today `tests/conftest.py` holds hand-written responses shaped from each provider's
 documentation, not recordings. OpenAI and Gemini were run live when AR2 shipped; the

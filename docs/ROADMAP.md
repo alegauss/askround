@@ -4,11 +4,10 @@
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-- 📋 **AR8** (deps: AR4 ✅) **Whether a product is named, and in which position, is read by eye in each answer** — On 12/11/2026 every answer was read in full to find where the app ranked; at three runs and four providers that does not scale. → §AR8
-- 📋 **AR9** (deps: AR8) **The rivals an answer recommends are not listed, so a competitor like Modly is found only by reading** — The strongest competitor of the app surfaced only because the agent read a pasted answer; it was missing from the product's own notes. → §AR9
-- 📋 **AR10** (deps: AR8) **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Knowing that an assistant cites the product's site and not its GitHub or Store page tells which page to improve first. → §AR10
-- 📋 **AR11** (deps: AR8) **What an answer claims about the product is not captured, such as 'CPU only: Check build' in a table** — The answer that ranked the app first also doubted its CPU support, a claim that decides a reader's choice and that the product can fix. → §AR11
-- 📋 **AR12** (deps: AR8) **There is no short report of a round; reading it means opening every raw answer** — The person deciding needs one table: question by provider, with rank, frequency and the rivals around the product. → §AR12
+- 📋 **AR9** (deps: AR8 ✅) **The rivals an answer recommends are not listed, so a competitor like Modly is found only by reading** — The strongest competitor of the app surfaced only because the agent read a pasted answer; it was missing from the product's own notes. → §AR9
+- 📋 **AR10** (deps: AR8 ✅) **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Knowing that an assistant cites the product's site and not its GitHub or Store page tells which page to improve first. → §AR10
+- 📋 **AR11** (deps: AR8 ✅) **What an answer claims about the product is not captured, such as 'CPU only: Check build' in a table** — The answer that ranked the app first also doubted its CPU support, a claim that decides a reader's choice and that the product can fix. → §AR11
+- 📋 **AR12** (deps: AR8 ✅) **There is no short report of a round; reading it means opening every raw answer** — The person deciding needs one table: question by provider, with rank, frequency and the rivals around the product. → §AR12
 
 ## Block C — Trust: checking what the answers say
 
@@ -19,13 +18,13 @@
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
 - 📋 **AR16** (deps: AR1 ✅) **Questions live in chat history; there is no prompt set per product to run again next week** — The four questions that explained the app's audience were typed once and would have to be retyped to see whether anything changed. → §AR16
-- 📋 **AR17** (deps: AR8, AR16) **Finding which question leads an assistant to a product took four manual tries** — The generic question never named the app; only the 'without NVIDIA' one did, which explained its audience and set its messaging. → §AR17
+- 📋 **AR17** (deps: AR8 ✅, AR16) **Finding which question leads an assistant to a product took four manual tries** — The generic question never named the app; only the 'without NVIDIA' one did, which explained its audience and set its messaging. → §AR17
 - 📋 **AR18** (deps: AR16) **Nothing warns when a question names the product it tests, which makes its answer worthless** — A question that mentions the product, or its domain, steers the assistant toward it and measures nothing. → §AR18
 - 📋 **AR19** (deps: AR16) **A question could carry personal data, an email or a person's name, to every provider at once** — One round sends the same text to four companies; a slip in a prompt is a leak to all of them. → §AR19
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
-- 📋 **AR20** (deps: AR8) **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — The app's audience moved on a given day; only a weekly series shows when an assistant started or stopped naming it. → §AR20
+- 📋 **AR20** (deps: AR8 ✅) **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — The app's audience moved on a given day; only a weekly series shows when an assistant started or stopped naming it. → §AR20
 - 📋 **AR21** (deps: AR9, AR20) **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — The change between two rounds is what someone needs to act on, and the full report hides it. → §AR21
 - 📋 **AR22** (deps: AR2 ✅) **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A round is dozens of searched calls; without an estimate and a cap a weekly habit can cost more than it is worth. → §AR22
 - 📋 **AR23** (deps: AR20) **A round cannot be exported to a dashboard or another project's data** — The visibility work that needs it keeps daily numbers per product; askround's rows should land there without a manual copy. → §AR23

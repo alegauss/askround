@@ -36,6 +36,11 @@ extend-exclude = [".claude"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "C4", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# the extraction instructions are prose a model reads: hard line breaks inside one
+# instruction would change what it is told
+"askround/extract.py" = ["E501"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "tests"]

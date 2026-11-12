@@ -6,13 +6,15 @@ A name matches case-insensitively on word boundaries, so "Modelado" does not mat
 
 The position is the product's place among the answer's recommendation lines: top-level
 numbered or bulleted items, numbered headings and table rows, the shapes assistants
-recommend in. The
-product's position is the index of the first such line that names it, so "2" reads
-as "the second thing recommended". A product named only in prose has no position.
+recommend in. The product's position is the index of the first such line that names
+it, so "2" reads as "the second thing recommended". A product named only in prose has
+no position.
 
-This is the plain-text half of reading an answer. A structured extraction pass
-(AR8) is meant to be checked against it, so that a table cell marked 'Best fit' and
-'my first choice' in prose count as well; this module never calls a model.
+That is the plain-text reading, and this module never calls a model. Where the
+extraction pass (extract.py) has read an answer, `locate` ranks the product by the
+answer's own order of recommendations instead, so 'Best fit' in a table and 'my first
+choice' in prose count; plain text still decides whether the product is named at all,
+and a recommendation whose name is not in the answer is dropped as invented.
 """
 
 from __future__ import annotations
@@ -28,6 +30,10 @@ _TABLE_RULE = re.compile(r"^[ \t]*(?:\|[ \t]*)?:?-{3}")
 class Mention:
     named: bool
     position: int | None = None
+    # "text" for the plain-text reading, "extraction" when ranked by the extraction pass
+    by: str = "text"
+    # the passage that ranks it, when the extraction pass found one in the answer
+    evidence: str = ""
 
 
 def _pattern(names: list[str]) -> re.Pattern[str]:
@@ -69,3 +75,25 @@ def find(text: str, names: list[str]) -> Mention:
         if pattern.search(line):
             return Mention(True, index)
     return Mention(True)
+
+
+def standing(text: str, recommendations: list) -> list:
+    """The extracted recommendations whose name is in the answer, in order; the
+    others were added by the extracting model and do not rank."""
+    folded = text.lower()
+    return [rec for rec in recommendations if rec.name.lower() in folded]
+
+
+def locate(answer, names: list[str]) -> Mention:
+    """The product in one answer: by the extraction pass where it ran, else by text."""
+    plain = find(answer.text, names)
+    if answer.recommendations is None or not plain.named:
+        return plain
+    pattern = _pattern(names)
+    ranked = standing(answer.text, answer.recommendations)
+    for index, rec in enumerate(ranked, start=1):
+        if pattern.search(rec.name):
+            evidence = rec.quote if rec.verified else ""
+            return Mention(True, index, "extraction", evidence)
+    # named in the text, but not among what the answer recommends
+    return Mention(True, None, "extraction")

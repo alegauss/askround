@@ -37,7 +37,16 @@ reported as "named in 2/3 runs, positions #1, #3, -", never from a single answer
 | `--no-search`       | ask without web search                              |
 | `--runs N`          | ask each provider N times, in fresh conversations (default 3) |
 | `--product NAME[,ALIAS...]` | report how many runs named the product and its position in each, repeatable |
+| `--extract [PROVIDER]` | read each answer's recommendations in order with a model (one extra call per answer), so "Best fit" in a table or "my first choice" in prose ranks the product first |
 | `--locale COUNTRY[:LANG]` | ask as someone in this country, e.g. `BR:pt-BR`; repeat to compare countries side by side |
+
+Without `--extract`, a product's position is read from the answer's text: its place
+among the top-level list items, numbered headings and table rows. With it, a small model
+(gpt-5-mini, gemini-2.5-flash or claude-haiku-5-5, whichever has a key; override with
+`ASKROUND_EXTRACT_MODEL`) lists what the answer recommends in its own order, each with a
+quote. The text stays the check: a product counts as named only if its name is in the
+answer, and a quote not found in the answer is marked `(?)`. Positions ranked this way
+show a `*`.
 
 Each API takes a different part of a locale, and only for its search: OpenAI,
 Anthropic and Perplexity an approximate country, Gemini a language. What a provider

@@ -90,6 +90,8 @@ def test_save_round_writes_summary_and_raw(all_keys, tmp_path):
         "runs": 2,
         "named": 2,
         "positions": [None, None],
+        "ranked_by": ["text", "text"],
+        "evidence": ["", ""],
     }
 
 

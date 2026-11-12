@@ -68,6 +68,9 @@ class Frequency:
     named: int
     positions: list[int | None]
     locale: Locale | None = None
+    # per run: "text" or "extraction", and the passage that ranked it ("" if none)
+    ranked_by: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
     @property
     def share(self) -> str:
@@ -141,10 +144,12 @@ def frequency(round_: Round, names: list[str]) -> list[Frequency]:
             (r.provider, r.locale, served),
             Frequency(r.provider, served, 0, 0, [], locale=r.locale),
         )
-        found = mention.find(r.answer.text, names)
+        found = mention.locate(r.answer, names)
         row.runs += 1
         row.named += found.named
         row.positions.append(found.position)
+        row.ranked_by.append(found.by)
+        row.evidence.append(found.evidence)
     for (provider, place), model in slots.items():
         if not any(key[:2] == (provider, place) for key in table):
             table[(provider, place, model)] = Frequency(provider, model, 0, 0, [], locale=place)
@@ -177,6 +182,8 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                         "runs": f.runs,
                         "named": f.named,
                         "positions": f.positions,
+                        "ranked_by": f.ranked_by,
+                        "evidence": f.evidence,
                     }
                     for f in frequency(round_, names)
                 ],
@@ -216,6 +223,9 @@ def _result(r: Result) -> dict:
             "text": None,
             "queries": [],
             "sources": [],
+            "recommendations": None,
+            "extracted_by": None,
+            "extraction_error": None,
             "error": r.error,
         }
     settings = answer.settings
@@ -233,6 +243,16 @@ def _result(r: Result) -> dict:
         "text": answer.text,
         "queries": answer.queries,
         "sources": [{"url": s.url, "title": s.title} for s in answer.sources],
+        "recommendations": (
+            None
+            if answer.recommendations is None
+            else [
+                {"name": rec.name, "quote": rec.quote, "verified": rec.verified}
+                for rec in answer.recommendations
+            ]
+        ),
+        "extracted_by": answer.extracted_by or None,
+        "extraction_error": answer.extraction_error,
         "error": None,
     }
 
