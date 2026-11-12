@@ -22,20 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block E — Over time: the series, the diff, the cost and the export
-
-### §AR23 Export and scheduling
-
-The project that motivated askround collects numbers per product every day and builds a
-dashboard from them. A weekly askround round should add rows there: date, product,
-provider, question, frequency, best rank, rivals count, cited pages.
-
-`askround export` writes those rows as CSV or JSON for a date range. Scheduling stays
-outside askround (Windows Task Scheduler, cron, CI); the README shows how.
-
-Done when an export of two rounds produces rows another project can load, and the README
-documents a weekly schedule.
-
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
 ### §AR24 An MCP server

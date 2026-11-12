@@ -1,7 +1,5 @@
 # Strategy
 
-## Block E — Over time: the series, the diff, the cost and the export
-
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
 ## Block G — Shipping: package, tests and the first screen

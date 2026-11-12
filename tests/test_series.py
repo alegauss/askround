@@ -32,7 +32,7 @@ def test_saved_rounds_append_one_row_per_answer(tmp_path):
     assert first["week"] == "2026-W46"
     assert first["day"] == "2026-11-12"
     assert first["provider"] == "openai"
-    assert first["products"] == {"Modelado": {"named": True, "position": 1}}
+    assert first["products"] == {"Modelado": {"named": True, "position": 1, "cited": []}}
     assert first["round"].endswith("/round.json")
     assert rows[1]["products"]["Modelado"]["named"] is False
 

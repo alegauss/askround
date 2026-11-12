@@ -7,7 +7,8 @@ database). A row holds what the answer was and what was read from it:
 
     asked_at, day, week (ISO, "2026-W46"), month, set, question, purpose, brand,
     provider, model (the one that answered), locale, run, round (its round.json),
-    products: {name: {named, position}} for each product the round tracked,
+    products: {name: {named, position, cited}} for each product the round tracked
+              (cited: its own pages the answer cited),
     recommendations (names, in order), cited (normalised pages), claims, error
 
 The rounds stay the evidence: `rebuild` reads every round.json under `out` and writes
@@ -61,9 +62,16 @@ def rows(round_, products: list[list[str]], source: str = "") -> list[dict]:
             "claims": None,
         }
         if answer is not None:
+            pages = citations.cited(answer)
             for names in products:
                 found = mention.locate(answer, names)
-                row["products"][names[0]] = {"named": found.named, "position": found.position}
+                places = citations.places(names)
+                own = [p.url for p in pages if any(citations.owns(x, p) for x in places)]
+                row["products"][names[0]] = {
+                    "named": found.named,
+                    "position": found.position,
+                    "cited": own,
+                }
             if answer.recommendations is not None:
                 standing = mention.standing(answer.text, answer.recommendations)
                 row["recommendations"] = [mention.core(rec.name) for rec in standing]

@@ -188,6 +188,30 @@ and lists only what changed, per question and provider: the product's share and 
 position, rivals that appeared or left, its pages newly cited or no longer cited, and
 claims made or dropped.
 
+## Export, and a weekly round
+
+`askround export --product Modelado` writes the product's numbers from the series, one
+row per day, provider and question (answers, named, frequency, best and mean position,
+rivals, its pages cited), as CSV, JSON, or with `--format daily` in the shape a
+`daily.json` of numbers per product takes (`{product: {day: {"assistants": {...}}}}`).
+`--from`/`--to` bound the days and `--file` writes it out.
+
+askround does not schedule itself; the system does. Every Monday at 08:00, on Windows:
+
+```
+schtasks /Create /SC WEEKLY /D MON /ST 08:00 /TN askround-modelado ^
+  /TR "cmd /c cd /d D:\work && askround run modelado.toml --extract --max-cost 2 && askround export --product Modelado --format daily --file modelado-assistants.json"
+```
+
+and with cron:
+
+```
+0 8 * * 1  cd ~/work && askround run modelado.toml --extract --max-cost 2 && askround export --product Modelado --format daily --file modelado-assistants.json
+```
+
+The keys come from the environment the task runs in; `--max-cost` keeps an unattended
+run from spending more than you agreed to.
+
 ## The report
 
 ```

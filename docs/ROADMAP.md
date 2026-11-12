@@ -2,10 +2,6 @@
 
 ## Priority
 
-## Block E — Over time: the series, the diff, the cost and the export
-
-- 📋 **AR23** (deps: AR20 ✅) **A round cannot be exported to a dashboard or another project's data** — The visibility work that needs it keeps daily numbers per product; askround's rows should land there without a manual copy. → §AR23
-
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
 - 📋 **AR24** (deps: AR1 ✅) **An agent in Claude Code cannot ask other assistants mid-analysis; it has to stop and ask the user** — On 12/11/2026 the analysis paused four times for the user to run a question in ChatGPT; an MCP tool lets the agent run it itself. → §AR24

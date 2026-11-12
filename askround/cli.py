@@ -35,6 +35,7 @@ from askround import (
     costs,
     diff,
     discover,
+    export,
     gaps,
     leading,
     links,
@@ -225,6 +226,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serie.add_argument("--out", type=Path, help="where rounds are saved")
     serie.add_argument("--json", action="store_true", help="print the table as JSON")
+    exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
+    exp.add_argument("--product", required=True, metavar="NAME", help="the product to export")
+    exp.add_argument("--from", dest="since", metavar="YYYY-MM-DD", default="", help="first day")
+    exp.add_argument("--to", dest="until", metavar="YYYY-MM-DD", default="", help="last day")
+    exp.add_argument("--format", choices=("csv", "json", "daily"), default="csv")
+    exp.add_argument("--key", help="the product's key in --format daily (default: its name)")
+    exp.add_argument("--file", type=Path, help="write here instead of printing")
+    exp.add_argument("--out", type=Path, help="where rounds are saved")
     report = commands.add_parser(
         "report", help="sum a stored round up: Markdown for a person, JSON for a pipeline"
     )
@@ -292,6 +301,8 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_series(args)
     if args.command == "diff":
         return run_diff(args)
+    if args.command == "export":
+        return run_export(args)
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
@@ -539,6 +550,23 @@ def run_lookup(args, post) -> int:
             print(f"{v.name}: {v.status.replace('_', ' ')}{where}")
             if v.evidence:
                 print(f"    {v.evidence} ({v.via or 'no lookup'})")
+    return 0
+
+
+def run_export(args) -> int:
+    items = export.rows(series.load(_rounds_dir(args.out)), args.product, args.since, args.until)
+    if args.format == "csv":
+        text = export.to_csv(items)
+    elif args.format == "json":
+        text = json.dumps(items, ensure_ascii=False, indent=2) + "\n"
+    else:
+        key = args.key or args.product.lower()
+        text = json.dumps(export.daily(items, key), ensure_ascii=False, indent=2) + "\n"
+    if args.file:
+        args.file.write_text(text, encoding="utf-8")
+        print(f"exported {len(items)} rows to {args.file}")
+    else:
+        print(text, end="")
     return 0
 
 
