@@ -87,17 +87,19 @@ def set_markdown(report: dict) -> str:
         f"asked {report['asked_at'][:16].replace('T', ' ')} UTC, {len(report['questions'])} "
         "questions. API answers, not the chat apps.",
         "",
-        "| # | question | purpose | " + " | ".join(providers) + " |",
-        "|---|---|---|" + "---|" * len(providers),
     ]
-    for q in report["questions"]:
-        cells = {}
-        for row in _rows(q["report"], product):
-            cells[row["provider"]] = f"{row['named']}/{row['runs']} {_positions(row)}"
-        question = _cell(q["text"]) + (f" ({q['locale']})" if q["locale"] else "")
-        shown = " | ".join(cells.get(p, "-") for p in providers)
-        lines.append(f"| {q['n']} | {question} | {_cell(q['purpose']) or '-'} | {shown} |")
+    neutral = [q for q in report["questions"] if not q.get("brand")]
+    brand = [q for q in report["questions"] if q.get("brand")]
+    lines += _set_table(neutral, product, providers)
     lines += ["", "Each cell: runs naming it, then its position in each run.", ""]
+    if brand:
+        lines += [
+            "Brand questions name the product on purpose, so they show what is said about it,",
+            "not whether it is found; they are kept out of the table above.",
+            "",
+            *_set_table(brand, product, providers),
+            "",
+        ]
     for q in report["questions"]:
         body = markdown(q["report"])
         demoted = "\n".join(
@@ -108,6 +110,21 @@ def set_markdown(report: dict) -> str:
             "",
         ]
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _set_table(questions: list[dict], product: str, providers: list[str]) -> list[str]:
+    lines = [
+        "| # | question | purpose | " + " | ".join(providers) + " |",
+        "|---|---|---|" + "---|" * len(providers),
+    ]
+    for q in questions:
+        cells = {}
+        for row in _rows(q["report"], product):
+            cells[row["provider"]] = f"{row['named']}/{row['runs']} {_positions(row)}"
+        question = _cell(q["text"]) + (f" ({q['locale']})" if q["locale"] else "")
+        shown = " | ".join(cells.get(p, "-") for p in providers)
+        lines.append(f"| {q['n']} | {question} | {_cell(q['purpose']) or '-'} | {shown} |")
+    return lines
 
 
 def _rows(report: dict, product: str) -> list[dict]:
@@ -155,6 +172,7 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
         search=data.get("search", True),
         runs=data.get("runs", 1),
         locales=[_locale(x) for x in data.get("locales") or []],
+        brand=bool(data.get("brand", False)),
     )
     _restore_checks(round_, data)
     products = [p["names"] for p in data.get("products") or []]
@@ -192,6 +210,7 @@ def build(round_: Round, products: list[list[str]], source: str = "") -> dict:
         "asked_at": round_.asked_at.isoformat(),
         "search": round_.search,
         "runs": round_.runs,
+        "brand": round_.brand,
         "locales": [str(x) for x in round_.locales],
         "answered": len(round_.results) - len(failures(round_)),
         "failed": [
@@ -283,6 +302,8 @@ def markdown(report: dict) -> str:
         f"asked {report['asked_at'][:16].replace('T', ' ')} UTC",
         f"{report['runs']} run(s) per provider",
     ]
+    if report.get("brand"):
+        facts.append("a brand question: it names the product on purpose")
     if report["locales"]:
         facts.append("locales " + ", ".join(report["locales"]))
     if not report["search"]:

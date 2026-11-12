@@ -57,6 +57,8 @@ class Round:
     search: bool = True
     runs: int = 1
     locales: list[Locale] = field(default_factory=list)
+    # a brand question names the product on purpose; its rounds are reported apart
+    brand: bool = False
     # whether each rival exists, by rivals.key(name), when --check-rivals ran (lookup.py)
     checks: dict = field(default_factory=dict)
     # the product's attributed links, followed, by product name, when --check-links ran
@@ -172,6 +174,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         "asked_at": round_.asked_at.astimezone(UTC).isoformat(),
         "search": round_.search,
         "runs": round_.runs,
+        "brand": round_.brand,
         "locales": [_locale(place) for place in round_.locales],
         "answered": len(round_.results) - len(failures(round_)),
         "failed": len(failures(round_)),

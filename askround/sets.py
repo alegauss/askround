@@ -20,10 +20,18 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import gaps, links
+from askround import gaps, leading, links
 from askround.extract import extract_round
 from askround.product import Product
 from askround.round import DEFAULT_RUNS, Round, run_round, save_round, slug
+
+
+def check(product: Product) -> None:
+    """Refuse the whole set, before any call, if an unmarked question names the product."""
+    for n, question in enumerate(product.questions, start=1):
+        hits = leading.leads(question.text, product.names, product.phrases)
+        if hits and not question.brand:
+            raise ValueError(f"question {n}: {leading.refusal(question.text, hits)}")
 
 
 def set_directory(product: Product, out: Path, now: datetime) -> Path:
@@ -47,6 +55,7 @@ def run_set(
     """Ask every question of the product file; `runs` overrides each question's own."""
     if not product.questions:
         raise ValueError(f"{product.name}: the product file has no [[question]]")
+    check(product)
     started = now or datetime.now(UTC)
     directory = set_directory(product, out, started)
     rounds: list[Round] = []
@@ -59,6 +68,7 @@ def run_set(
             runs=runs or question.runs or DEFAULT_RUNS,
             locales=[question.locale] if question.locale else None,
         )
+        round_.brand = question.brand
         if extractor is not None:
             extract_round(round_, extractor)
             if product.facts:
@@ -75,6 +85,7 @@ def run_set(
                 "purpose": question.purpose,
                 "locale": str(question.locale) if question.locale else None,
                 "runs": round_.runs,
+                "brand": question.brand,
                 "round": f"{where.name}/round.json",
             }
         )

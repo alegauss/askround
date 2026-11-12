@@ -24,18 +24,6 @@ context on what a command could have answered.
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
-### §AR18 Leading questions
-
-The tests on 12/11/2026 were written to stay neutral: no product name, no domain, no
-wording copied from the product's page. That care was manual.
-
-Before a round, every question is checked against the product's names, aliases, domains
-and distinctive phrases, and a question that contains one is refused unless marked as an
-intentional brand question, which the report keeps apart.
-
-Done when a question containing the product's name or domain is refused and a marked
-brand question runs and is reported separately.
-
 ### §AR19 No personal data in questions
 
 The session that started askround worked under a rule that no personal details go to

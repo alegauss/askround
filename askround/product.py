@@ -6,6 +6,7 @@
     aliases = []                                   # other names it goes by
     places = ["alegauss.github.io/modelado",       # its pages: a domain or a URL prefix
               "github.com/alegauss/modelado"]
+    phrases = ["a photo becomes a 3D model"]       # its own wording, kept out of questions
 
     [[fact]]
     attribute = "Runs without an NVIDIA GPU"
@@ -17,6 +18,7 @@
     purpose = "constraint"       # generic, constraint, use case, language: why it is asked
     locale = "BR:pt-BR"          # optional: asked as someone in this country
     runs = 3                     # optional: the round's default otherwise
+    brand = false                # true: it names the product on purpose, reported apart
 
 A fact is what is true about the product, with the page a reader (and an assistant)
 should find it on. `askround ask --product-file modelado.toml` asks about the product
@@ -48,6 +50,8 @@ class Question:
     purpose: str = ""
     locale: Locale | None = None
     runs: int | None = None
+    # asks about the product on purpose, so it may name it; reported apart (leading.py)
+    brand: bool = False
 
 
 @dataclass
@@ -57,6 +61,8 @@ class Product:
     places: list[str] = field(default_factory=list)
     facts: list[Fact] = field(default_factory=list)
     questions: list[Question] = field(default_factory=list)
+    # wording distinctive of the product's own pages, which a neutral question avoids
+    phrases: list[str] = field(default_factory=list)
 
     @property
     def names(self) -> list[str]:
@@ -87,6 +93,7 @@ def load(path: Path) -> Product:
         [str(p) for p in head.get("places") or []],
         facts,
         questions,
+        [str(p) for p in head.get("phrases") or []],
     )
 
 
@@ -101,4 +108,7 @@ def _question(path: Path, i: int, item: dict) -> Question:
     runs = item.get("runs")
     if runs is not None and (not isinstance(runs, int) or runs < 1):
         raise ValueError(f"{path}: question {i}: runs must be a whole number of at least 1")
-    return Question(text, str(item.get("purpose") or "").strip(), locale, runs)
+    brand = item.get("brand", False)
+    if not isinstance(brand, bool):
+        raise ValueError(f"{path}: question {i}: brand must be true or false")
+    return Question(text, str(item.get("purpose") or "").strip(), locale, runs, brand)

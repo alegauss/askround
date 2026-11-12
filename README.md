@@ -118,6 +118,11 @@ locale = "BR:pt-BR"        # optional
 runs = 3                   # optional
 ```
 
+A question that names the product it tests (its name, an alias, one of its places, or
+a phrase listed under `phrases`) measures nothing, so it is refused before anything is
+paid for. A question that asks about the product on purpose is marked `brand = true`
+(or `--brand` on `ask`); it runs, and is reported apart.
+
 `askround run modelado.toml` asks every question as its own round, kept together in
 one set directory, and prints one table of question by provider before each question's
 report. `askround report` on the set's directory prints it again.

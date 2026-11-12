@@ -29,7 +29,17 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations, discover, gaps, links, lookup, product, sets
+from askround import (
+    __version__,
+    citations,
+    discover,
+    gaps,
+    leading,
+    links,
+    lookup,
+    product,
+    sets,
+)
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
@@ -129,6 +139,11 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="a product file (TOML: names, places, facts); with --extract, the answers' "
         "claims are compared with its facts (repeatable)",
+    )
+    ask.add_argument(
+        "--brand",
+        action="store_true",
+        help="the question names the product on purpose; without this it is refused",
     )
     ask.add_argument(
         "--check-links",
@@ -271,6 +286,9 @@ def run_discover(args, providers, post) -> int:
         seed = args.seed or (item.questions[0].text if item.questions else "")
         if not seed:
             raise Refused(f"{args.file} has no [[question]]; give a --seed")
+        hits = leading.leads(seed, item.names, item.phrases)
+        if hits:
+            raise Refused(leading.refusal(seed, hits))
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return 2
@@ -324,6 +342,10 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
         if not item.questions:
             raise Refused(f"{args.file} has no [[question]] to ask")
         try:
+            sets.check(item)
+        except ValueError as error:
+            raise Refused(str(error)) from None
+        try:
             extractor = choose(args.extract, **_post(post)) if args.extract else None
         except ValueError as error:
             raise Refused(str(error)) from None
@@ -364,6 +386,11 @@ def _preflight(args, providers, post):
     except (OSError, ValueError) as error:
         raise Refused(str(error)) from None
     products = [*(args.products or []), *(f.names for f in files)]
+    if not args.brand:
+        phrases = [p for f in files for p in f.phrases]
+        hits = [t for names in products for t in leading.leads(args.question, names, phrases)]
+        if hits:
+            raise Refused(leading.refusal(args.question, list(dict.fromkeys(hits))))
     if args.check_rivals and not args.extract:
         raise Refused("--check-rivals reads the rivals from --extract; add it")
     if args.check_links and not products:
@@ -401,6 +428,7 @@ def run_ask(args, providers, post, fetch=None) -> int:
     round_ = run_round(
         args.question, providers, search=args.search, runs=args.runs, locales=args.locales
     )
+    round_.brand = args.brand
     _after(args, round_, files, products, extractor, post, fetch)
     directory = save_round(round_, _rounds_dir(args.out), products)
     if args.json:

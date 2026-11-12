@@ -18,6 +18,8 @@ places = [
     "apps.microsoft.com/detail/9PB86WW5NRR2",
     "huggingface.co/alegauss/modelado-models",
 ]
+# the site's own wording: a question that borrows it steers the assistant to the site
+phrases = ["a photo becomes a 3D model"]
 
 [[fact]]
 attribute = "Runs without an NVIDIA GPU"
