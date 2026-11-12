@@ -1,0 +1,15 @@
+# Dependabot keeps the actions in .github/workflows/ current: one pull request a week with
+# every action that has a new version, grouped so a weekly review is one merge. It also
+# moves them off Node.js 20, which GitHub Actions has deprecated.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
