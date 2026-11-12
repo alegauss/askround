@@ -1,0 +1,41 @@
+{
+  "question": "What Windows app can turn a single photo into a 3D model without an NVIDIA GPU (AMD or CPU only)?",
+  "asked_on": "2026-11-12",
+  "product": "Modelado",
+  "answers": [
+    {
+      "provider": "openai",
+      "model": "gpt-5-2025-08-07",
+      "named": true,
+      "position": 1
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "named": false,
+      "position": null
+    }
+  ],
+  "cost": 0.18,
+  "read_by": "openai:gpt-5-mini",
+  "openai_recommends": [
+    "Modelado (Windows desktop app)",
+    "TripoSR",
+    "Shape Studio by Hivemind (free)",
+    "Modly (open\u2011source desktop app)",
+    "TRELLIS.2",
+    "Hunyuan3D",
+    "TripoSG",
+    "Reallusion Character Creator + Headshot 3 (plugin) \u2014 faces",
+    "FaceGen Artist (faces)",
+    "Blender",
+    "MeshLab"
+  ],
+  "gemini_names": [
+    "Modly",
+    "RealityScan",
+    "DreamVision",
+    "Fudge3d",
+    "Image-to-3d-model"
+  ]
+}

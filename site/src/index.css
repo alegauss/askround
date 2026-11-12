@@ -1,0 +1,277 @@
+@import "tailwindcss";
+/* The ground, the type and the colours are the design system's: tokens.css (its default, cool
+   tone) keyed by data-theme for the mode, and site.css for the nav, footer and buttons. The layout
+   below is askround's own. No webfont is fetched. */
+@import "@viglet/viglet-design-system/tokens.css";
+@import "@viglet/viglet-design-system/site.css";
+
+:root {
+  --wrap: 1180px;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scroll-behavior: smooth;
+}
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.wrap.narrow {
+  max-width: 820px;
+}
+section {
+  padding: 96px 0;
+  position: relative;
+}
+@media (max-width: 700px) {
+  section {
+    padding: 64px 0;
+  }
+}
+section.tinted {
+  background: var(--vg-muted);
+}
+
+.eyebrow {
+  color: var(--vg-brand);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.sec-head {
+  max-width: 720px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+.sec-head h2 {
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+.sec-lead {
+  color: var(--vg-muted-foreground);
+  line-height: 1.6;
+  max-width: 760px;
+  margin: -24px auto 32px;
+  text-align: center;
+}
+.sec-note {
+  color: var(--vg-muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 760px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+.sec-note a {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* site.css's `.vg-site a { color: inherit }` outweighs its own `.vg-site-btn-primary { color: #fff }`;
+   the same white, at the weight that wins. */
+.vg-site a.vg-site-btn-primary {
+  color: #fff;
+}
+@media (max-width: 560px) {
+  .vg-site-nav .vg-site-btn-primary {
+    display: none;
+  }
+}
+
+.intro {
+  padding: 88px 0 72px;
+}
+.intro h1 {
+  font-size: clamp(2.2rem, 5.2vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  max-width: 920px;
+  margin-bottom: 22px;
+  text-wrap: balance;
+}
+.intro-lead {
+  color: var(--vg-muted-foreground);
+  font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+  line-height: 1.6;
+  max-width: 740px;
+  margin-bottom: 18px;
+}
+.intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* The recorded round: the question, then one card per assistant. */
+.question {
+  max-width: 820px;
+  margin: 0 auto 28px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--vg-border);
+  background: var(--vg-card);
+}
+.question figcaption,
+.answer-label {
+  color: var(--vg-muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.answer-label span {
+  font-weight: 400;
+}
+.question blockquote {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.answers {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 800px) {
+  .answers {
+    grid-template-columns: 1fr;
+  }
+}
+.answer {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--vg-card);
+  border: 1px solid var(--vg-border);
+}
+.answer h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.answer-model {
+  color: var(--vg-muted-foreground);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+.verdict {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  border: 1px solid var(--vg-border);
+  margin-bottom: 16px;
+}
+/* White on the brand orange is 2.8:1; the page's own text on a wash of it passes either theme. */
+.verdict.is-named {
+  background: color-mix(in oklab, var(--vg-brand) 18%, transparent);
+  border-color: var(--vg-brand);
+  color: var(--vg-foreground);
+}
+.answer-list {
+  padding-left: 1.4em;
+  line-height: 1.7;
+}
+.answer-list .is-product {
+  font-weight: 800;
+}
+
+.cards {
+  list-style: none;
+  display: grid;
+  gap: 18px;
+}
+.cards-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.cards-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .cards-3,
+  .cards-2 {
+    grid-template-columns: 1fr;
+  }
+}
+.card {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--vg-card);
+  border: 1px solid var(--vg-border);
+}
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.card p {
+  color: var(--vg-muted-foreground);
+  line-height: 1.6;
+}
+
+.steps {
+  list-style: none;
+  display: grid;
+  gap: 22px;
+}
+.steps p {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.steps pre {
+  overflow-x: auto;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #14161b;
+  color: #f2f3f5;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.steps pre:focus-visible {
+  outline: 3px solid var(--vg-brand);
+  outline-offset: 3px;
+}
+
+.facts {
+  width: 100%;
+  border-collapse: collapse;
+}
+.facts th,
+.facts td {
+  text-align: left;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--vg-border);
+}
+.facts thead th {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--vg-muted-foreground);
+}
+.facts td,
+.facts thead th:not(:first-child) {
+  text-align: right;
+}
+.facts td {
+  color: var(--vg-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

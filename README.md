@@ -1,5 +1,8 @@
 # askround
 
+**Site:** [alegauss.github.io/askround](https://alegauss.github.io/askround/), with a real
+recorded round.
+
 People now ask ChatGPT or Gemini which app to use, and you cannot see the answer they
 get. askround asks the assistants for you: the same question to OpenAI, Gemini,
 Anthropic and Perplexity, with web search on, several times each. It tells you whether

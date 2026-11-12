@@ -54,24 +54,6 @@ clean machine, and the plugin works with only Python present.
 
 ## Block I — The site at alegauss.github.io/askround
 
-### §AR40 The site
-
-roadkeep, Modelado and the other products each have a prerendered English page at
-alegauss.github.io/<product>/, built from a site/ workspace in their own repository:
-Vite, React 19, TypeScript and Tailwind v4, with the nav, footer, buttons and theme
-toggle from @viglet/viglet-design-system/site, the colours from its tokens, and the
-prerender and social card from its /vite helpers. Every word lives in src/content.ts,
-the route and its metadata in src/routes.ts, and the prerender writes title,
-description, canonical and og:url by replace-or-throw.
-
-askround's site follows that layout at /askround/. Its first screen states the pain (you
-cannot see what assistants say about your product, and your agent cannot ask them) and
-shows a real round report, recorded, not mocked; then the agent-first design with
-roadkeep's family, install, and the measured cost.
-
-Done when site/ builds a prerendered page at /askround/ with the design system's chrome,
-the README links it, and Lighthouse accessibility scores 100.
-
 ### §AR41 site.yml
 
 Modelado's site.yml builds the site on every push that touches site/ and publishes it to

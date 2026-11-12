@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-tone="cool">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/askround/favicon.svg" />
+    <link rel="apple-touch-icon" href="/askround/apple-touch-icon.png" />
+
+    <!--
+      The theme follows the OS, and a stored choice wins over it. The design system's
+      pre-paint script replaces the anchor below, inlined by vite.config.ts.
+    -->
+    <!--theme-script-->
+
+    <title>askround: see what ChatGPT, Gemini, Claude and Perplexity recommend</title>
+    <meta
+      name="description"
+      content="Ask ChatGPT, Gemini, Claude and Perplexity the same question through their APIs, with web search, and read whether your product is named, where, beside which rivals, and what they claim about it. A CLI and an MCP server your agent calls itself."
+    />
+
+    <!--
+      scripts/prerender.mjs patches the title, description, canonical and og:url by
+      replace-or-throw and inlines the rendered body into the root element. No closing head or
+      script token may appear in a comment here.
+    -->
+  </head>
+  <body class="vg-site">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
