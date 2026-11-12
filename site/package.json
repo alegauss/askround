@@ -12,7 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@viglet/viglet-design-system": "2026.3.25",
+    "@viglet/viglet-design-system": "2026.3.26",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

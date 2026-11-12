@@ -2,10 +2,104 @@
 // written once here too. The round itself is not here: it is ./round.json, which
 // tests/test_site.py holds to askround's own reading of the recorded live answers.
 
+import type { SiteRichRuns, SponsorDeclaration } from "@viglet/viglet-design-system/site";
+
 export const THEME_KEY = "askround-theme";
 export const BASE = "/askround/";
 export const repoUrl = "https://github.com/alegauss/askround";
 export const roadkeepUrl = "https://alegauss.github.io/roadkeep/";
+export const parentUrl = "https://alegauss.github.io/";
+
+/* ------------------------------------------------------------------ hero */
+
+export const hero = {
+  badge: "Python 3.11+ · zero dependencies · Apache-2.0",
+  title: "You cannot see what assistants say about your product.",
+  titleAccent: "Now you can ask them.",
+  sub: [
+    "askround asks ",
+    { b: "ChatGPT, Gemini, Claude and Perplexity" },
+    " the same question through their APIs, with web search on, several times each, and reads whether your product is named, at which position, beside which rivals, and what they claim about it. Your coding agent runs it itself over ",
+    { code: "askround mcp" },
+    ".",
+  ] as SiteRichRuns,
+  meta: ["No account, your own keys", "Refused before it is paid for", "Measures the APIs, not the apps"],
+  pills: [
+    [{ b: "4" }, " assistants, in parallel"] as SiteRichRuns,
+    ["A brief of ", { b: "~300 tokens" }, " per round"] as SiteRichRuns,
+    [{ b: "MCP" }, " server + Claude Code plugin"] as SiteRichRuns,
+  ],
+  install: "Install it",
+  github: "★ View on GitHub",
+};
+
+/* ------------------------------------------------- the hero's session */
+
+// An agent's task as it runs: the three calls it makes and what each returns. The figures are
+// the recorded round's (./round.json) and the token counts the ones tests/test_tokens.py
+// measures; the session plays itself one step at a time after the page has loaded.
+export const session = {
+  eyebrow: "What your agent does with it",
+  task: "Do assistants recommend Modelado to someone without an NVIDIA GPU?",
+  steps: [
+    {
+      cmd: "askround_doctor",
+      cost: "257 tokens",
+      out: "can run: openai, gemini  (anthropic, perplexity: no key)",
+    },
+    {
+      cmd: 'askround_ask  question: "What Windows app can turn a single photo into a 3D model without an NVIDIA GPU?"  products: ["Modelado"]  extract: true',
+      cost: "304 tokens",
+      pack: [
+        "Modelado   openai 1/1 #1   gemini 0/1",
+        "rivals     TripoSR · Shape Studio · Modly · TRELLIS.2",
+        "cost       $0.18   in: openai#1",
+      ],
+    },
+    {
+      cmd: 'askround_answer  answer: "openai#1"  around: "Modelado"',
+      cost: "175 tokens",
+      out: "“Modelado (Windows desktop app): turns one photo of a single object into a textured mesh (TripoSR under the hood).”",
+    },
+  ],
+  today: "pasting the answers in: 12,253 characters",
+  target: "askround's brief: 614 characters, each fact cited",
+  note: [
+    "Every fact in the brief names the answer it came from, so the agent checks one passage instead of reading the round.",
+  ] as SiteRichRuns,
+};
+
+/* --------------------------------------------------------------- sponsor */
+
+// Mirrors alegauss.github.io/sponsor.json, as the family's other sites transcribe it: the
+// page is prerendered, and a sponsor is named so that crawlers and assistants read it.
+export const sponsor: SponsorDeclaration = {
+  sponsor: {
+    label: "Sponsored by",
+    name: "Viglet",
+    url: "https://www.viglet.org",
+    siteLabel: "viglet.org",
+    logo: "/askround/viglet/viglet-logo.png",
+    summary:
+      "Open source search and content tools for organisations with a lot to publish. Run on your own servers, with no per-user licence.",
+  },
+  products: [
+    {
+      id: "turing",
+      name: "Viglet Turing",
+      url: "https://turing.viglet.org/",
+      logo: "/askround/viglet/turing-logo.png",
+      inline: "so visitors find what they came for, with AI answers drawn only from your own content",
+    },
+    {
+      id: "shio",
+      name: "Viglet Shio",
+      url: "https://shio.viglet.org/",
+      logo: "/askround/viglet/shio-logo.png",
+      inline: "so a new page goes live the same day, reviewed and approved by your own team",
+    },
+  ],
+};
 
 /** A file under public/, with the base. */
 export const asset = (path: string) => `${BASE}${path}`;
@@ -30,20 +124,10 @@ export const words = {
       { href: `${BASE}#install`, label: "Install" },
       { href: `${BASE}#cost`, label: "Cost" },
       { href: `${BASE}docs/`, label: "Docs" },
-      { href: repoUrl, label: "Source" },
+      // no "Source" link: the GitHub button beside these goes to the same place
     ],
     cta: "Install",
     themeLabel: (next: string) => `Switch to the ${next} theme`,
-  },
-  intro: {
-    eyebrow: "askround · open source · Python",
-    title: "You cannot see what assistants say about your product. Now you can ask them.",
-    lead:
-      "People ask ChatGPT, Gemini, Claude and Perplexity which tool to use, and you never see the answer. askround asks them the same question through their APIs, with web search on, several times each, and reads what comes back: whether your product is named, at which position, beside which rivals, what is claimed about it and which pages are cited.",
-    agent:
-      "Your coding agent can ask them too. With askround's MCP server it runs the question itself instead of asking you to paste ChatGPT's answer back.",
-    install: "Install it",
-    source: "See the source",
   },
   round: {
     eyebrow: "A real round",
@@ -79,15 +163,15 @@ export const words = {
     title: "Read the answers as data, not anecdotes",
     items: [
       {
-        title: "Named, and where",
+        icon: "#1", title: "Named, and where",
         body: "For each product, how many runs name it and its position in each, per provider and per locale. A table's \"best fit\" row counts as a position.",
       },
       {
-        title: "Rivals and claims",
+        icon: "⇄", title: "Rivals and claims",
         body: "The products named beside yours, and what each answer claims about yours, quoted, with the answer it came from, checked against the facts in your product file.",
       },
       {
-        title: "Pages cited",
+        icon: "↗", title: "Pages cited",
         body: "Which of your pages the assistants cite, and the ones they cite instead. A prompt set runs the same questions every week, and diff says what moved.",
       },
     ],
@@ -99,19 +183,19 @@ export const words = {
       "askround is a CLI and an MCP server with zero runtime dependencies, in the family of roadkeep: small answers on purpose, refusals before money is spent, and nothing an agent has to read twice.",
     items: [
       {
-        title: "A brief, not a transcript",
+        icon: "≈", title: "A brief, not a transcript",
         body: "askround_ask returns a few hundred tokens for a whole round: each product's runs and positions, the rivals, the claims, each fact with the ids of the answers it came from. askround_answer returns one answer, or only the passage behind a fact.",
       },
       {
-        title: "Refused before it is paid for",
+        icon: "⛔", title: "Refused before it is paid for",
         body: "A question that names the product it tests, personal data, a missing key or a round estimated above the cap is refused before the first call, every problem at once, each with a code and its fix.",
       },
       {
-        title: "The person sets the money",
+        icon: "$", title: "The person sets the money",
         body: "A day and a month budget in a config file no tool writes. An agent cannot raise it, and a round that would pass it waits for the person's approval.",
       },
       {
-        title: "Long rounds as jobs",
+        icon: "⏱", title: "Long rounds as jobs",
         body: "A round takes minutes. Started in the background, it returns a job id at once and keeps every answer as it lands, so an interrupted round loses nothing it paid for.",
       },
     ],
