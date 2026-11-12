@@ -40,6 +40,10 @@ CODES: dict[str, tuple[str, str]] = {
         "The estimate for this run is above the cap set with --max-cost or ASKROUND_MAX_COST.",
         "Ask fewer providers or fewer runs, drop --extract, or raise the cap if you agree to the cost.",
     ),
+    "budget.over": (
+        "This run's estimate would take the day's or the month's spending past the budget the person set in askround's config file. It is an approval request: the run waits for the person.",
+        "The person approves it by running it with --approve, or raises [budget] day / month in the config file (askround budget shows where). An agent asks the person; it cannot approve.",
+    ),
     "extract.no-reader": (
         "The extraction pass needs an OpenAI, Gemini or Anthropic key, and none is set (or the one named has none).",
         "Set one of those keys, name one that is set with --extract PROVIDER, or run without --extract.",

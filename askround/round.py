@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import citations, costs, mention, series
+from askround import budget, citations, costs, mention, series
 from askround.claims import product_claims
 from askround.http import HttpError
 from askround.provenance import answer_id, schema, span
@@ -437,6 +437,7 @@ def save_round(
     except ValueError:
         source = (directory / "round.json").as_posix()
     series.append(out, series.rows(round_, products or [], source))
+    budget.record(out, cost(round_)["total"], round_.question)
     return directory
 
 

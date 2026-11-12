@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 from typing import Any, TextIO
 
-from askround import __version__
+from askround import __version__, budget
 from askround import report as report_
 from askround.providers import all_providers
 from askround.refusals import QUESTION_LIMIT
@@ -353,9 +353,22 @@ def call(name: str, args: dict, out: str | None = None, post=None) -> dict:
     if name not in handlers:
         return _text(f"no tool named {name}", error=True)
     try:
-        return _text(json.dumps(handlers[name](), ensure_ascii=False, indent=2))
+        result = handlers[name]()
     except (ToolError, FileNotFoundError, KeyError, ValueError) as error:
         return _text(str(error), error=True)
+    if name in PAID and isinstance(result, dict):
+        # what has been spent against the person's budget, with every paid result (L5)
+        result = {**result, "spending": budget.status(_rounds(out))}
+    return _text(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+PAID = ("askround_ask", "askround_run", "askround_research")
+
+
+def _rounds(out: str | None) -> Path:
+    from askround.cli import _rounds_dir
+
+    return _rounds_dir(Path(out) if out else None)
 
 
 def _text(text: str, error: bool = False) -> dict:

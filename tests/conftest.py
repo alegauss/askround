@@ -166,8 +166,9 @@ def allow_network():
 
 
 @pytest.fixture(autouse=True)
-def no_private_list(monkeypatch):
-    """The person's own private terms, cap and prices never leak into a test's verdict."""
+def no_private_list(monkeypatch, tmp_path_factory):
+    """The person's own private terms, cap, prices and budget never leak into a test's
+    verdict: the config file is one in a temporary folder, absent unless a test writes it."""
     for var in (
         "ASKROUND_PRIVATE",
         "ASKROUND_PRIVATE_FILE",
@@ -175,6 +176,7 @@ def no_private_list(monkeypatch):
         "ASKROUND_PRICES",
     ):
         monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("ASKROUND_CONFIG", str(tmp_path_factory.mktemp("config") / "config.toml"))
 
 
 @pytest.fixture(autouse=True)

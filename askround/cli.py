@@ -31,6 +31,7 @@ from pathlib import Path
 
 from askround import (
     __version__,
+    budget,
     citations,
     costs,
     diff,
@@ -78,6 +79,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         metavar="USD",
         help="refuse, before anything is sent, a run estimated above this (or ASKROUND_MAX_COST)",
+    )
+    paid.add_argument(
+        "--approve",
+        action="store_true",
+        help="the person approves this run past the day or month budget (agents cannot)",
     )
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
@@ -245,6 +251,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     research_.add_argument("--out", type=Path, help="where rounds are saved")
     research_.add_argument("--json", action="store_true", help="print the merged claims as JSON")
+    spend = commands.add_parser("budget", help="what has been spent against the budget")
+    spend.add_argument("--out", type=Path, help="where rounds are saved")
+    spend.add_argument("--json", action="store_true", help="print it as JSON")
     why = commands.add_parser("explain", help="what a refusal code means and how to pass it")
     why.add_argument("code", nargs="?", help="e.g. question.leading (default: list them)")
     serve = commands.add_parser("mcp", help="serve askround to an agent as an MCP server (stdio)")
@@ -321,52 +330,78 @@ def _names(value: str) -> list[str]:
 
 def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     args = build_parser().parse_args(argv)
-    if args.command == "report":
-        return run_report(args)
-    if args.command == "explain":
-        if not args.code:
-            for code, (meaning, _) in sorted(refusals.CODES.items()):
-                print(f"{code:28} {meaning}")
-            return OK
-        print(refusals.explain(args.code))
-        return OK if args.code in refusals.CODES else REFUSED
-    if args.command == "lookup":
-        return run_lookup(args, post)
-    if args.command == "series":
-        return run_series(args)
-    if args.command == "diff":
-        return run_diff(args)
-    if args.command == "export":
-        return run_export(args)
-    if args.command == "mcp":
-        from askround import mcp
-
-        mcp.serve(out=str(args.out) if args.out else None)
-        return 0
+    # the commands that ask no provider
+    local = {
+        "report": lambda: run_report(args),
+        "explain": lambda: run_explain(args),
+        "lookup": lambda: run_lookup(args, post),
+        "series": lambda: run_series(args),
+        "diff": lambda: run_diff(args),
+        "export": lambda: run_export(args),
+        "budget": lambda: run_budget(args),
+        "mcp": lambda: run_mcp(args),
+    }
+    if args.command in local:
+        return local[args.command]()
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
         providers = by_name(args.providers, **kwargs) if args.providers else all_providers(**kwargs)
     except ValueError as error:
         print(f"askround: {error}", file=sys.stderr)
-        return 2
-    if args.command == "doctor":
-        return run_doctor(providers, args.check, args.json)
-    if args.command == "run":
-        return run_prompt_set(args, providers, post, fetch)
-    if args.command == "discover":
-        return run_discover(args, providers, post)
-    if args.command == "research":
-        return run_research(args, providers, post)
-    return run_ask(args, providers, post, fetch)
+        return REFUSED
+    paid = {
+        "doctor": lambda: run_doctor(providers, args.check, args.json),
+        "run": lambda: run_prompt_set(args, providers, post, fetch),
+        "discover": lambda: run_discover(args, providers, post),
+        "research": lambda: run_research(args, providers, post),
+        "ask": lambda: run_ask(args, providers, post, fetch),
+    }
+    return paid[args.command]()
 
 
-def _budget(checks, est, max_cost: float | None) -> None:
-    """Print the estimate; a run above the cap is a problem to refuse (law L5)."""
+def run_explain(args) -> int:
+    if not args.code:
+        for code, (meaning, _) in sorted(refusals.CODES.items()):
+            print(f"{code:28} {meaning}")
+        return OK
+    print(refusals.explain(args.code))
+    return OK if args.code in refusals.CODES else REFUSED
+
+
+def run_mcp(args) -> int:
+    from askround import mcp
+
+    mcp.serve(out=str(args.out) if args.out else None)
+    return OK
+
+
+def run_budget(args) -> int:
+    """What has been spent today and this month, against the budget, and where it is set."""
+    state = budget.status(_rounds_dir(args.out))
+    if args.json:
+        print(json.dumps({"schema": schema("budget"), **state}, indent=2))
+        return OK
+    limits = state["budget"]
+    day = f"${limits['day']:.2f}" if limits["day"] is not None else "none"
+    month = f"${limits['month']:.2f}" if limits["month"] is not None else "none"
+    print(
+        f"spent today ${state['today']:.4f} of {day}; this month ${state['month']:.4f} of {month}"
+    )
+    print(f"budget set in {state['config']}")
+    return OK
+
+
+def _budget(checks, est, args) -> None:
+    """Print the estimate; a run above the cap, or past the person's day or month budget
+    without their approval, is a problem to refuse (law L5)."""
     print(f"askround: {costs.describe(est)}", file=sys.stderr)
-    limit = costs.cap(max_cost)
+    limit = costs.cap(args.max_cost)
     if limit is not None and est.total > limit:
         checks.add("cost.over-cap", f"the estimate ${est.total:.4f} is above the cap ${limit:.4f}")
+    passing = budget.over(_rounds_dir(args.out), est.total)
+    if passing and not getattr(args, "approve", False):
+        checks.add("budget.over", f"{passing}; this run needs the person's approval")
 
 
 def run_research(args, providers, post) -> int:
@@ -375,7 +410,7 @@ def run_research(args, providers, post) -> int:
     _text(checks, args.question, "the question")
     reader = _reader(checks, args.extract, post)
     if providers:
-        _budget(checks, costs.estimate(providers, args.runs, True, reader), args.max_cost)
+        _budget(checks, costs.estimate(providers, args.runs, True, reader), args)
     try:
         _refuse(checks)
     except Refused as refusal:
@@ -419,7 +454,7 @@ def _discover_preflight(args, providers, post):
     if providers:
         calls = args.runs * (args.variants + 1)
         extractor = writer if args.extract else None
-        _budget(checks, costs.estimate(providers, calls, True, extractor), args.max_cost)
+        _budget(checks, costs.estimate(providers, calls, True, extractor), args)
     _refuse(checks)
     return providers, item, writer, seed
 
@@ -503,7 +538,7 @@ def _set_preflight(args, providers, post):
     extractor = _reader(checks, args.extract, post) if args.extract else None
     if providers and item:
         est = sets.estimate(item, providers, args.runs, args.search, extractor)
-        _budget(checks, est, args.max_cost)
+        _budget(checks, est, args)
     _refuse(checks)
     return providers, item, extractor
 
@@ -615,7 +650,7 @@ def _preflight(args, providers, post):
     if providers:
         calls = args.runs * max(1, len(args.locales or []))
         est = costs.estimate(providers, calls, args.search, extractor)
-        _budget(checks, est, args.max_cost)
+        _budget(checks, est, args)
         args.estimate = costs.as_dict(est)
     _refuse(checks)
     return providers, files, products, extractor

@@ -87,6 +87,21 @@
         "disagreements": {"type": "array", "items": {"type": "object", "required": ["fact", "sides", "check"]}}
       }
     },
+    "budget": {
+      "description": "askround budget --json; also the 'spending' of every paid MCP result",
+      "type": "object",
+      "required": ["schema", "today", "month", "budget", "config"],
+      "properties": {
+        "schema": {"const": "askround/budget@1"},
+        "today": {"type": "number"},
+        "month": {"type": "number"},
+        "budget": {
+          "type": "object",
+          "required": ["day", "month"],
+          "properties": {"day": {"type": ["number", "null"]}, "month": {"type": ["number", "null"]}}
+        }
+      }
+    },
     "discovery": {
       "description": "askround discover --json",
       "type": "object",

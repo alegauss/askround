@@ -37,21 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR34 Money needs the person's consent
-
-The session that started askround could only estimate the cost of a weekly round. An
-agent with an MCP tool can run rounds on its own, and every round with web search costs
-money on the user's keys. roadkeep never spends anything; askround does, so it needs a
-rule roadkeep did not.
-
-The user sets a budget per day and per month in askround's config, which the agent
-cannot change through the MCP tools. Within it, rounds run; a round that would pass it
-is not run, and the tool returns the estimate and asks the person to approve it or raise
-the budget. Spending so far is reported with every result.
-
-Done when an agent's round above the budget returns an approval request with no provider
-called, and the month's spending appears in every result.
-
 ### §AR35 Rounds as jobs
 
 Dozens of calls with web search, each taking seconds to tens of seconds, make a round of

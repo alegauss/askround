@@ -141,6 +141,24 @@ of 2026-11-03, the others the last known list prices, to be checked against the
 providers' pages. `ASKROUND_PRICES` names a JSON file that replaces any of them:
 `{"models": {"gpt-5": {"input": 1.25, "output": 10.0}}, "search": {"openai": 0.01}}`.
 
+### A budget an agent cannot raise
+
+Set what askround may spend in its config file, `%APPDATA%\askround\config.toml` on
+Windows, `~/.config/askround/config.toml` elsewhere (or the file `ASKROUND_CONFIG`
+names):
+
+```toml
+[budget]
+day = 1.00
+month = 10.00
+```
+
+Every saved round adds its actual cost to `spent.jsonl` beside the rounds. A run whose
+estimate would pass the day's or the month's budget is refused before any call
+(`budget.over`): it waits for you. You approve it by running it with `--approve`, or
+raise the budget; an agent using the MCP tools cannot do either, and every paid result
+it gets says what has been spent against the budget. `askround budget` shows it.
+
 ## Prompt sets: the same questions every week
 
 Add `[[question]]` entries to the product file and it becomes a prompt set:
