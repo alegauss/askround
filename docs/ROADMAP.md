@@ -6,7 +6,6 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- 📋 **AR37** (deps: AR29 ✅, AR31 ✅) **Nothing measures how many tokens each MCP response costs the agent, so outputs grow unnoticed** — roadkeep was born from measuring what its files cost an agent; without a measured budget, each new field makes askround heavier. → §AR37
 - 📋 **AR38** (deps: AR24 ✅, AR27 ✅) **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — roadkeep's project-scoped plugin wires every clone with the MCP tools, slash commands and skill; askround should arrive the same way. → §AR38
 - 📋 **AR39** (deps: AR1 ✅) **Running askround would mean installing provider SDKs and their dependency trees** — roadkeep is Python 3.11+ with zero runtime dependencies and runs under uvx with no install; askround should start as easily. → §AR39
 

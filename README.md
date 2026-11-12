@@ -326,6 +326,28 @@ with extraction: 614 characters, against 12,253 of answers). Each fact in it car
 ids of the answers it came from (`openai#2`, `openai@BR#2`); `askround_answer` with an
 id returns that answer, or with `around: "<quote>"` only the passage behind the fact.
 `detail: true` returns the full report. On the command line: `askround report --brief`.
+`askround_run` returns one brief per question in the set, and `detail: true` the set's
+full report.
+
+What each response costs the agent, measured on the recorded rounds in `tests/fixtures`
+(two providers, three runs, extraction on; one token per four characters of JSON, so
+an approximation, the same way for every tool):
+
+| Response | Tokens | Budget |
+| --- | ---: | ---: |
+| `askround_ask` (brief) | 304 | 400 |
+| `askround_ask` with `detail: true` | 1,360 | 1,800 |
+| `askround_answer` | 868 | 1,100 |
+| `askround_answer` with `around` | 175 | 250 |
+| `askround_research` | 163 | 250 |
+| `askround_run` (one question per purpose) | 760 | 1,000 |
+| `askround_report` | 1,136 | 1,500 |
+| `askround_diff` | 112 | 200 |
+| `askround_doctor` | 257 | 350 |
+
+The budgets live in `budgets/mcp-tokens.json` and `tests/test_tokens.py` fails a response
+over its budget, so a field added to a response is a reviewed change. `pytest -s -k
+figures` prints the table again.
 
 A round takes minutes. With `background: true`, `askround_ask` and `askround_run` check
 and estimate it, start it in a process of its own and return a job id at once; the

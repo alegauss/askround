@@ -21,6 +21,18 @@
         }
       }
     },
+    "set-brief": {
+      "description": "askround_run over MCP: a prompt set run as one brief per question",
+      "type": "object",
+      "required": ["schema", "set", "product", "questions"],
+      "properties": {
+        "schema": {"const": "askround/set-brief@1"},
+        "questions": {
+          "type": "array",
+          "items": {"type": "object", "required": ["n", "purpose", "q", "round", "answers", "products"]}
+        }
+      }
+    },
     "doctor": {
       "description": "askround doctor --json",
       "type": "object",

@@ -37,20 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR37 A token budget in the tests
-
-roadkeep started from measurements (142 words a line, a 186 KB agents.md, about 46k
-tokens read every turn) and keeps its answers small on purpose. Responses grow one field
-at a time, and nobody notices until the agent's context is full.
-
-The tests run the recorded rounds through every MCP tool and count the tokens of each
-response, against a budget per tool written in the repository. A response over its
-budget fails the test, raising a budget is a reviewed change, and the README publishes
-the figures as roadkeep does.
-
-Done when every MCP tool has a token budget enforced by the recorded tests and the
-README states it.
-
 ### §AR38 Wired like roadkeep
 
 roadkeep installs with two commands at project scope, which write the marketplace and

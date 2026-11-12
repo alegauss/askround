@@ -115,7 +115,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "askround_run",
-        "description": "Ask every question of a product file (a prompt set) and return the set's report: one table of question by provider, then each question's report.",
+        "description": "Ask every question of a product file (a prompt set) and return a brief per question: the runs naming the product and its best position per provider, its claims, the rivals, each fact with its answers' ids. detail: true returns every question's full report instead.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -124,6 +124,7 @@ TOOLS: list[dict[str, Any]] = [
                 "runs": {"type": "integer", "minimum": 1},
                 "extract": {"type": "boolean"},
                 "max_cost": _COST,
+                "detail": {"type": "boolean", "description": "every question's full report"},
                 "background": {
                     "type": "boolean",
                     "description": "start it as a job and return at once; read it with askround_job",
@@ -376,7 +377,10 @@ def run(args: dict, out: str | None, post=None) -> dict:
     saved = [
         line.removeprefix("saved: ") for line in text.splitlines() if line.startswith("saved: ")
     ]
-    return report_.build_set(Path(saved[-1]) / "set.json")
+    path = Path(saved[-1]) / "set.json"
+    if args.get("detail"):
+        return report_.build_set(path)
+    return report_.set_brief(path)
 
 
 def research_(args: dict, out: str | None, post=None) -> dict:

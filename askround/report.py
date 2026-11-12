@@ -77,6 +77,24 @@ def build_set(path: Path) -> dict:
     }
 
 
+def set_brief(path: Path) -> dict:
+    """A prompt set run as briefs: each question's few hundred tokens, not its report."""
+    index = json.loads(path.read_text(encoding="utf-8"))
+    questions = []
+    for q in index["questions"]:
+        round_path = path.parent / q["round"]
+        round_, products = load_round(round_path)
+        found = brief(round_, products or [index["names"]], str(round_path.parent))
+        found.pop("schema", None)
+        questions.append({"n": q["n"], "purpose": q["purpose"], "locale": q["locale"], **found})
+    return {
+        "schema": schema("set-brief"),
+        "set": str(path.parent),
+        "product": index["product"],
+        "questions": questions,
+    }
+
+
 def set_markdown(report: dict) -> str:
     product = report["product"]
     providers: list[str] = []
