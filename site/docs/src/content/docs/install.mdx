@@ -1,0 +1,63 @@
+---
+title: Install
+description: askround as a Claude Code plugin at project scope, with uvx or pip, and the API keys it reads.
+---
+
+askround needs Python 3.11 or later and nothing else: it has no runtime dependencies, and
+every provider is one HTTPS call through the standard library.
+
+## In Claude Code: the plugin
+
+The plugin brings the MCP server, four slash commands (`/askround:ask`, `/askround:run`,
+`/askround:report`, `/askround:diff`) and a skill that tells the agent to run a question
+itself. It carries the package and runs it with the Python on the machine, so nothing has
+to be installed or put on the PATH.
+
+```
+/plugin marketplace add alegauss/askround
+/plugin install askround@askround
+```
+
+### At project scope, for every clone
+
+Run `askround install` in the project and commit `.claude/settings.json`. It names the
+marketplace and enables the plugin, keeping every other setting, so everyone who clones the
+project is offered the plugin on their first session.
+
+```
+askround install            # writes the two entries
+askround install --check    # writes nothing, exits 1 when they are missing (for CI)
+```
+
+Claude Code on the web installs no plugin. `askround install --vendor` also copies askround
+into `.claude/askround/` with a launcher and names it in the project's `.mcp.json`. Commit
+both; `askround install --vendor --check` exits 1 when the copy is behind the askround that
+checks it.
+
+## On the command line
+
+From a checkout, until the first release is on PyPI:
+
+```
+pip install .
+askround doctor
+```
+
+Once it is published, `pip install askround`, or `uvx askround doctor` with no install at
+all. The MCP server alone, without the plugin: `claude mcp add askround -- askround mcp`.
+
+## The keys
+
+Every provider whose key is in the environment is asked, in parallel:
+
+| Provider | Key variable | Search |
+| --- | --- | --- |
+| OpenAI | `OPENAI_API_KEY` | web_search, Responses API |
+| Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | google_search grounding |
+| Anthropic | `ANTHROPIC_API_KEY` | web_search server tool |
+| Perplexity | `PERPLEXITY_API_KEY` | built into Sonar |
+
+askround reads the keys at call time and never stores them. `askround doctor` lists which
+providers can run: the key variable (never its value), the model, the search tool and a
+free check call; `--no-check` makes no call. Override a provider's model with
+`ASKROUND_OPENAI_MODEL` and its siblings, or `--model openai=gpt-5` on one command.

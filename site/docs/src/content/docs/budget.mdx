@@ -1,0 +1,56 @@
+---
+title: Budget and consent
+description: What a round costs, the cap on one run, the day and month budget only the person sets, and the data a question may not carry.
+---
+
+Every round is paid for on your keys. askround makes the cost visible before the round, and
+keeps the decision with you.
+
+## Before a round: the estimate and the cap
+
+askround estimates a round from the number of calls, the tokens a searched answer usually
+takes and each provider's prices, and prints it before anything is sent. A round estimated
+above the cap is refused:
+
+```
+askround ask "..." --max-cost 0.50      # or ASKROUND_MAX_COST, or max_cost over MCP
+askround run modelado.toml --estimate-only
+```
+
+After it, the report gives the actual cost per provider from the usage each API reported,
+the extraction pass included. The prices are a dated table in the package;
+`ASKROUND_PRICES` names a JSON file that replaces any of them.
+
+## A budget an agent cannot raise
+
+Set what askround may spend in its config file, `%APPDATA%\askround\config.toml` on Windows
+and `~/.config/askround/config.toml` elsewhere (or the file `ASKROUND_CONFIG` names):
+
+```toml
+[budget]
+day = 1.00     # USD
+month = 10.00
+```
+
+Every saved round adds its actual cost to `spent.jsonl` beside the rounds. A run whose
+estimate would pass the day's or the month's budget is refused before any call, as a request
+for your approval: you run it with `--approve`, or raise the budget. No MCP tool offers
+either, and every paid result an agent gets says what has been spent against the budget.
+`askround budget` shows it. Days and months are counted in UTC.
+
+## The same question twice costs once
+
+A question asked again the same way within a day returns the stored round and calls no
+provider. `--fresh` asks anew; the window is in the config file:
+
+```toml
+[reuse]
+max_age_hours = 24   # 0 turns reuse off
+```
+
+## What a question may not carry
+
+One round sends the same text to every provider. A question that carries an email address,
+a phone number, a CPF, an IP address, an API key, or a name on your own list
+(`ASKROUND_PRIVATE`, or the file `ASKROUND_PRIVATE_FILE` names) stops before anything is
+sent, naming the question and what it found.

@@ -1,0 +1,38 @@
+---
+// The MCP tools, rendered from askround.mcp.TOOLS by scripts/reference.py.
+import reference from "../data/reference.generated.json";
+---
+
+{
+  reference.tools.map((tool) => (
+    <section>
+      <h3 id={tool.name}>{tool.name}</h3>
+      <p>{tool.description}</p>
+      {tool.params.length > 0 ? (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Argument</th>
+              <th scope="col">Type</th>
+              <th scope="col">What it is</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tool.params.map((param) => (
+              <tr>
+                <td>
+                  <code>{param.name}</code>
+                  {param.required ? " (required)" : ""}
+                </td>
+                <td>{param.type}</td>
+                <td>{param.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>No arguments.</p>
+      )}
+    </section>
+  ))
+}

@@ -32,3 +32,4 @@ og:url by replace-or-throw, so a template that lost an anchor fails the build.
 | `src/components/Sections.tsx` | The page's sections |
 | `public/icon.svg`, `favicon.svg` | The mark: four answers around one question |
 | `scripts/prerender.mjs` | The prerender, `og.png` and `apple-touch-icon.png` |
+| `docs/` | The docs area at `/askround/docs/`: its own npm project (Astro Starlight), built last by `npm run build` into `dist/docs`. The MCP and CLI reference pages are generated from the package by `docs/scripts/reference.py`; `npm ci --prefix docs` installs it |

@@ -6,7 +6,8 @@
   "description": "The public site for askround: every word in one module, a real recorded round, the chrome from the design system.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node scripts/prerender.mjs",
+    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node scripts/prerender.mjs && npm run build:docs",
+    "build:docs": "npm --prefix docs run prebuild && npm --prefix docs run build",
     "typecheck": "tsc -b",
     "preview": "vite preview"
   },

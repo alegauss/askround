@@ -29,6 +29,7 @@ export const words = {
       { href: `${BASE}#agents`, label: "For agents" },
       { href: `${BASE}#install`, label: "Install" },
       { href: `${BASE}#cost`, label: "Cost" },
+      { href: `${BASE}docs/`, label: "Docs" },
       { href: repoUrl, label: "Source" },
     ],
     cta: "Install",
@@ -142,7 +143,7 @@ export const words = {
   footer: {
     links: [
       { href: repoUrl, label: "GitHub" },
-      { href: `${repoUrl}/blob/main/README.md`, label: "README" },
+      { href: `${BASE}docs/`, label: "Docs" },
       { href: `${repoUrl}/blob/main/docs/CHANGELOG.md`, label: "Changelog" },
       { href: roadkeepUrl, label: "roadkeep" },
     ],

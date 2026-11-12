@@ -1,0 +1,66 @@
+---
+title: Prompt sets and leading questions
+description: A product file with its facts and the questions you track, the questions askround refuses, and finding the wording that leads to the product.
+---
+
+## A product file
+
+A product file names the product, the places that are its own, and the facts the answers
+should get right:
+
+```toml
+[product]
+name = "Modelado"
+aliases = []
+places = ["alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+phrases = []   # wording distinctive of its own pages, which a neutral question avoids
+
+[[fact]]
+attribute = "Runs without an NVIDIA GPU"
+value = "Yes: any DirectX 12 GPU through DirectML, or the CPU"
+page = "https://alegauss.github.io/modelado/"   # where it should be said plainly
+```
+
+`askround ask "..." --product-file modelado.toml --extract` compares what the answers claim
+with the facts. A claim that contradicts a fact, or doubts it, is reported as a **fact gap**
+with the page that should state the fact plainly.
+
+## A prompt set
+
+Add `[[question]]` entries and the file becomes the set of questions you track:
+
+```toml
+[[question]]
+text = "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?"
+purpose = "constraint"   # generic, constraint, use case, language
+locale = "BR:pt-BR"      # optional
+runs = 3                 # optional
+```
+
+`askround run modelado.toml` (or `askround_run` over MCP) asks every question as its own
+round, kept together in one set directory. Run it every week from the system's scheduler,
+with `--max-cost` so an unattended run spends no more than you agreed to.
+
+The MCP server lists the product files it finds at the top of the project and one
+directory down, with their question counts, in `askround_run`'s schema.
+
+## Questions askround refuses
+
+A question that names the product it tests (its name, an alias, one of its places, or a
+phrase under `phrases`) measures nothing: the answer names the product because the question
+did. askround refuses it before anything is paid for. A question that asks about the
+product on purpose is marked `brand = true` (or `--brand`); it runs and is reported apart.
+
+Ask the way the product's audience asks: their constraint ("without an NVIDIA GPU"), their
+use case, their language, with `locale` set and the question written in it.
+
+## Which wording leads to the product?
+
+```
+askround discover modelado.toml --seed "free offline app photo to 3D model on Windows"
+```
+
+From the seed and the product's facts, a model writes variants (a constraint the product
+meets, a use case, another language) that never name it. askround runs them with the seed
+and ranks them by how often and how high the product appears. One run per question is a
+sketch: put the promising ones in the product file and run them with more.

@@ -66,21 +66,6 @@ anchor.
 Done when a push changing content.ts is built by site.yml and live at
 alegauss.github.io/askround/.
 
-### §AR42 The docs
-
-roadkeep's site has a docs section (alegauss.github.io/roadkeep/docs/) with pages for
-adopting a backlog, what an agent receives in a session, and the reference, so the
-README stays a first screen.
-
-askround's site gets the same section: install (plugin at project scope, uvx, pip), a
-first session in Claude Code (ask in plain words, what the agent calls), the laws,
-prompt sets and leading questions, budget and consent, reading a report and a diff, the
-MCP tools with their schemas, the CLI with its JSON and exit codes, and what askround
-measures (the APIs, not the apps).
-
-Done when each of those pages exists under /askround/docs/, linked from the README and
-the site's nav.
-
 ### §AR43 Readable by assistants, measured by itself
 
 The family's sites carry an llms.txt and structured data so assistants can read them;

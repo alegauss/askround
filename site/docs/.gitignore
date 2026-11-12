@@ -1,0 +1,6 @@
+# What the build downloads and caches. The output lands in ../dist/docs, which site/.gitignore
+# keeps out of the tree; the reference is generated from the package by `npm run prebuild`.
+node_modules
+.astro
+*.local
+src/data/*.generated.json

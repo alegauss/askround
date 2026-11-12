@@ -15,9 +15,9 @@ name: site
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**"]
+    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**", "plugin/src/askround/**"]
   pull_request:
-    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**"]
+    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**", "plugin/src/askround/**"]
   workflow_dispatch:
 
 # Least privilege by default; the Pages grants live on the job that publishes.
@@ -54,12 +54,17 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache-dependency-path: |
+            site/package-lock.json
+            site/docs/package-lock.json
 
+      # The docs area (site/docs, Astro Starlight) builds last, into dist/docs; its reference
+      # pages are generated from the package by docs/scripts/reference.py.
       - name: Build
         working-directory: site
         run: |
           npm ci
+          npm ci --prefix docs
           npm run build
 
       - name: Keep the built site for the deploy

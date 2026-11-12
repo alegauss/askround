@@ -1,0 +1,17 @@
+{
+  "name": "askround-docs",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The documentation area, at /askround/docs/. Its own npm project, building into the site's dist/docs.",
+  "scripts": {
+    "prebuild": "python scripts/reference.py",
+    "dev": "npm run prebuild && astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.9",
+    "astro": "^7.4.7"
+  }
+}

@@ -1,0 +1,51 @@
+---
+title: A first session in Claude Code
+description: Ask in plain words; what the agent calls, what it gets back, and what it refuses.
+---
+
+With the plugin installed, you do not call the tools yourself. Ask the way you would ask a
+colleague:
+
+> Do the assistants recommend Modelado to someone who wants to turn a photo into a 3D
+> model without an NVIDIA card?
+
+## What the agent calls
+
+1. **`askround_doctor`**, once, to see which providers have a key here. It names the key
+   variables, never their values.
+2. **`askround_ask`**, with a question a person who does not know the product would ask,
+   `products: ["Modelado,alegauss.github.io/modelado"]` and `extract: true`. The schema it
+   reads already lists only the providers with a key, your budget and what is spent.
+3. It reads the **brief** that comes back: for each product, how many runs named it and its
+   best position per provider, its top claims and the rivals, each fact with the ids of
+   the answers it came from (`openai#2`).
+4. To check one fact, **`askround_answer`** with that id and `around: "<quote>"` returns
+   only the passage behind it. The whole answer is there too, when it is worth the tokens.
+
+The skill tells it to keep runs low while exploring, to give `max_cost` to anything you have
+not agreed to, to report what the round cost, and to say that the numbers are the APIs'.
+
+## What it is refused
+
+- **A question that names the product it tests**, its domain or its own wording. It would
+  measure nothing. The agent is told to reword it; a brand question on purpose is marked so
+  and reported apart.
+- **Personal data**: an email address, a phone number, a CPF, a key, or a name on your own
+  private list. One round sends the text to every provider.
+- **A round above `max_cost`**, or one that would pass your day or month budget. That one
+  waits for you: only you approve it, on the command line with `--approve`.
+
+Every refusal lists all the problems at once, each with a code and its fix, before anything
+is sent. `askround explain <code>` says more about one.
+
+## Long rounds
+
+A round of several providers and runs takes minutes. With `background: true` the agent
+gets a job id at once and keeps working; `askround_job` says how many answers are in, then
+returns the brief. Each answer is kept the moment it lands, so an interrupted job loses
+nothing it paid for.
+
+## The same question twice
+
+Asked again the same way within a day, a question returns the stored round at no cost,
+marked with its age. `fresh: true` asks anew.

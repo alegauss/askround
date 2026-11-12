@@ -1,0 +1,59 @@
+---
+title: Reading a report and a diff
+description: Named in how many runs and where, claims and fact gaps, rivals, cited pages, what changed between two runs, and research mode.
+---
+
+## The report
+
+```
+askround report                      # the latest round, as Markdown
+askround report <round dir> --json   # one round, as JSON for a pipeline
+askround report --brief              # what an agent gets: a few hundred tokens
+```
+
+For each product, a report gives:
+
+- **Named, and where.** The share of runs per provider that named it, and its position in
+  each: "2/3, #1, #3, -". Without `--extract` the position is read from the answer's
+  top-level list items, numbered headings and table rows; with it, a small model lists what
+  the answer recommends in its own order, and those positions show a `*`. A product counts
+  as named only if its name is in the answer.
+- **Claims.** What the answers say about it, from tables and prose, each with the providers
+  that said it and the passage. A claim whose quote is not in the answer is never shown as a
+  finding. With a product file, the claims that contradict or doubt its facts are **fact
+  gaps**, with the page that should say the fact plainly.
+- **Pages cited.** Per provider, how many answers cited one of its places, and which kind
+  (site, repository, store, docs). `--check-links` follows the links written beside its name
+  and flags those that land on someone else's page or are broken.
+- **Rivals.** Every other product the answers recommend, with how many answers named it and
+  its best rank. `--check-rivals` looks each one up, so an invented product is named as such.
+
+Every fact carries the answer it came from (`openai#2`, `openai@BR#2` for a locale) and the
+character range of its passage in that answer, so a script or an agent can cite it.
+
+## The diff
+
+```
+askround diff                    # the latest two runs of the same questions
+askround diff <old> <new> --json
+```
+
+A diff lists only what changed, per question and provider: the product's share and best
+position, rivals that appeared or left, its pages newly cited or no longer cited, and claims
+made or dropped. Answers vary between runs, so a change within the spread of a few runs is
+noise; compare runs of three or more.
+
+`askround series --product Modelado` follows the share week by week, and `askround export`
+writes the numbers as CSV or JSON for a dashboard.
+
+## Research mode
+
+```
+askround research "Which open-source image-to-3D models allow commercial use?"
+```
+
+asks every provider once with search and merges the factual statements the answers make,
+ranked by how many providers support each, with every provider's passage and the sources,
+primary ones (repositories, licence texts, papers, official docs) first. Where the
+assistants disagree on a fact, the report opens with both sides and the sources to read to
+settle it. Support is agreement among assistants, not proof.

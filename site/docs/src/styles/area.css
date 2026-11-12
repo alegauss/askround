@@ -1,0 +1,19 @@
+/* The area's accent, the pitch page's orange, in the ramp Starlight asks for. Every layout
+   decision stays the theme's. */
+:root {
+  --sl-color-accent-low: #3a1d0b;
+  --sl-color-accent: #ea580c;
+  --sl-color-accent-high: #fed7aa;
+}
+:root[data-theme="light"] {
+  --sl-color-accent-low: #ffedd5;
+  --sl-color-accent: #c2410c;
+  --sl-color-accent-high: #7c2d12;
+}
+
+/* A generated reference table is as wide as the parser makes it, so it scrolls in its box. */
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

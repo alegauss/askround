@@ -1,0 +1,28 @@
+---
+title: Command line
+description: Every askround command and its arguments, generated from the package, with its JSON schemas and exit codes.
+---
+
+import CliCommands from "../../../components/CliCommands.astro";
+
+## JSON and its schemas
+
+Every command takes `--json` (`export` takes `--format json`). Each JSON object names its
+schema, `"schema": "askround/round@1"`, and the schemas are published in the repository's
+[`schema/`](https://github.com/alegauss/askround/tree/main/schema) directory as JSON Schema.
+
+## Exit codes
+
+| Code | Means |
+| --- | --- |
+| 0 | every answer came back |
+| 3 | a partial round: it finished, and the answers that failed are listed |
+| 1 | no answer came back |
+| 2 | refused before anything was sent (personal data, a leading question, over the cap or the budget, no key) or a usage error |
+
+`askround explain` lists the refusal codes, and `askround explain <code>` says what one means
+and how to pass it.
+
+## The commands
+
+<CliCommands />

@@ -1,0 +1,18 @@
+---
+title: MCP tools
+description: Every tool askround's MCP server serves, with its arguments, generated from the package.
+---
+
+import McpTools from "../../../components/McpTools.astro";
+
+`askround mcp` serves these tools over stdio. They run the command line in-process, so every
+refusal holds for an agent too. The schemas below are the package's own; the server writes
+them for the machine and project it runs in, listing only the providers with a key, the
+product files it finds, and the person's budget beside `max_cost`.
+
+What each response costs an agent is measured on recorded rounds and held to a budget per
+tool: the brief of a whole round is about 300 tokens.
+
+## The tools
+
+<McpTools />

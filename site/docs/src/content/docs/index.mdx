@@ -1,0 +1,51 @@
+---
+title: What askround is
+description: askround asks ChatGPT, Gemini, Claude and Perplexity the same question through their APIs, with web search, and reads what they recommend.
+---
+
+People ask assistants which tool to use, and the product's makers never see the answer.
+askround asks OpenAI, Gemini, Anthropic and Perplexity the same question through their
+APIs, with web search on, several times each, and reads what comes back: whether a product
+is named and at which position, which rivals sit around it, what the answers claim about it
+and which of its pages they cite.
+
+It is a command line and an MCP server. The second is the point: a coding agent working on
+a product can ask the assistants itself, instead of asking its user to type a question
+into ChatGPT and paste the answer back.
+
+## What it measures: the APIs, not the apps
+
+An API answer with web search is close to what a chat app says, but it is not the same
+page. The apps add memory, personalisation and their own choice of model. askround records
+what produced each answer (the model asked for and the one that answered, the search tool,
+the settings, the time), and every number it reports is about the API. Say so when you
+report its numbers.
+
+Answers also vary from one run to the next, so askround never reports a single answer as
+the truth. A product is "named in 2/3 runs, positions #1, #3, -".
+
+## The laws
+
+Every design question in askround is settled by one of these:
+
+1. **Context is cost.** An agent pays for every token it reads, so a round comes back as a
+   brief of a few hundred tokens, and the text of an answer only when it is asked for.
+2. **Refuse before paying.** Every check that needs no call runs before the first one: a
+   question that names its product, personal data, a missing key, a round above the cap.
+3. **Ask instead of read.** The agent asks the assistants itself rather than asking a
+   person to paste what an assistant said.
+4. **Facts trace to a passage.** Every claim, position and rival carries the answer it came
+   from and the character range of its passage, so it can be checked and cited.
+5. **The person sets the money.** The day and month budget lives in a file no tool writes;
+   an agent cannot raise it.
+6. **It measures the APIs, not the apps.** What produced each answer is recorded, and
+   every report is about the API.
+
+## Where to go next
+
+- [Install](./install/) it, as a Claude Code plugin or on the command line.
+- [A first session](./first-session/) shows what an agent calls when you ask in plain words.
+- [Prompt sets](./prompt-sets/) are the questions you track every week.
+- [Budget and consent](./budget/) is what a round costs and who decides.
+- [Reports and diffs](./reports/) explain how to read what comes back.
+- The reference lists the [MCP tools](./reference/mcp/) and the [command line](./reference/cli/).
