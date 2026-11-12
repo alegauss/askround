@@ -63,7 +63,7 @@ def test_a_name_with_added_notes_still_stands():
 
 
 def test_invented_products_are_left_out():
-    round_ = _round(_answer("openai", GENERAL, ["Presidium Shape Studio", "Modly"]))
+    round_ = _round(_answer("openai", GENERAL, ["Nowhere Shape Studio", "Modly"]))
     assert [r.name for r in rivals(round_).rivals] == ["Modly"]
 
 
@@ -86,5 +86,6 @@ def test_round_json_carries_the_rivals():
             "ranks": [1],
             "providers": {"openai": 1},
             "reason": "Modly",
+            "exists": None,
         }
     ]

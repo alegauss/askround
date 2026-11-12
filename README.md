@@ -80,6 +80,19 @@ on, and the report lists the failures at the end.
 The model per provider is overridden with `ASKROUND_OPENAI_MODEL`,
 `ASKROUND_GEMINI_MODEL`, `ASKROUND_ANTHROPIC_MODEL` and `ASKROUND_PERPLEXITY_MODEL`.
 
+## Does a recommended product exist?
+
+```
+askround lookup "MeshForge3D" "Modly" --context "a Windows photo-to-3D app"
+askround ask "..." --extract --check-rivals     # the top 10 rivals of a round
+```
+
+Each name is looked up on GitHub first (free; a repository of that name with at least
+10 stars), then with one searched call on OpenAI, Anthropic or Gemini, which answers
+found, ambiguous or not found with the page. A "found" whose page is not among the
+pages that search returned is downgraded to ambiguous. `--no-web` keeps it to GitHub.
+The report marks each checked rival, and names the ones found nowhere.
+
 ## The report
 
 ```

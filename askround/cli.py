@@ -27,12 +27,13 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations
+from askround import __version__, citations, lookup
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
 from askround.providers import Answer, Locale, all_providers, by_name
+from askround.rivals import key as rival_key
 from askround.rivals import rivals
 from askround.round import (
     DEFAULT_RUNS,
@@ -109,8 +110,24 @@ def build_parser() -> argparse.ArgumentParser:
         "per answer), so a product's rank counts tables and prose; default extractor: the "
         "first of openai, gemini, anthropic with a key",
     )
+    ask.add_argument(
+        "--check-rivals",
+        nargs="?",
+        type=_positive,
+        const=10,
+        metavar="N",
+        help="look up whether the top N rivals (default 10) exist: GitHub, then one "
+        "searched call each; needs --extract",
+    )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
+    find = commands.add_parser(
+        "lookup", help="check whether products exist: GitHub, then one searched call each"
+    )
+    find.add_argument("names", nargs="+", metavar="NAME")
+    find.add_argument("--context", default="", help="what they were recommended for")
+    find.add_argument("--no-web", dest="web", action="store_false", help="GitHub only, free")
+    find.add_argument("--json", action="store_true", help="print the verdicts as JSON")
     report = commands.add_parser(
         "report", help="sum a stored round up: Markdown for a person, JSON for a pipeline"
     )
@@ -172,6 +189,8 @@ def main(argv: list[str] | None = None, post=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "report":
         return run_report(args)
+    if args.command == "lookup":
+        return run_lookup(args, post)
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
@@ -196,10 +215,14 @@ def run_ask(args, providers, post) -> int:
     out = _rounds_dir(args.out)
     products = args.products or []
     extractor = None
+    # everything that could refuse is decided before the round, so nothing is paid for
+    # a run that was going to stop anyway (law L2)
+    if args.check_rivals and not args.extract:
+        print("askround: --check-rivals reads the rivals from --extract; add it", file=sys.stderr)
+        return 2
     if args.extract:
-        # chosen before the round, so a missing key is refused before anything is paid
         try:
-            extractor = choose(args.extract, **({"post": post} if post is not None else {}))
+            extractor = choose(args.extract, **_post(post))
         except ValueError as error:
             print(f"askround: {error}", file=sys.stderr)
             return 2
@@ -208,6 +231,11 @@ def run_ask(args, providers, post) -> int:
     )
     if extractor is not None:
         extract_round(round_, extractor)
+    if args.check_rivals:
+        top = rivals(round_, products).rivals[: args.check_rivals]
+        web = lookup.web_lookup(**_post(post))
+        verdicts = lookup.check([v.name for v in top], args.question, web=web, **_post(post))
+        round_.checks = {rival_key(v.name): v for v in verdicts}
     directory = save_round(round_, out, products)
     if args.json:
         data = {**summary(round_, products), "saved": str(directory)}
@@ -219,6 +247,24 @@ def run_ask(args, providers, post) -> int:
 
 def _rounds_dir(out: Path | None) -> Path:
     return out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
+
+
+def _post(post) -> dict:
+    return {"post": post} if post is not None else {}
+
+
+def run_lookup(args, post) -> int:
+    web = lookup.web_lookup(**_post(post)) if args.web else None
+    verdicts = lookup.check(args.names, args.context, web=web, **_post(post))
+    if args.json:
+        print(json.dumps([v.__dict__ for v in verdicts], ensure_ascii=False, indent=2))
+    else:
+        for v in verdicts:
+            where = f" <{v.url}>" if v.url else ""
+            print(f"{v.name}: {v.status.replace('_', ' ')}{where}")
+            if v.evidence:
+                print(f"    {v.evidence} ({v.via or 'no lookup'})")
+    return 0
 
 
 def run_report(args) -> int:
@@ -311,7 +357,11 @@ def _rival_lines(round_: Round, products: list[list[str]]) -> list[str]:
     for rival in found.rivals[:RIVALS_SHOWN]:
         ranks = ", ".join(f"#{rank}" for rank in rival.ranks)
         by = ", ".join(f"{p} {n}" for p, n in rival.providers.items())
-        lines.append(f"  {rival.name:<24} {rival.answers}/{found.read}   ranks: {ranks}   ({by})")
+        verdict = round_.checks.get(rival_key(rival.name))
+        tag = f"   [{verdict.status.replace('_', ' ')}]" if verdict else ""
+        lines.append(
+            f"  {rival.name:<24} {rival.answers}/{found.read}   ranks: {ranks}   ({by}){tag}"
+        )
     hidden = len(found.rivals) - RIVALS_SHOWN
     if hidden > 0:
         lines.append(f"  ... and {hidden} more in round.json")

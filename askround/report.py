@@ -20,9 +20,10 @@ from pathlib import Path
 from askround import citations
 from askround.claims import product_claims
 from askround.extract import Claim, Recommendation
+from askround.lookup import Verdict
 from askround.providers import Answer, Locale, Source
-from askround.rivals import rivals
-from askround.round import Result, Round, failures, frequency
+from askround.rivals import key, rivals
+from askround.round import Result, Round, exists, failures, frequency
 
 RIVALS_SHOWN = 10
 
@@ -100,6 +101,10 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
         runs=data.get("runs", 1),
         locales=[_locale(x) for x in data.get("locales") or []],
     )
+    for rival in (data.get("rivals") or {}).get("products") or []:
+        verdict = rival.get("exists")
+        if verdict:
+            round_.checks[key(rival["name"])] = Verdict(rival["name"], **verdict)
     products = [p["names"] for p in data.get("products") or []]
     return round_, products
 
@@ -130,7 +135,13 @@ def build(round_: Round, products: list[list[str]], source: str = "") -> dict:
             "read": found.read,
             "missing": found.missing or None,
             "top": [
-                {"name": v.name, "answers": v.answers, "ranks": v.ranks, "providers": v.providers}
+                {
+                    "name": v.name,
+                    "answers": v.answers,
+                    "ranks": v.ranks,
+                    "providers": v.providers,
+                    "exists": exists(round_, v.name),
+                }
                 for v in found.rivals[:RIVALS_SHOWN]
             ],
             "more": max(0, len(found.rivals) - RIVALS_SHOWN),
@@ -260,14 +271,27 @@ def _rivals_markdown(found: dict) -> list[str]:
     lines = [
         f"## Rivals (in {found['read']} answers read)",
         "",
-        "| product | answers | ranks | providers |",
-        "|---|---|---|---|",
+        "| product | answers | ranks | providers | exists |",
+        "|---|---|---|---|---|",
     ]
     for v in found["top"]:
         ranks = ", ".join(f"#{r}" for r in v["ranks"])
         by = ", ".join(f"{p} {n}" for p, n in v["providers"].items())
-        lines.append(f"| {_cell(v['name'])} | {v['answers']}/{found['read']} | {ranks} | {by} |")
+        share = f"{v['answers']}/{found['read']}"
+        lines.append(f"| {_cell(v['name'])} | {share} | {ranks} | {by} | {_exists(v['exists'])} |")
     if found["more"]:
         lines.append(f"\n{found['more']} more in round.json.")
+    flagged = [v["name"] for v in found["top"] if (v["exists"] or {}).get("status") == "not_found"]
+    if flagged:
+        lines.append(
+            f"\n**Not found anywhere:** {', '.join(flagged)}. The answers may have invented them."
+        )
     lines.append("")
     return lines
+
+
+def _exists(verdict: dict | None) -> str:
+    if verdict is None:
+        return "not checked"
+    status = verdict["status"].replace("_", " ")
+    return f"[{status}]({verdict['url']})" if verdict["url"] else status

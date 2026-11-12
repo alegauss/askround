@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block C — Trust: checking what the answers say
 
-### §AR13 Rivals that may not exist
-
-On 12/11/2026 one answer listed two CPU-only alternatives that a later web search could
-not find as Windows apps. A competitor table built from answers inherits whatever the
-model invents.
-
-Each rival extracted from a round is looked up (web search, GitHub, package registries,
-app stores) and marked found, ambiguous or not found, with the evidence link. The report
-flags the ones not found.
-
-Done when the two names from 12/11/2026 come out flagged and Modly comes out found with
-its repository.
-
 ### §AR14 Links that point elsewhere
 
 On 12/11/2026 two answers illustrated Modelado with Microsoft Store pages of other apps

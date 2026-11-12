@@ -80,9 +80,9 @@ def test_extraction_reports_absent_where_it_was_absent():
 
 
 def test_an_invented_product_never_counts():
-    recs = [{"name": "Presidium Shape Studio", "quote": "made up"}, *GENERAL_RECS]
+    recs = [{"name": "Nowhere Shape Studio", "quote": "made up"}, *GENERAL_RECS]
     answer = _answer(GENERAL, recs)
-    assert locate(answer, ["Presidium Shape Studio"]) == Mention(False)
+    assert locate(answer, ["Nowhere Shape Studio"]) == Mention(False)
     # and it does not push the real ones down
     assert locate(answer, ["Trellis Studio"]).position == 2
 

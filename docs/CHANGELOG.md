@@ -20,6 +20,8 @@
 
 ## Block C — Trust: checking what the answers say
 
+- ✅ **AR13** **A product an answer names may not exist, like two Windows apps no search could find** — askround lookup and --check-rivals check a rival on GitHub, then a searched call; both 12/11 'invented' names exist (design superseded: they exist).
+
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
 ## Block E — Over time: the series, the diff, the cost and the export

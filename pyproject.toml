@@ -40,6 +40,7 @@ select = ["E", "F", "I", "UP", "C4", "B"]
 # the extraction instructions are prose a model reads: hard line breaks inside one
 # instruction would change what it is told
 "askround/extract.py" = ["E501"]
+"askround/lookup.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

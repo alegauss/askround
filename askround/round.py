@@ -29,7 +29,7 @@ from askround import citations, mention
 from askround.claims import product_claims
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
-from askround.rivals import rivals
+from askround.rivals import key, rivals
 
 DEFAULT_RUNS = 3
 MAX_PARALLEL = 12
@@ -57,6 +57,8 @@ class Round:
     search: bool = True
     runs: int = 1
     locales: list[Locale] = field(default_factory=list)
+    # whether each rival exists, by rivals.key(name), when --check-rivals ran (lookup.py)
+    checks: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -228,11 +230,25 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                 "ranks": rival.ranks,
                 "providers": rival.providers,
                 "reason": rival.reason,
+                "exists": exists(round_, rival.name),
             }
             for rival in found.rivals
         ],
     }
     return data
+
+
+def exists(round_: Round, name: str) -> dict | None:
+    """The lookup's verdict on a rival, or None where none was looked up."""
+    verdict = round_.checks.get(key(name))
+    if verdict is None:
+        return None
+    return {
+        "status": verdict.status,
+        "url": verdict.url,
+        "evidence": verdict.evidence,
+        "via": verdict.via,
+    }
 
 
 def _locale(place: Locale | None, ignored: list[str] | None = None) -> dict | None:
