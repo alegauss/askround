@@ -8,7 +8,6 @@
 
 ## Block I — The site at alegauss.github.io/askround
 
-- 📋 **AR41** (deps: AR40 ✅) **Nothing builds and deploys the site when it changes** — In the other products a push that changes content.ts is built and live within minutes; a site deployed by hand goes stale. → §AR41
 - 📋 **AR42** (deps: AR40 ✅) **There are no docs pages: install, a first session in Claude Code, the MCP tools and the CLI reference live nowhere** — roadkeep's docs (install, adopting, in a session) are what lets an agent's user set it up without reading the code. → §AR42
 - 📋 **AR43** (deps: AR40 ✅, AR16 ✅) **The site is not built to be read by assistants, and askround never measures whether they name askround itself** — A tool that measures how assistants see a product should be readable by them and should measure itself first, publicly. → §AR43
 

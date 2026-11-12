@@ -10,3 +10,4 @@
 
 ## Block I — The site at alegauss.github.io/askround
 
+- ⏸ **AR41** (deps: AR40 ✅) **Nothing builds and deploys the site when it changes** — set aside (Waits on the person: a push to GitHub and Pages set to GitHub Actions, then the deploy checked live.): The page is live only after the person pushes and sets Pages to GitHub Actions; nothing has been deployed yet. → §AR41

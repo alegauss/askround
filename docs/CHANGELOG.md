@@ -68,3 +68,4 @@
 - ✅ **AR40** **askround has no public site: nowhere to see what a round reports, install it or read the docs** — site/ prerenders the page at /askround/ with a real recorded round; Lighthouse scores 100.
   checked **site/ builds a prerendered page at /askround/ with the design system's chrome** npm run build in site/ prerenders dist/index.html, og.png and the sitemap; the round shown is held to the recordings by tests/test_site.py.
   checked **Lighthouse accessibility scores 100** Lighthouse 12 on the built page scored 100 for accessibility, best practices and SEO, in light and dark.
+- ✅ **AR41 (site.yml written)** **Nothing builds and deploys the site when it changes** — site.yml builds and gates the site on every change and deploys it to Pages.

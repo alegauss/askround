@@ -1,0 +1,85 @@
+# AR41: the site (site/), built on every change to it and published to GitHub Pages at
+# https://alegauss.github.io/askround/, the base vite.config.ts names. After Modelado's site.yml.
+#
+# The gate is the build: `npm run build` runs tsc, the client build, the SSR build, the social
+# card and the prerender, whose replace-or-throw head patch fails on a template that lost an
+# anchor. The round the page shows is held to the recorded answers by tests/test_site.py, so a
+# change to the reading of answers runs that test here too. A pull request runs both and deploys
+# nothing; a push to main, or a run by hand, publishes the bytes that build made.
+#
+# ONE-TIME REPOSITORY SETTING, without which the deploy job fails: Settings > Pages > Build and
+# deployment > Source: "GitHub Actions".
+
+name: site
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**"]
+  pull_request:
+    paths: ["site/**", ".github/workflows/site.yml", "tests/test_site.py", "tests/fixtures/**"]
+  workflow_dispatch:
+
+# Least privilege by default; the Pages grants live on the job that publishes.
+permissions:
+  contents: read
+
+# One publish at a time; a pull request's build has nothing to do with another's.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('site-check-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: build (the gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The page's round is askround's own reading of the recordings; no package to install,
+      # askround has no dependencies beyond pytest for the test itself.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The round on the page matches the recordings
+        run: |
+          pip install pytest
+          python -m pytest -q tests/test_site.py
+
+      # The social card rasterises SVG text with resvg, which needs a font on disk.
+      - name: Fonts for the social card
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-dejavu-core
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Build
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Keep the built site for the deploy
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    name: deploy to Pages
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deploy
+        uses: actions/deploy-pages@v4
