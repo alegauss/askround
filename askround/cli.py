@@ -27,7 +27,7 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations, lookup
+from askround import __version__, citations, links, lookup
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
@@ -119,6 +119,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="look up whether the top N rivals (default 10) exist: GitHub, then one "
         "searched call each; needs --extract",
     )
+    ask.add_argument(
+        "--check-links",
+        action="store_true",
+        help="follow the links each answer gives beside a --product, and flag the ones "
+        "that land on someone else's page",
+    )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
     find = commands.add_parser(
@@ -185,7 +191,7 @@ def _names(value: str) -> list[str]:
     return names
 
 
-def main(argv: list[str] | None = None, post=None) -> int:
+def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "report":
         return run_report(args)
@@ -200,10 +206,10 @@ def main(argv: list[str] | None = None, post=None) -> int:
         return 2
     if args.command == "doctor":
         return run_doctor(providers, args.check, args.json)
-    return run_ask(args, providers, post)
+    return run_ask(args, providers, post, fetch)
 
 
-def run_ask(args, providers, post) -> int:
+def run_ask(args, providers, post, fetch=None) -> int:
     providers = [p for p in providers if p.configured()]
     if not providers:
         print(
@@ -219,6 +225,9 @@ def run_ask(args, providers, post) -> int:
     # a run that was going to stop anyway (law L2)
     if args.check_rivals and not args.extract:
         print("askround: --check-rivals reads the rivals from --extract; add it", file=sys.stderr)
+        return 2
+    if args.check_links and not products:
+        print("askround: --check-links follows a --product's links; name one", file=sys.stderr)
         return 2
     if args.extract:
         try:
@@ -236,6 +245,9 @@ def run_ask(args, providers, post) -> int:
         web = lookup.web_lookup(**_post(post))
         verdicts = lookup.check([v.name for v in top], args.question, web=web, **_post(post))
         round_.checks = {rival_key(v.name): v for v in verdicts}
+    if args.check_links:
+        for names in products:
+            round_.links[names[0]] = links.check_links(round_, names, **_fetch(fetch))
     directory = save_round(round_, out, products)
     if args.json:
         data = {**summary(round_, products), "saved": str(directory)}
@@ -251,6 +263,10 @@ def _rounds_dir(out: Path | None) -> Path:
 
 def _post(post) -> dict:
     return {"post": post} if post is not None else {}
+
+
+def _fetch(fetch) -> dict:
+    return {"get": fetch} if fetch is not None else {}
 
 
 def run_lookup(args, post) -> int:
@@ -399,6 +415,20 @@ def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
         lines.append("  * ranked by the extraction pass")
     lines.extend(_claim_lines(round_, names))
     lines.extend(_cited_lines(round_, names))
+    lines.extend(_link_lines(round_, names[0]))
+    return lines
+
+
+def _link_lines(round_: Round, product: str) -> list[str]:
+    checks = round_.links.get(product)
+    if checks is None:
+        return []
+    wrong = [c for c in checks if c.verdict != "ok"]
+    lines = [f"{product}: links given for it, {len(checks)} followed, {len(wrong)} not its own"]
+    for c in wrong:
+        lands = (c.title or c.final_url) if c.status else "unreachable"
+        lines.append(f"  {c.provider} run {c.run}: {c.url}")
+        lines.append(f"      {c.verdict}: {lands}")
     return lines
 
 

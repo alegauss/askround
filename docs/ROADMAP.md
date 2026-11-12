@@ -4,7 +4,6 @@
 
 ## Block C — Trust: checking what the answers say
 
-- 📋 **AR14** (deps: AR10 ✅) **A cited link or picture may belong to another product, like a Store page of a different app shown for Modelado** — A reader who clicks the picture beside the recommended app can install a rival; the product owner never learns it happened. → §AR14
 - 📋 **AR15** (deps: AR11 ✅) **Claims about the product are not checked against what is true, so a wrong 'needs NVIDIA' goes unnoticed** — The fix for a wrong claim is a sentence on the page the assistant reads; askround can say which claim is wrong and which page lacks it. → §AR15
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product

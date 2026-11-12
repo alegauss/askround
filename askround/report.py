@@ -20,10 +20,11 @@ from pathlib import Path
 from askround import citations
 from askround.claims import product_claims
 from askround.extract import Claim, Recommendation
+from askround.links import LinkCheck
 from askround.lookup import Verdict
 from askround.providers import Answer, Locale, Source
 from askround.rivals import key, rivals
-from askround.round import Result, Round, exists, failures, frequency
+from askround.round import Result, Round, exists, failures, frequency, link_checks
 
 RIVALS_SHOWN = 10
 
@@ -105,6 +106,9 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
         verdict = rival.get("exists")
         if verdict:
             round_.checks[key(rival["name"])] = Verdict(rival["name"], **verdict)
+    for product in data.get("products") or []:
+        if product.get("links") is not None:
+            round_.links[product["product"]] = [LinkCheck(**c) for c in product["links"]]
     products = [p["names"] for p in data.get("products") or []]
     return round_, products
 
@@ -188,6 +192,7 @@ def _product(round_: Round, names: list[str]) -> dict:
         ]
         if citations.places(names)
         else None,
+        "links": link_checks(round_, names[0]),
     }
 
 
@@ -261,6 +266,22 @@ def _product_markdown(product: dict, report: dict) -> list[str]:
             kinds = ", ".join(f"{k} {n}" for k, n in sorted(c["kinds"].items())) or "-"
             pages = "<br>".join(f"{n}x {url}" for url, n in c["pages"].items()) or "-"
             lines.append(f"| {c['provider']} | {c['citing']}/{c['answers']} | {kinds} | {pages} |")
+        lines.append("")
+    lines += _links_markdown(product["links"])
+    return lines
+
+
+def _links_markdown(links: list[dict] | None) -> list[str]:
+    if links is None:
+        return []
+    wrong = [c for c in links if c["verdict"] != "ok"]
+    lines = [f"Links given for it: {len(links)} followed, {len(wrong)} not its own.", ""]
+    if wrong:
+        lines += ["| provider | run | link | lands on | verdict |", "|---|---|---|---|---|"]
+        for c in wrong:
+            lands = _cell(c["title"] or c["final_url"]) if c["status"] else "unreachable"
+            row = f"| {c['provider']} | {c['run']} | {_cell(c['url'])} | {lands} | {c['verdict']} |"
+            lines.append(row)
         lines.append("")
     return lines
 

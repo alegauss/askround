@@ -55,6 +55,12 @@ kind (site, repository, store, docs), and `round.json` lists every page and the
 third-party domains cited. Tracking parameters are dropped; Gemini's redirect links are
 counted by the domain in their title.
 
+`--check-links` follows every link an answer writes beside the product's name (in its
+table row or list item, or close to it in prose), images included, and flags those that
+land on someone else's page, such as another app's Store page shown for yours, or that
+are broken. A page counts as the product's when it is on one of its places or its
+title names it.
+
 With `--extract`, the report also lists what the answers claim about the product, from
 tables and prose: `CPU only: Check build`, `Cost: Free, open-source`, each with the
 providers that said it and the passage it came from. A claim whose quote is not in the

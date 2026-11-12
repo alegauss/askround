@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block C — Trust: checking what the answers say
 
-### §AR14 Links that point elsewhere
-
-On 12/11/2026 two answers illustrated Modelado with Microsoft Store pages of other apps
-('Image to 3d model', 'AI Text & Image to 3D Generator Pro'), while its own Store page
-existed but was a day old.
-
-Every link and image source attributed to the product is resolved: status code, final
-URL after redirects, and whether the page's title and domain belong to the product.
-Mismatches are reported with the answer they came from.
-
-Done when those two mismatches are flagged from the recorded answers and the product's
-real pages pass.
-
 ### §AR15 Fact gaps
 
 Modelado runs on the CPU and the README said so on line 96; the assistant still answered

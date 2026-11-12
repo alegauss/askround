@@ -59,6 +59,8 @@ class Round:
     locales: list[Locale] = field(default_factory=list)
     # whether each rival exists, by rivals.key(name), when --check-rivals ran (lookup.py)
     checks: dict = field(default_factory=dict)
+    # the product's attributed links, followed, by product name, when --check-links ran
+    links: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -202,6 +204,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                     }
                     for c in product_claims(round_, names)
                 ],
+                "links": link_checks(round_, names[0]),
                 "places": citations.places(names),
                 "cited": [
                     {
@@ -236,6 +239,25 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         ],
     }
     return data
+
+
+def link_checks(round_: Round, product: str) -> list[dict] | None:
+    """The product's attributed links as followed, or None where --check-links did not run."""
+    checks = round_.links.get(product)
+    if checks is None:
+        return None
+    return [
+        {
+            "provider": c.provider,
+            "run": c.run,
+            "url": c.url,
+            "status": c.status,
+            "final_url": c.final_url,
+            "title": c.title,
+            "verdict": c.verdict,
+        }
+        for c in checks
+    ]
 
 
 def exists(round_: Round, name: str) -> dict | None:
