@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import citations, mention, series
+from askround import citations, costs, mention, series
 from askround.claims import product_claims
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
@@ -62,6 +62,12 @@ class Round:
     # the prompt set (its product's name) and the question's purpose, when run from one
     set: str = ""
     purpose: str = ""
+    # costs.py: the estimate made before the round, what the extraction pass's own calls
+    # cost, and the actual cost per provider as stored (a round read back has no raw
+    # responses to price again)
+    estimate: dict | None = None
+    extraction_cost: float | None = None
+    spent: dict | None = None
     # whether each rival exists, by rivals.key(name), when --check-rivals ran (lookup.py)
     checks: dict = field(default_factory=dict)
     # the product's attributed links, followed, by product name, when --check-links ran
@@ -183,6 +189,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         "locales": [_locale(place) for place in round_.locales],
         "answered": len(round_.results) - len(failures(round_)),
         "failed": len(failures(round_)),
+        "cost": cost(round_),
         "results": [_result(r) for r in round_.results],
     }
     if products:
@@ -250,6 +257,19 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
         ],
     }
     return data
+
+
+def cost(round_: Round) -> dict:
+    """The estimate made before the round and the actual cost per provider, in USD; an
+    actual of null is a model the price table does not know."""
+    spent = round_.spent if round_.spent is not None else costs.actual(round_)
+    known = [v for v in spent.values() if v is not None]
+    return {
+        "estimate": round_.estimate,
+        "actual": spent,
+        "total": round(sum(known), 6) if known else None,
+        "prices_as_of": costs.PRICES_AS_OF,
+    }
 
 
 def fact_gaps(round_: Round, product: str) -> list[dict] | None:

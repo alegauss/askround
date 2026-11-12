@@ -24,10 +24,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any
 
+from askround import costs
 from askround.http import ATTEMPTS, PostJson, post_json, with_retries
 from askround.providers import Anthropic, Gemini, OpenAI
 
@@ -141,6 +143,9 @@ class Extractor:
         self._post = with_retries(post, ATTEMPTS)
         self.timeout = timeout
         self._source = self.provider(post=post)
+        # USD its calls cost so far, as their usage reports it (costs.py)
+        self.spent = 0.0
+        self._lock = threading.Lock()
 
     @property
     def name(self) -> str:
@@ -160,6 +165,9 @@ class Extractor:
             raise RuntimeError(f"{self.name}: no API key for the extraction pass")
         url, headers, body = self.request(prompt, key, schema)
         raw = self._post(url, headers, body, self.timeout)
+        paid = costs.price(self.name, self.model, costs.usage(self.name, raw))
+        with self._lock:
+            self.spent += paid or 0.0
         return json.loads(self.json_text(raw))
 
     def read(self, answer_text: str) -> Reading:

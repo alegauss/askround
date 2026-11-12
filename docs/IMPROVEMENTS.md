@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block E — Over time: the series, the diff, the cost and the export
 
-### §AR22 Cost estimate and budget
-
-Proposing a weekly round on 12/11/2026, the agent could only say 'cents to a few dollars
-a week, to confirm against current prices'.
-
-Before a round, askround estimates its cost from the number of calls, the expected
-tokens and each provider's search price, kept in a price table with its date; a budget
-cap stops a round that would exceed it. After a round, it records the actual tokens and
-searches each provider reports and the cost computed from them.
-
-Done when a round prints its estimate, refuses one above the cap, and reports the actual
-cost per provider.
-
 ### §AR23 Export and scheduling
 
 The project that motivated askround collects numbers per product every day and builds a

@@ -28,6 +28,7 @@ from askround.rivals import key, rivals
 from askround.round import (
     Result,
     Round,
+    cost,
     exists,
     fact_gaps,
     failures,
@@ -175,6 +176,8 @@ def load_round(path: Path) -> tuple[Round, list[list[str]]]:
         brand=bool(data.get("brand", False)),
         set=data.get("set") or "",
         purpose=data.get("purpose") or "",
+        estimate=(data.get("cost") or {}).get("estimate"),
+        spent=(data.get("cost") or {}).get("actual") or {},
     )
     _restore_checks(round_, data)
     products = [p["names"] for p in data.get("products") or []]
@@ -214,6 +217,7 @@ def build(round_: Round, products: list[list[str]], source: str = "") -> dict:
         "search": round_.search,
         "runs": round_.runs,
         "brand": round_.brand,
+        "cost": cost(round_),
         "locales": [str(x) for x in round_.locales],
         "answered": len(round_.results) - len(failures(round_)),
         "failed": [
@@ -314,6 +318,9 @@ def markdown(report: dict) -> str:
     facts.append(f"{report['answered']} answers")
     if report["failed"]:
         facts.append(f"{len(report['failed'])} failed")
+    spent = (report.get("cost") or {}).get("total")
+    if spent is not None:
+        facts.append(f"cost ${spent:.4f}")
     lines += [", ".join(facts) + ". API answers, not the chat apps.", ""]
     for product in report["products"]:
         lines += _product_markdown(product, report)

@@ -20,7 +20,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import gaps, leading, links, private
+from askround import costs, gaps, leading, links, private
 from askround.extract import extract_round
 from askround.product import Product
 from askround.round import DEFAULT_RUNS, Round, run_round, save_round, slug
@@ -36,6 +36,12 @@ def check(product: Product) -> None:
         hits = leading.leads(question.text, product.names, product.phrases)
         if hits and not question.brand:
             raise ValueError(f"question {n}: {leading.refusal(question.text, hits)}")
+
+
+def estimate(product: Product, providers: list, runs: int | None, search: bool, extractor=None):
+    """What the whole set should cost: each question's calls, summed."""
+    calls = sum(runs or q.runs or DEFAULT_RUNS for q in product.questions)
+    return costs.estimate(providers, calls, search, extractor)
 
 
 def set_directory(product: Product, out: Path, now: datetime) -> Path:
@@ -75,10 +81,15 @@ def run_set(
         round_.brand = question.brand
         round_.set = product.name
         round_.purpose = question.purpose
+        round_.estimate = costs.as_dict(
+            costs.estimate(providers, round_.runs * max(1, len(round_.locales)), search, extractor)
+        )
         if extractor is not None:
+            before = extractor.spent
             extract_round(round_, extractor)
             if product.facts:
                 round_.gaps[product.name] = gaps.compare(round_, product, extractor)
+            round_.extraction_cost = extractor.spent - before
         if get is not None:
             round_.links[product.name] = links.check_links(round_, product.names, get=get)
         where = directory / f"{n:02d}-{slug(question.text, 30)}"

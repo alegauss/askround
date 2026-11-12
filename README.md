@@ -106,6 +106,19 @@ claim that contradicts a fact, or doubts it ('CPU only: Check build'), is report
 fact gap with the page that should state the fact plainly and the product's pages the
 answers did cite.
 
+## What a round costs
+
+Before a round, askround prints an estimate from the number of calls, the tokens a
+searched answer usually takes and each provider's prices, and refuses a round above the
+cap you set (`--max-cost 0.50`, or `ASKROUND_MAX_COST`) before anything is sent. After
+it, the report gives the actual cost per provider from the usage each API reported,
+the extraction pass included.
+
+The prices are a dated table in `askround/costs.py`: Anthropic's from its model table
+of 2026-11-03, the others the last known list prices, to be checked against the
+providers' pages. `ASKROUND_PRICES` names a JSON file that replaces any of them:
+`{"models": {"gpt-5": {"input": 1.25, "output": 10.0}}, "search": {"openai": 0.01}}`.
+
 ## Prompt sets: the same questions every week
 
 Add `[[question]]` entries to the product file and it becomes a prompt set:

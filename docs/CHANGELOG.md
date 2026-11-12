@@ -35,6 +35,7 @@
 
 - ✅ **AR20** **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — Every saved round appends a row per answer to series.jsonl, rebuildable from the rounds; askround series gives a product's share per week, day or month per provider.
 - ✅ **AR21** **Nothing compares a round with the previous one: a new rival, a rank lost, a product dropped** — askround diff compares two rounds or set runs per question and provider, naming share and rank changes, rivals and cited pages that appeared or left, and claims made or dropped.
+- ✅ **AR22** **The cost of a round is unknown before it runs, and web search is billed apart from tokens** — A run prints its estimate from a dated price table, refuses one above --max-cost before any call, and reports the actual cost per provider from each API's usage.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 

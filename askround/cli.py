@@ -32,6 +32,7 @@ from pathlib import Path
 from askround import (
     __version__,
     citations,
+    costs,
     diff,
     discover,
     gaps,
@@ -53,6 +54,7 @@ from askround.rivals import rivals
 from askround.round import (
     DEFAULT_RUNS,
     Round,
+    cost,
     failures,
     frequency,
     run_round,
@@ -66,6 +68,13 @@ def build_parser() -> argparse.ArgumentParser:
         prog="askround", description="Ask several AI assistants the same question."
     )
     parser.add_argument("--version", action="version", version=f"askround {__version__}")
+    paid = argparse.ArgumentParser(add_help=False)
+    paid.add_argument(
+        "--max-cost",
+        type=float,
+        metavar="USD",
+        help="refuse, before anything is sent, a run estimated above this (or ASKROUND_MAX_COST)",
+    )
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument(
         "--provider",
@@ -84,7 +93,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     ask = commands.add_parser(
-        "ask", parents=[common], help="send one question to every configured provider"
+        "ask", parents=[common, paid], help="send one question to every configured provider"
     )
     ask.add_argument("question")
     ask.add_argument(
@@ -157,7 +166,7 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
     run = commands.add_parser(
-        "run", parents=[common], help="ask every question of a product file (a prompt set)"
+        "run", parents=[common, paid], help="ask every question of a product file (a prompt set)"
     )
     run.add_argument("file", type=Path, metavar="PRODUCT.toml")
     run.add_argument(
@@ -175,7 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--out", type=Path, help="where rounds are saved")
     disc = commands.add_parser(
         "discover",
-        parents=[common],
+        parents=[common, paid],
         help="find which way of asking leads the assistants to a product",
     )
     disc.add_argument("file", type=Path, metavar="PRODUCT.toml")
@@ -299,6 +308,17 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
     return run_ask(args, providers, post, fetch)
 
 
+def _budget(est, max_cost: float | None) -> None:
+    """Print the estimate; refuse, before anything is paid, a run above the cap (L5)."""
+    print(f"askround: {costs.describe(est)}", file=sys.stderr)
+    limit = costs.cap(max_cost)
+    if limit is not None and est.total > limit:
+        raise Refused(
+            f"the estimate ${est.total:.4f} is above the cap ${limit:.4f} "
+            "(--max-cost or ASKROUND_MAX_COST); nothing was sent"
+        )
+
+
 def run_discover(args, providers, post) -> int:
     providers = [p for p in providers if p.configured()]
     try:
@@ -318,6 +338,10 @@ def run_discover(args, providers, post) -> int:
         found = private.scan(seed)
         if found:
             raise Refused(private.refusal("the seed", seed, found))
+        calls = args.runs * (args.variants + 1)
+        _budget(
+            costs.estimate(providers, calls, True, writer if args.extract else None), args.max_cost
+        )
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return 2
@@ -381,6 +405,7 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
             extractor = choose(args.extract, **_post(post)) if args.extract else None
         except ValueError as error:
             raise Refused(str(error)) from None
+        _budget(sets.estimate(item, providers, args.runs, args.search, extractor), args.max_cost)
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return 2
@@ -427,6 +452,10 @@ def _preflight(args, providers, post):
         extractor = choose(args.extract, **_post(post)) if args.extract else None
     except ValueError as error:
         raise Refused(str(error)) from None
+    calls = args.runs * max(1, len(args.locales or []))
+    est = costs.estimate(providers, calls, args.search, extractor)
+    _budget(est, args.max_cost)
+    args.estimate = costs.as_dict(est)
     return providers, files, products, extractor
 
 
@@ -445,10 +474,12 @@ def _check_question(question: str, products, phrases, brand: bool) -> None:
 def _after(args, round_, files, products, extractor, post, fetch) -> None:
     """The passes over a round that already answered."""
     if extractor is not None:
+        before = extractor.spent
         extract_round(round_, extractor)
         for f in files:
             if f.facts:
                 round_.gaps[f.name] = gaps.compare(round_, f, extractor)
+        round_.extraction_cost = extractor.spent - before
     if args.check_rivals:
         top = rivals(round_, products).rivals[: args.check_rivals]
         web = lookup.web_lookup(**_post(post))
@@ -469,6 +500,7 @@ def run_ask(args, providers, post, fetch=None) -> int:
         args.question, providers, search=args.search, runs=args.runs, locales=args.locales
     )
     round_.brand = args.brand
+    round_.estimate = args.estimate
     _after(args, round_, files, products, extractor, post, fetch)
     directory = save_round(round_, _rounds_dir(args.out), products)
     if args.json:
@@ -650,8 +682,21 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
             where = f" {r.locale}" if r.locale else ""
             lines.append(f"  {r.provider}{where} run {r.run}: {r.error}")
         lines.append("")
+    lines.append(_cost_line(cost(round_)))
     lines.append(f"saved: {directory}")
     return "\n".join(lines)
+
+
+def _cost_line(spent: dict) -> str:
+    """'cost: $0.0412 (openai $0.0301, ...), estimated $0.05' from round.cost()."""
+    actual = spent["actual"] or {}
+    parts = ", ".join(
+        f"{k} ${v:.4f}" if v is not None else f"{k} (no price)" for k, v in actual.items()
+    )
+    total = f"${spent['total']:.4f}" if spent["total"] is not None else "unknown"
+    estimate = spent["estimate"]
+    guessed = f", estimated ${estimate['total']:.4f}" if estimate else ""
+    return f"cost: {total} ({parts or 'nothing billed'}){guessed}"
 
 
 RIVALS_SHOWN = 10

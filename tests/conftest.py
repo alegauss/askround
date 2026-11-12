@@ -145,9 +145,14 @@ class FakePost:
 
 @pytest.fixture(autouse=True)
 def no_private_list(monkeypatch):
-    """The person's own list of private terms never leaks into a test's verdict."""
-    monkeypatch.delenv("ASKROUND_PRIVATE", raising=False)
-    monkeypatch.delenv("ASKROUND_PRIVATE_FILE", raising=False)
+    """The person's own private terms, cap and prices never leak into a test's verdict."""
+    for var in (
+        "ASKROUND_PRIVATE",
+        "ASKROUND_PRIVATE_FILE",
+        "ASKROUND_MAX_COST",
+        "ASKROUND_PRICES",
+    ):
+        monkeypatch.delenv(var, raising=False)
 
 
 @pytest.fixture(autouse=True)
