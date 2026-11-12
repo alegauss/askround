@@ -61,6 +61,7 @@
 - ✅ **AR36** **An agent asking the same question again the same day pays for the same round twice** — A question asked again the same way within the day returns the stored round with its age and calls no provider; --fresh asks anew, and a round with failures is asked again.
 - ✅ **AR37** **Nothing measures how many tokens each MCP response costs the agent, so outputs grow unnoticed** — Every MCP tool's response is counted on the recorded rounds against a budget in budgets/mcp-tokens.json, and askround_run returns one brief per question.
 - ✅ **AR38** **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — The plugin, askround install and a vendored copy for the web wire every clone.
+- ✅ **AR39 (no runtime dependency, guarded)** **Running askround would mean installing provider SDKs and their dependency trees** — askround installs alone and imports only the standard library.
 
 ## Block I — The site at alegauss.github.io/askround
 

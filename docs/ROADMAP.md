@@ -6,8 +6,6 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- 📋 **AR39** (deps: AR1 ✅) **Running askround would mean installing provider SDKs and their dependency trees** — roadkeep is Python 3.11+ with zero runtime dependencies and runs under uvx with no install; askround should start as easily. → §AR39
-
 ## Block I — The site at alegauss.github.io/askround
 
 - 📋 **AR40** (deps: —) **askround has no public site: nowhere to see what a round reports, install it or read the docs** — Every product in the family has its page at alegauss.github.io; a developer who hears of askround needs one place that shows a real round. → §AR40
@@ -20,6 +18,13 @@
 - **pip install askround installs the published package on Windows, macOS and Linux**
   Checked by installing from PyPI into a fresh virtual environment on each system and
   running askround doctor --no-check.
+
+## Done when — AR39
+
+- **pip install askround installs nothing else** tests/test_dependencies.py fails on a
+  third-party import or a declared dependency; a clean venv held only askround and pip.
+- **uvx askround doctor runs on a clean machine** Run uvx askround doctor on a machine
+  with uv and no askround, once the package is on PyPI.
 
 ## Non-goals
 
