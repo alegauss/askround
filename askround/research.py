@@ -16,6 +16,12 @@ separate searches and reading, marking what was verified against what was inferr
 
 Claims are ranked by how many providers support them. Support is agreement among
 assistants, not proof: a claim with a primary source is the one to check at the source.
+
+Where the claims disagree (one assistant says a model's licence allows commercial use,
+another that it does not) the merge says so, and the report puts each disagreement
+first, with both sides, their passages and the primary sources to read to settle it:
+that is where a decision is at risk. A conflict inside one provider's own sources is
+not detected: that would mean reading the sources, which askround does not do.
 """
 
 from __future__ import annotations
@@ -54,6 +60,8 @@ READ_SCHEMA: dict[str, Any] = {
 
 MERGE = """Below are statements that several AI assistants made in answer to one research question, each with an id. Group the statements that make the same claim (the same fact about the same subject, even worded differently) and write each group's claim once, in plain words. Every id belongs to exactly one group; a statement no other statement repeats is a group of one. Do not merge statements that disagree: two different values for the same fact are two claims. Do not merge statements about different subjects, even when their names are alike (two models, versions or products with similar names are different subjects).
 
+Then list the disagreements: facts on which your claims differ - one says a model's licence allows commercial use and another says it does not, two different numbers for the same thing. For each, name the fact in a few words and give the numbers of the claims (counting your claims from 1, in the order you wrote them) that take part in it. Leave the list empty when the claims do not disagree.
+
 <question>{question}</question>
 
 <statements>
@@ -74,9 +82,21 @@ MERGE_SCHEMA: dict[str, Any] = {
                 "required": ["claim", "ids"],
                 "additionalProperties": False,
             },
-        }
+        },
+        "disagreements": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "fact": {"type": "string"},
+                    "claims": {"type": "array", "items": {"type": "integer"}},
+                },
+                "required": ["fact", "claims"],
+                "additionalProperties": False,
+            },
+        },
     },
-    "required": ["claims"],
+    "required": ["claims", "disagreements"],
     "additionalProperties": False,
 }
 
@@ -106,7 +126,8 @@ def primary(url: str) -> bool:
     host = parts.netloc.lower().removeprefix("www.")
     path = parts.path.lower()
     if any(host == h or host.endswith("." + h) for h in PRIMARY_HOSTS):
-        return True
+        # a repository or a paper, not the site's front page (a redirect known by its domain)
+        return path.strip("/") != ""
     if "licen" in path or path.endswith((".pdf", "/license", "/copying")):
         return True
     return host.startswith("docs.") or "/docs" in path
@@ -135,26 +156,54 @@ def read(round_, extractor) -> list[Statement]:
     return out
 
 
-def merge(question: str, statements: list[Statement], extractor) -> list[Merged]:
+@dataclass
+class Disagreement:
+    fact: str
+    sides: list[Merged]  # the claims that differ, each with its providers and passages
+    check: list[str]  # the primary sources to read to settle it, subject first
+
+
+@dataclass
+class Findings:
+    claims: list[Merged]
+    disagreements: list[Disagreement]
+
+
+def merge(question: str, statements: list[Statement], extractor) -> Findings:
     if not statements:
-        return []
+        return Findings([], [])
     listed = "\n".join(f"{s.id}: {s.statement}" for s in statements)
     data = extractor.ask_json(MERGE.format(question=question, statements=listed), MERGE_SCHEMA)
     by_id = {s.id: s for s in statements}
     placed: set[str] = set()
     merged: list[Merged] = []
-    for group in data.get("claims") or []:
+    numbered: dict[int, Merged] = {}  # the model's claim number -> the claim
+    for n, group in enumerate(data.get("claims") or [], start=1):
         members = [by_id[i] for i in group.get("ids") or [] if i in by_id and i not in placed]
         if not members:
             continue
         placed.update(m.id for m in members)
-        merged.append(_merged(str(group.get("claim") or members[0].statement), members))
+        numbered[n] = _merged(str(group.get("claim") or members[0].statement), members)
+        merged.append(numbered[n])
     # a statement the model left out of every group still counts, on its own
     merged += [_merged(s.statement, [s]) for s in statements if s.id not in placed]
     merged.sort(
         key=lambda m: (-len(m.providers), -sum(s["primary"] and s["about"] for s in m.sources))
     )
-    return merged
+    return Findings(merged, _disagreements(data.get("disagreements") or [], numbered))
+
+
+def _disagreements(items: list[dict], numbered: dict[int, Merged]) -> list[Disagreement]:
+    found = []
+    for item in items:
+        sides = [numbered[n] for n in dict.fromkeys(item.get("claims") or []) if n in numbered]
+        if len(sides) < 2:
+            continue  # a disagreement needs two sides askround can show
+        pages = sorted(
+            {(not s["about"], s["url"]) for side in sides for s in side.sources if s["primary"]}
+        )
+        found.append(Disagreement(str(item.get("fact") or ""), sides, [url for _, url in pages]))
+    return found
 
 
 def _merged(claim: str, members: list[Statement]) -> Merged:
@@ -194,7 +243,8 @@ def _subject_words(claim: str) -> list[str]:
     return [t for t in tokens if len(t) >= 4 and t not in _COMMON]
 
 
-def markdown(question: str, merged: list[Merged], providers: list[str]) -> str:
+def markdown(question: str, found: Findings, providers: list[str]) -> str:
+    merged = found.claims
     lines = [f"# Research: {question}", ""]
     lines.append(
         f"{len(merged)} claims from {len(providers)} providers ({', '.join(providers)}), "
@@ -202,6 +252,7 @@ def markdown(question: str, merged: list[Merged], providers: list[str]) -> str:
         "claim at its primary source."
     )
     lines.append("")
+    lines += _disagreement_lines(found.disagreements)
     for n, m in enumerate(merged, 1):
         lines.append(f"## {n}. {m.claim}")
         lines.append("")
@@ -218,5 +269,28 @@ def markdown(question: str, merged: list[Merged], providers: list[str]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def as_json(merged: list[Merged]) -> list[dict]:
-    return [m.__dict__ for m in merged]
+def _disagreement_lines(disagreements: list[Disagreement]) -> list[str]:
+    if not disagreements:
+        return []
+    lines = ["## Where they disagree - check these at the source", ""]
+    for d in disagreements:
+        lines.append(f"**{d.fact}**")
+        for side in d.sides:
+            quotes = "; ".join(f'{p}: "{q}"' for p, q in side.passages.items())
+            lines.append(f"- {side.claim} ({quotes})")
+        if d.check:
+            lines.append("  Settle it at: " + ", ".join(d.check[:3]))
+        else:
+            lines.append("  No primary source was cited: find the project's own page.")
+        lines.append("")
+    return lines
+
+
+def as_json(found: Findings) -> dict:
+    return {
+        "claims": [m.__dict__ for m in found.claims],
+        "disagreements": [
+            {"fact": d.fact, "sides": [s.__dict__ for s in d.sides], "check": d.check}
+            for d in found.disagreements
+        ],
+    }

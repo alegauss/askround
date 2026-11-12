@@ -66,7 +66,8 @@ class Reader:
             "claims": [
                 {"claim": "TripoSR is MIT licensed", "ids": ["openai#1:1", "gemini#1:1"]},
                 {"claim": "Hunyuan3D 2.1 restricts use in the EU", "ids": ["openai#1:2"]},
-            ]
+            ],
+            "disagreements": [],
         }
 
 
@@ -78,7 +79,9 @@ def test_read_keeps_only_statements_traced_to_their_passage():
 
 def test_merge_groups_by_support_and_ranks_primary_sources_first():
     reader = Reader()
-    merged = research.merge(QUESTION, research.read(_round(), reader), reader)
+    found = research.merge(QUESTION, research.read(_round(), reader), reader)
+    merged = found.claims
+    assert found.disagreements == []
     top = merged[0]
     assert top.claim == "TripoSR is MIT licensed"
     assert top.providers == ["openai", "gemini"]
@@ -103,16 +106,64 @@ def test_primary():
     assert research.primary("https://docs.example.org/start")
     assert research.primary("https://arxiv.org/abs/2403.02151")
     assert not research.primary("https://someblog.example/best-3d-models")
+    assert not research.primary("https://github.com/")  # a front page, not a repository
 
 
 def test_markdown():
     reader = Reader()
-    merged = research.merge(QUESTION, research.read(_round(), reader), reader)
-    text = research.markdown(QUESTION, merged, ["openai", "gemini"])
+    found = research.merge(QUESTION, research.read(_round(), reader), reader)
+    text = research.markdown(QUESTION, found, ["openai", "gemini"])
     assert text.startswith(f"# Research: {QUESTION}")
     assert "## 1. TripoSR is MIT licensed" in text
     assert "Supported by 2/2: openai, gemini" in text
     assert "- [primary] https://github.com/VAST-AI-Research/TripoSR/blob/main/LICENSE" in text
+    assert "disagree" not in text
+
+
+# the 12/11/2026 case: a third-party page called every Depth Anything 3 checkpoint
+# non-commercial, while the official table lists Mono and Metric Large under Apache-2.0
+DA3_OPENAI = "Depth Anything 3 Mono Large is released under Apache-2.0."
+DA3_GEMINI = "All Depth Anything 3 checkpoints are non-commercial."
+
+
+class DisagreeingReader:
+    def ask_json(self, prompt, schema):
+        if "statements" in schema["properties"]:
+            quote = DA3_OPENAI if DA3_OPENAI in prompt else DA3_GEMINI
+            return {"statements": [{"statement": quote, "quote": quote}]}
+        return {
+            "claims": [
+                {"claim": "DA3 Mono Large is Apache-2.0", "ids": ["openai#1:1"]},
+                {"claim": "Every DA3 checkpoint is non-commercial", "ids": ["gemini#1:1"]},
+            ],
+            "disagreements": [
+                {"fact": "Depth Anything 3's licence", "claims": [1, 2]},
+                {"fact": "a one-sided one", "claims": [1, 9]},
+            ],
+        }
+
+
+def test_a_disagreement_is_reported_with_both_sides_and_the_source_to_check():
+    official = "https://github.com/ByteDance-Seed/Depth-Anything-3"
+    a = Answer("openai", "m", DA3_OPENAI, {}, sources=[Source(official)])
+    g = Answer("gemini", "m", DA3_GEMINI, {}, sources=[Source("https://aiblog.example/da3")])
+    round_ = Round(
+        "q", NOW, [Result("openai", "m", 1, answer=a), Result("gemini", "m", 1, answer=g)]
+    )
+    reader = DisagreeingReader()
+    found = research.merge("q", research.read(round_, reader), reader)
+    assert len(found.disagreements) == 1  # the one-sided entry is dropped
+    d = found.disagreements[0]
+    assert d.fact == "Depth Anything 3's licence"
+    assert [s.claim for s in d.sides] == [
+        "DA3 Mono Large is Apache-2.0",
+        "Every DA3 checkpoint is non-commercial",
+    ]
+    assert d.check == [official]
+    text = research.markdown("q", found, ["openai", "gemini"])
+    assert text.index("## Where they disagree") < text.index("## 1.")
+    assert '- Every DA3 checkpoint is non-commercial (gemini: "All Depth Anything 3' in text
+    assert f"Settle it at: {official}" in text
 
 
 class Routed(FakePost):

@@ -238,6 +238,10 @@ provider's passage and the sources, those naming the claim's subject first and p
 ones (repositories, licence texts, papers, official docs) before secondary ones.
 Support is agreement among assistants, not proof: check a claim at its primary source.
 
+Where the assistants disagree on a fact (one says a model's licence allows commercial
+use, another that it does not), the report opens with it: both sides, their passages,
+and the primary sources to read to settle it.
+
 ## For agents: the MCP server
 
 `askround mcp` serves askround over stdio to an agent. In Claude Code:

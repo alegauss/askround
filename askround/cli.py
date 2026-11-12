@@ -372,13 +372,13 @@ def run_research(args, providers, post) -> int:
         return 2
     round_ = run_round(args.question, providers, runs=args.runs)
     before = reader.spent
-    merged = research.merge(args.question, research.read(round_, reader), reader)
+    found = research.merge(args.question, research.read(round_, reader), reader)
     round_.extraction_cost = reader.spent - before
     directory = save_round(round_, _rounds_dir(args.out))
     names = list(dict.fromkeys(r.provider for r in round_.results if r.answer))
-    text = research.markdown(args.question, merged, names)
+    text = research.markdown(args.question, found, names)
     (directory / "research.md").write_text(text, encoding="utf-8")
-    data = {"question": args.question, "providers": names, "claims": research.as_json(merged)}
+    data = {"question": args.question, "providers": names, **research.as_json(found)}
     (directory / "research.json").write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

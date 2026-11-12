@@ -24,18 +24,6 @@ context on what a command could have answered.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-### §AR26 Disagreements to check
-
-During the model research, one third-party page described every Depth Anything 3
-checkpoint as non-commercial, while the official table lists the Mono and Metric Large
-ones under Apache-2.0. A merged answer that hides such a split invites a wrong decision.
-
-Research mode marks every claim on which providers disagree, or on which one provider's
-sources conflict, and lists the primary source to read to settle it.
-
-Done when a research question with a known disagreement reports it with both sides and
-the primary source to check.
-
 ### §AR27 A Claude Code skill
 
 The author ships his Claude Code tools (roadkeep, commitclerk) with skills and plugins.
