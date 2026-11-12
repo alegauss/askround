@@ -2,6 +2,7 @@ import { SiteButton } from "@viglet/viglet-design-system/site";
 import { BASE, PROVIDER_NAMES, repoUrl, roadkeepUrl, words } from "../content";
 import round from "../round.json";
 import self from "../self-round.json";
+import { Shell } from "./Shell";
 
 function Head({ id, eyebrow, title }: { id: string; eyebrow: string; title: string }) {
   return (
@@ -179,7 +180,7 @@ export function Install() {
             <li key={step.label}>
               <p>{step.label}</p>
               <pre tabIndex={0}>
-                <code>{step.code}</code>
+                <Shell code={step.code} />
               </pre>
             </li>
           ))}

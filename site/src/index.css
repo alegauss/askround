@@ -241,6 +241,29 @@ section.tinted {
   font-size: 0.9rem;
   line-height: 1.6;
 }
+/* The command lines' colours, on the blocks' own dark ground in either theme; each is at
+   least 7:1 against #14161b. */
+.sh-prompt {
+  color: #9ca3af;
+  user-select: none;
+}
+.sh-cmd {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+.sh-sub {
+  color: #c4b5fd;
+}
+.sh-flag {
+  color: #fdba74;
+}
+.sh-str {
+  color: #86efac;
+}
+.sh-comment {
+  color: #9ca3af;
+  font-style: italic;
+}
 .steps pre:focus-visible {
   outline: 3px solid var(--vg-brand);
   outline-offset: 3px;
