@@ -22,20 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block D — Questions: prompt sets and finding the question that leads to a product
-
-### §AR19 No personal data in questions
-
-The session that started askround worked under a rule that no personal details go to
-outside services. A round multiplies any slip by the number of providers.
-
-Before sending, each question is scanned for email addresses, phone numbers, personal
-names from a configured list and other identifiers, and the round stops and names the
-match. Product names and public domains are allowed.
-
-Done when a question with an email address stops the round before any call and says
-which question and why.
-
 ## Block E — Over time: the series, the diff, the cost and the export
 
 ### §AR20 The series

@@ -2,10 +2,6 @@
 
 ## Priority
 
-## Block D — Questions: prompt sets and finding the question that leads to a product
-
-- 📋 **AR19** (deps: AR16 ✅) **A question could carry personal data, an email or a person's name, to every provider at once** — One round sends the same text to four companies; a slip in a prompt is a leak to all of them. → §AR19
-
 ## Block E — Over time: the series, the diff, the cost and the export
 
 - 📋 **AR20** (deps: AR8 ✅) **Rounds are not kept as a series, so a product entering or leaving the answers goes unnoticed** — The app's audience moved on a given day; only a weekly series shows when an assistant started or stopped naming it. → §AR20
@@ -29,7 +25,7 @@
 
 - 📋 **AR31** (deps: AR12 ✅, AR24) **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — roadkeep's answer to context cost is 'ask instead of read'; askround returns the extracted result and one raw answer only when asked. → §AR31
 - 📋 **AR32** (deps: AR12 ✅) **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every roadkeep command takes --json and says which file and line an answer came from; askround's agents need the same contract. → §AR32
-- 📋 **AR33** (deps: AR18 ✅, AR19, AR22, AR24) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33
+- 📋 **AR33** (deps: AR18 ✅, AR19 ✅, AR22, AR24) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33
 - 📋 **AR34** (deps: AR22, AR24) **An agent could spend the user's API money on rounds without the user ever agreeing to the amount** — A tool an agent can call in a loop needs a spending limit the person sets, and a stop that asks before going past it. → §AR34
 - 📋 **AR35** (deps: AR24) **A round takes minutes of searched calls, longer than an MCP call should block the agent** — An agent waiting on one tool call for minutes stalls its session, or times out and loses a round it already paid for. → §AR35
 - 📋 **AR36** (deps: AR20) **An agent asking the same question again the same day pays for the same round twice** — Agents repeat themselves across turns and sessions; a repeated round should cost nothing unless a fresh answer is asked for. → §AR36

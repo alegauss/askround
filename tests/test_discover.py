@@ -109,7 +109,7 @@ def test_discover_ranks_the_no_nvidia_variant_above_the_generic(all_keys, tmp_pa
     assert "photo to 3D on Windows without an NVIDIA GPU" in rows[0]
     assert rows[0].startswith("| 1 | 1.00 |")
     assert any(SEED in row and "| 0.00 |" in row for row in rows)
-    assert "Dropped for naming the product: is Modelado good" in out
+    assert "Dropped for naming the product or carrying personal data: is Modelado good" in out
     assert list(tmp_path.glob("*/*/discovery.md"))
 
 

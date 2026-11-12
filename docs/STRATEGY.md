@@ -1,7 +1,5 @@
 # Strategy
 
-## Block D — Questions: prompt sets and finding the question that leads to a product
-
 ## Block E — Over time: the series, the diff, the cost and the export
 
 ## Block F — For agents: an MCP server, a skill and research across assistants

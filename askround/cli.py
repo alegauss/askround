@@ -37,6 +37,7 @@ from askround import (
     leading,
     links,
     lookup,
+    private,
     product,
     sets,
 )
@@ -289,6 +290,9 @@ def run_discover(args, providers, post) -> int:
         hits = leading.leads(seed, item.names, item.phrases)
         if hits:
             raise Refused(leading.refusal(seed, hits))
+        found = private.scan(seed)
+        if found:
+            raise Refused(private.refusal("the seed", seed, found))
     except Refused as refusal:
         print(f"askround: {refusal}", file=sys.stderr)
         return 2
@@ -322,7 +326,10 @@ def run_discover(args, providers, post) -> int:
             "run. Add the promising questions to the product file and `askround run` them.",
         ]
     if dropped:
-        lines += ["", "Dropped for naming the product: " + "; ".join(dropped)]
+        lines += [
+            "",
+            "Dropped for naming the product or carrying personal data: " + "; ".join(dropped),
+        ]
     text = "\n".join(lines) + "\n"
     (directory / "discovery.md").write_text(text, encoding="utf-8")
     print(text, end="")
@@ -386,11 +393,7 @@ def _preflight(args, providers, post):
     except (OSError, ValueError) as error:
         raise Refused(str(error)) from None
     products = [*(args.products or []), *(f.names for f in files)]
-    if not args.brand:
-        phrases = [p for f in files for p in f.phrases]
-        hits = [t for names in products for t in leading.leads(args.question, names, phrases)]
-        if hits:
-            raise Refused(leading.refusal(args.question, list(dict.fromkeys(hits))))
+    _check_question(args.question, products, [p for f in files for p in f.phrases], args.brand)
     if args.check_rivals and not args.extract:
         raise Refused("--check-rivals reads the rivals from --extract; add it")
     if args.check_links and not products:
@@ -400,6 +403,18 @@ def _preflight(args, providers, post):
     except ValueError as error:
         raise Refused(str(error)) from None
     return providers, files, products, extractor
+
+
+def _check_question(question: str, products, phrases, brand: bool) -> None:
+    """No personal data (private.py), and no naming the product unless on purpose."""
+    found = private.scan(question)
+    if found:
+        raise Refused(private.refusal("the question", question, found))
+    if brand:
+        return
+    hits = [t for names in products for t in leading.leads(question, names, phrases)]
+    if hits:
+        raise Refused(leading.refusal(question, list(dict.fromkeys(hits))))
 
 
 def _after(args, round_, files, products, extractor, post, fetch) -> None:
@@ -452,6 +467,11 @@ def _fetch(fetch) -> dict:
 
 
 def run_lookup(args, post) -> int:
+    for text in [*args.names, args.context]:
+        found = private.scan(text)
+        if found:
+            print(f"askround: {private.refusal('the lookup', text, found)}", file=sys.stderr)
+            return 2
     web = lookup.web_lookup(**_post(post)) if args.web else None
     verdicts = lookup.check(args.names, args.context, web=web, **_post(post))
     if args.json:

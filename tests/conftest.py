@@ -144,6 +144,13 @@ class FakePost:
 
 
 @pytest.fixture(autouse=True)
+def no_private_list(monkeypatch):
+    """The person's own list of private terms never leaks into a test's verdict."""
+    monkeypatch.delenv("ASKROUND_PRIVATE", raising=False)
+    monkeypatch.delenv("ASKROUND_PRIVATE_FILE", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def no_waiting(monkeypatch):
     """Retries back off with `askround.http.sleep`; a test records the delays instead."""
     delays: list[float] = []

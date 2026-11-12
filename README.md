@@ -123,6 +123,11 @@ a phrase listed under `phrases`) measures nothing, so it is refused before anyth
 paid for. A question that asks about the product on purpose is marked `brand = true`
 (or `--brand` on `ask`); it runs, and is reported apart.
 
+A round sends the same text to every provider, so a question that carries personal data
+(an email address, a phone number, a CPF, an IP address, an API key, or a name on your
+own list in `ASKROUND_PRIVATE` or the file `ASKROUND_PRIVATE_FILE` names) stops before
+anything is sent, naming the question and what it found.
+
 `askround run modelado.toml` asks every question as its own round, kept together in
 one set directory, and prints one table of question by provider before each question's
 report. `askround report` on the set's directory prints it again.

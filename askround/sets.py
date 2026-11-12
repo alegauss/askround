@@ -20,15 +20,19 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askround import gaps, leading, links
+from askround import gaps, leading, links, private
 from askround.extract import extract_round
 from askround.product import Product
 from askround.round import DEFAULT_RUNS, Round, run_round, save_round, slug
 
 
 def check(product: Product) -> None:
-    """Refuse the whole set, before any call, if an unmarked question names the product."""
+    """Refuse the whole set, before any call, if a question carries personal data or,
+    unmarked as a brand question, names the product."""
     for n, question in enumerate(product.questions, start=1):
+        found = private.scan(question.text)
+        if found:
+            raise ValueError(private.refusal(f"question {n}", question.text, found))
         hits = leading.leads(question.text, product.names, product.phrases)
         if hits and not question.brand:
             raise ValueError(f"question {n}: {leading.refusal(question.text, hits)}")

@@ -7,7 +7,8 @@ for and what to say on its first screen. Discovery does that search:
 1. From a seed question and the product file's facts, a model writes variants along
    each axis - a constraint the product meets, a use case it serves, another language -
    none of them naming the product. A variant that names it (or one of its places) is
-   dropped: a question that names the product measures nothing.
+   dropped: a question that names the product measures nothing. So is one that carries
+   personal data (private.py), which the model could have copied from the facts.
 2. The seed and the variants run as a prompt set (sets.py).
 3. Each question is scored over all its answers: 1/position where the product is in the
    answer's recommendations, 1/2 where it is named outside them, 0 where it is absent;
@@ -23,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from askround import mention
+from askround import mention, private
 from askround.product import Product, Question
 from askround.providers import Locale
 from askround.round import Round, frequency
@@ -80,7 +81,7 @@ def generate(
         text = str(item.get("text") or "").strip()
         if not text or text == seed:
             continue
-        if names.search(text):
+        if names.search(text) or private.scan(text):
             dropped.append(text)
             continue
         try:
