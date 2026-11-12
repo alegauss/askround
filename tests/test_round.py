@@ -85,6 +85,7 @@ def test_save_round_writes_summary_and_raw(all_keys, tmp_path):
     openai = next(p for p in product["providers"] if p["provider"] == "openai")
     assert openai == {
         "provider": "openai",
+        "locale": None,
         "model": "gpt-5-2025-08-07",
         "runs": 2,
         "named": 2,

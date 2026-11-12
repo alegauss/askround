@@ -12,6 +12,12 @@ sees; `search=False` is there to compare against. Each answer keeps the search q
 and the sources the provider reported, as the provider reported them (Gemini's are
 redirect links titled with the domain).
 
+A question can be asked as someone in a country and language would ask it (`Locale`).
+Each API takes a different part of that, and only for its search: OpenAI, Anthropic and
+Perplexity an approximate country, Gemini a language for its Google Search retrieval.
+What an API cannot take is recorded on the answer as ignored, never silently dropped;
+the language of the question itself is still the strongest signal and is the caller's.
+
 The model is the provider's default below unless `ASKROUND_<NAME>_MODEL` is set.
 """
 
@@ -29,6 +35,26 @@ from askround.http import PostJson, post_json
 class Source:
     url: str
     title: str = ""
+
+
+@dataclass(frozen=True)
+class Locale:
+    """Where and in which language the asker is: an ISO 3166 country code ("BR") and
+    an optional BCP 47 language tag ("pt-BR")."""
+
+    country: str
+    language: str | None = None
+
+    @classmethod
+    def parse(cls, value: str) -> Locale:
+        country, _, language = value.partition(":")
+        country = country.strip().upper()
+        if len(country) != 2 or not country.isalpha():
+            raise ValueError(f"{value!r}: expected COUNTRY[:LANGUAGE], e.g. BR:pt-BR")
+        return cls(country, language.strip() or None)
+
+    def __str__(self) -> str:
+        return f"{self.country}:{self.language}" if self.language else self.country
 
 
 @dataclass
@@ -51,6 +77,9 @@ class Answer:
     served_model: str = ""
     settings: dict[str, Any] = field(default_factory=dict)
     answered_at: datetime | None = None
+    locale: Locale | None = None
+    # the parts of `locale` this provider's API could not take, e.g. ["language"]
+    locale_ignored: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,6 +99,8 @@ class Provider:
     default_model: str = ""
     # how the adapter searches, as `askround doctor` reports it
     search_tool: str = ""
+    # the Locale fields this API takes, and only when searching
+    locale_fields: tuple[str, ...] = ()
 
     def __init__(
         self, post: PostJson = post_json, timeout: float = 300.0, model: str | None = None
@@ -116,13 +147,20 @@ class Provider:
     def check_request(self, key: str) -> tuple[str, dict[str, str], dict[str, Any] | None]:
         raise NotImplementedError
 
-    def ask(self, question: str, search: bool = True) -> Answer:
+    def locale_ignored(self, locale: Locale | None, search: bool) -> list[str]:
+        if locale is None:
+            return []
+        asked = ["country"] + (["language"] if locale.language else [])
+        taken = self.locale_fields if search else ()
+        return [part for part in asked if part not in taken]
+
+    def ask(self, question: str, search: bool = True, locale: Locale | None = None) -> Answer:
         key = self.api_key()
         if key is None:
             raise RuntimeError(f"{self.name}: none of {', '.join(self.key_vars)} is set")
-        _, _, body = self.request(question, key, search)
+        _, _, body = self.request(question, key, search, locale)
         settings = {k: v for k, v in body.items() if k not in QUESTION_FIELDS}
-        raw = self.call(question, key, search)
+        raw = self.call(question, key, search, locale)
         parsed = self.parse(raw)
         return Answer(
             self.name,
@@ -135,14 +173,18 @@ class Provider:
             served_model=self.served_model(raw) or self.model,
             settings=settings,
             answered_at=datetime.now(timezone.utc),
+            locale=locale,
+            locale_ignored=self.locale_ignored(locale, search),
         )
 
-    def call(self, question: str, key: str, search: bool) -> dict[str, Any]:
-        url, headers, body = self.request(question, key, search)
+    def call(
+        self, question: str, key: str, search: bool, locale: Locale | None = None
+    ) -> dict[str, Any]:
+        url, headers, body = self.request(question, key, search, locale)
         return self._post(url, headers, body, self.timeout)
 
     def request(
-        self, question: str, key: str, search: bool
+        self, question: str, key: str, search: bool, locale: Locale | None = None
     ) -> tuple[str, dict[str, str], dict[str, Any]]:
         raise NotImplementedError
 
@@ -165,6 +207,7 @@ class OpenAI(Provider):
     key_vars = ("OPENAI_API_KEY",)
     default_model = "gpt-5"
     search_tool = "web_search (Responses API)"
+    locale_fields = ("country",)
 
     def check_request(self, key):
         return (
@@ -173,10 +216,13 @@ class OpenAI(Provider):
             None,
         )
 
-    def request(self, question, key, search):
+    def request(self, question, key, search, locale=None):
         body: dict[str, Any] = {"model": self.model, "input": question}
         if search:
-            body["tools"] = [{"type": "web_search"}]
+            tool: dict[str, Any] = {"type": "web_search"}
+            if locale:
+                tool["user_location"] = {"type": "approximate", "country": locale.country}
+            body["tools"] = [tool]
             body["include"] = ["web_search_call.action.sources"]
         return (
             "https://api.openai.com/v1/responses",
@@ -210,6 +256,7 @@ class Gemini(Provider):
     key_vars = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
     default_model = "gemini-2.5-flash"
     search_tool = "google_search grounding"
+    locale_fields = ("language",)
 
     def check_request(self, key):
         return (
@@ -218,10 +265,12 @@ class Gemini(Provider):
             None,
         )
 
-    def request(self, question, key, search):
+    def request(self, question, key, search, locale=None):
         body: dict[str, Any] = {"contents": [{"role": "user", "parts": [{"text": question}]}]}
         if search:
             body["tools"] = [{"google_search": {}}]
+            if locale and locale.language:
+                body["toolConfig"] = {"retrievalConfig": {"languageCode": locale.language}}
         return (
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
             {"x-goog-api-key": key},
@@ -252,6 +301,7 @@ class Anthropic(Provider):
     key_vars = ("ANTHROPIC_API_KEY",)
     default_model = "claude-opus-5-5"
     search_tool = "web_search_20260209 server tool"
+    locale_fields = ("country",)
     # a searching turn can pause server-side; it is resumed by sending it back
     max_continuations = 3
 
@@ -262,22 +312,25 @@ class Anthropic(Provider):
             None,
         )
 
-    def request(self, question, key, search):
+    def request(self, question, key, search, locale=None):
         body: dict[str, Any] = {
             "model": self.model,
             "max_tokens": 16000,
             "messages": [{"role": "user", "content": question}],
         }
         if search:
-            body["tools"] = [{"type": "web_search_20260209", "name": "web_search"}]
+            tool: dict[str, Any] = {"type": "web_search_20260209", "name": "web_search"}
+            if locale:
+                tool["user_location"] = {"type": "approximate", "country": locale.country}
+            body["tools"] = [tool]
         return (
             "https://api.anthropic.com/v1/messages",
             {"x-api-key": key, "anthropic-version": "2026-10-21"},
             body,
         )
 
-    def call(self, question, key, search):
-        url, headers, body = self.request(question, key, search)
+    def call(self, question, key, search, locale=None):
+        url, headers, body = self.request(question, key, search, locale)
         turns = [self._post(url, headers, body, self.timeout)]
         while turns[-1].get("stop_reason") == "pause_turn" and len(turns) <= self.max_continuations:
             body = {
@@ -323,6 +376,7 @@ class Perplexity(Provider):
     key_vars = ("PERPLEXITY_API_KEY",)
     default_model = "sonar"
     search_tool = "built into Sonar"
+    locale_fields = ("country",)
 
     def check_request(self, key):
         # no free model lookup: one token, search off, is the cheapest proof
@@ -337,13 +391,15 @@ class Perplexity(Provider):
             },
         )
 
-    def request(self, question, key, search):
+    def request(self, question, key, search, locale=None):
         body: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": question}],
         }
         if not search:
             body["disable_search"] = True
+        elif locale:
+            body["web_search_options"] = {"user_location": {"country": locale.country}}
         return (
             "https://api.perplexity.ai/chat/completions",
             {"Authorization": f"Bearer {key}"},

@@ -4,7 +4,6 @@
 
 ## Block A — The round: one question to every assistant, with web search
 
-- 📋 **AR6** (deps: AR2 ✅) **A question cannot be asked as someone in a given country and language would ask it** — A Portuguese question about running on the CPU also put the app first; country and language change which products search finds. → §AR6
 - 📋 **AR7** (deps: AR1 ✅) **A rate limit, timeout or provider error aborts the round instead of being retried and reported** — A round makes dozens of calls across providers, and one failure should cost one answer, not the whole round. → §AR7
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims

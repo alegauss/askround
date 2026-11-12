@@ -37,6 +37,12 @@ reported as "named in 2/3 runs, positions #1, #3, -", never from a single answer
 | `--no-search`       | ask without web search                              |
 | `--runs N`          | ask each provider N times, in fresh conversations (default 3) |
 | `--product NAME[,ALIAS...]` | report how many runs named the product and its position in each, repeatable |
+| `--locale COUNTRY[:LANG]` | ask as someone in this country, e.g. `BR:pt-BR`; repeat to compare countries side by side |
+
+Each API takes a different part of a locale, and only for its search: OpenAI,
+Anthropic and Perplexity an approximate country, Gemini a language. What a provider
+cannot take is recorded on the answer and shown as "ignored by the API". Write the
+question in the language you are testing: that is still the strongest signal.
 | `--out DIR`         | where the round is saved                            |
 | `--json`            | print the round as JSON                             |
 

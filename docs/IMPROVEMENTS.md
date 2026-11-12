@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block A — The round: one question to every assistant, with web search
 
-### §AR6 Locale and location
-
-One of the tests on 12/11/2026 was asked in Brazilian Portuguese, because the Microsoft
-Store showed Brazil among the app's top markets. Search results, and so the
-recommendations, depend on the asker's language and country.
-
-A round accepts a language and a country per question, passed to each provider where its
-API allows it (OpenAI's web search user location, Gemini's language, Perplexity's search
-settings), and records when a provider ignored it.
-
-Done when the same question asked as Brazil and as the United States records the locale
-used by each provider, and the report compares the two.
-
 ### §AR7 Retries and partial rounds
 
 A round of ten questions, four providers and three runs is 120 calls with web search,

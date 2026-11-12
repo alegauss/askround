@@ -1,7 +1,8 @@
 """The `askround` command.
 
     askround ask "<question>" [--provider NAME ...] [--model PROVIDER=MODEL ...]
-                 [--runs N] [--product NAME[,ALIAS...]] [--no-search] [--out DIR] [--json]
+                 [--runs N] [--product NAME[,ALIAS...]] [--locale COUNTRY[:LANG] ...]
+                 [--no-search] [--out DIR] [--json]
     askround doctor [--provider NAME ...] [--model PROVIDER=MODEL ...] [--no-check] [--json]
 
 `ask` sends the question to every provider whose API key is in the environment (or the
@@ -24,7 +25,7 @@ from pathlib import Path
 
 from askround import __version__
 from askround.doctor import Status, diagnose
-from askround.providers import Answer, all_providers, by_name
+from askround.providers import Answer, Locale, all_providers, by_name
 from askround.round import DEFAULT_RUNS, Round, frequency, run_round, save_round, summary
 
 
@@ -74,6 +75,15 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="NAME[,ALIAS...]",
         help="report how often this product is named and where (repeatable)",
     )
+    ask.add_argument(
+        "--locale",
+        action="append",
+        dest="locales",
+        type=_locale,
+        metavar="COUNTRY[:LANGUAGE]",
+        help="ask as someone in this country, e.g. BR:pt-BR; repeat to compare (each "
+        "locale is a full set of runs)",
+    )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
     doctor = commands.add_parser(
@@ -98,6 +108,13 @@ def _pin(value: str) -> tuple[str, str]:
     if not sep or not provider.strip() or not model.strip():
         raise argparse.ArgumentTypeError("expected PROVIDER=MODEL, e.g. openai=gpt-5")
     return provider.strip(), model.strip()
+
+
+def _locale(value: str) -> Locale:
+    try:
+        return Locale.parse(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
 
 
 def _names(value: str) -> list[str]:
@@ -128,7 +145,9 @@ def main(argv: list[str] | None = None, post=None) -> int:
         return 2
     out = args.out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
     products = args.products or []
-    round_ = run_round(args.question, providers, search=args.search, runs=args.runs)
+    round_ = run_round(
+        args.question, providers, search=args.search, runs=args.runs, locales=args.locales
+    )
     directory = save_round(round_, out, products)
     if args.json:
         data = {**summary(round_, products), "saved": str(directory)}
@@ -183,10 +202,7 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
         lines[0] += "  (web search off)"
     for r in round_.results:
         run = f", run {r.run}/{round_.runs}" if round_.runs > 1 else ""
-        model = r.model
-        if r.answer and r.answer.served_model and r.answer.served_model != r.model:
-            model = f"{r.model} -> {r.answer.served_model}"
-        lines.append(f"=== {r.provider} ({model}{run}) ===")
+        lines.append(f"=== {r.provider} ({_model(r)}{run}){_place(r)} ===")
         lines.extend(_answer_lines(r.answer) if r.answer else [f"[error] {r.error}"])
         lines.append("")
     for names in products or []:
@@ -196,12 +212,26 @@ def render(round_: Round, directory: Path, products: list[list[str]] | None = No
     return "\n".join(lines)
 
 
+def _model(r) -> str:
+    served = r.answer.served_model if r.answer else ""
+    return f"{r.model} -> {served}" if served and served != r.model else r.model
+
+
+def _place(r) -> str:
+    if r.locale is None:
+        return ""
+    ignored = r.answer.locale_ignored if r.answer else []
+    note = f", {' and '.join(ignored)} ignored by the API" if ignored else ""
+    return f" [{r.locale}{note}]"
+
+
 def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
     lines = [f"{names[0]}: named in"]
     for f in frequency(round_, names):
         places = ", ".join("-" if p is None else f"#{p}" for p in f.positions)
+        where = f"{str(f.locale):<9}" if round_.locales else ""
         lines.append(
-            f"  {f.provider:<11} {f.share} runs   positions: {places or '-'}   ({f.model})"
+            f"  {f.provider:<11} {where}{f.share} runs   positions: {places or '-'}   ({f.model})"
         )
     return lines
 
