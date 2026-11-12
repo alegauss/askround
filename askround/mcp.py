@@ -7,6 +7,7 @@ stdio (newline-delimited JSON-RPC 2.0, the MCP stdio transport), with no depende
     askround_ask     ask one question across providers; the report, and the answers listed
     askround_answer  one answer's full text, from a round already asked
     askround_run     run a prompt set (a product file); the set's report
+    askround_research  a research question everywhere, its claims merged by support
     askround_report  the report of a stored round or set
     askround_diff    what changed between two runs of the same questions
     askround_doctor  which providers can run (key variable names, never values)
@@ -107,6 +108,21 @@ TOOLS: list[dict[str, Any]] = [
                 "max_cost": _COST,
             },
             "required": ["file"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "askround_research",
+        "description": "Ask a research question to every assistant with web search and merge the answers: the claims they make, how many providers support each, each provider's passage, and the sources they cited with primary ones (repositories, licence texts, papers, official docs) first. Support is agreement among assistants, not proof.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "question": _STR,
+                "providers": _PROVIDERS,
+                "runs": {"type": "integer", "minimum": 1, "description": "default 1"},
+                "max_cost": _COST,
+            },
+            "required": ["question"],
             "additionalProperties": False,
         },
     },
@@ -242,6 +258,17 @@ def run(args: dict, out: str | None, post=None) -> dict:
     return report_.build_set(Path(saved[-1]) / "set.json")
 
 
+def research_(args: dict, out: str | None, post=None) -> dict:
+    argv = ["research", args["question"], "--json"]
+    for name in args.get("providers") or []:
+        argv += ["--provider", name]
+    if args.get("runs"):
+        argv += ["--runs", str(args["runs"])]
+    if args.get("max_cost") is not None:
+        argv += ["--max-cost", str(args["max_cost"])]
+    return _json(argv + (["--out", out] if out else []), post)
+
+
 def report(args: dict, out: str | None) -> dict:
     argv = ["report", "--json"] + ([args["round"]] if args.get("round") else [])
     return _json(argv + (["--out", out] if out else []))
@@ -264,6 +291,7 @@ def call(name: str, args: dict, out: str | None = None, post=None) -> dict:
         "askround_ask": lambda: ask(args, out, post),
         "askround_answer": lambda: answer(args, out),
         "askround_run": lambda: run(args, out, post),
+        "askround_research": lambda: research_(args, out, post),
         "askround_report": lambda: report(args, out),
         "askround_diff": lambda: diff(args, out),
         "askround_doctor": lambda: doctor(args, out, post),

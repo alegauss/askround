@@ -42,6 +42,7 @@ from askround import (
     lookup,
     private,
     product,
+    research,
     series,
     sets,
 )
@@ -226,6 +227,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serie.add_argument("--out", type=Path, help="where rounds are saved")
     serie.add_argument("--json", action="store_true", help="print the table as JSON")
+    research_ = commands.add_parser(
+        "research",
+        parents=[common, paid],
+        help="ask a research question everywhere and merge the answers' claims and sources",
+    )
+    research_.add_argument("question")
+    research_.add_argument(
+        "--runs", type=_positive, default=1, help="runs per provider (default 1)"
+    )
+    research_.add_argument(
+        "--extract", metavar="PROVIDER", default="auto", help="who reads and merges (default: auto)"
+    )
+    research_.add_argument("--out", type=Path, help="where rounds are saved")
+    research_.add_argument("--json", action="store_true", help="print the merged claims as JSON")
     serve = commands.add_parser("mcp", help="serve askround to an agent as an MCP server (stdio)")
     serve.add_argument("--out", type=Path, help="where rounds are saved")
     exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
@@ -323,6 +338,8 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_prompt_set(args, providers, post, fetch)
     if args.command == "discover":
         return run_discover(args, providers, post)
+    if args.command == "research":
+        return run_research(args, providers, post)
     return run_ask(args, providers, post, fetch)
 
 
@@ -335,6 +352,42 @@ def _budget(est, max_cost: float | None) -> None:
             f"the estimate ${est.total:.4f} is above the cap ${limit:.4f} "
             "(--max-cost or ASKROUND_MAX_COST); nothing was sent"
         )
+
+
+def run_research(args, providers, post) -> int:
+    providers = [p for p in providers if p.configured()]
+    try:
+        if not providers:
+            raise Refused("no provider has an API key in the environment")
+        found = private.scan(args.question)
+        if found:
+            raise Refused(private.refusal("the question", args.question, found))
+        try:
+            reader = choose(args.extract, **_post(post))
+        except ValueError as error:
+            raise Refused(str(error)) from None
+        _budget(costs.estimate(providers, args.runs, True, reader), args.max_cost)
+    except Refused as refusal:
+        print(f"askround: {refusal}", file=sys.stderr)
+        return 2
+    round_ = run_round(args.question, providers, runs=args.runs)
+    before = reader.spent
+    merged = research.merge(args.question, research.read(round_, reader), reader)
+    round_.extraction_cost = reader.spent - before
+    directory = save_round(round_, _rounds_dir(args.out))
+    names = list(dict.fromkeys(r.provider for r in round_.results if r.answer))
+    text = research.markdown(args.question, merged, names)
+    (directory / "research.md").write_text(text, encoding="utf-8")
+    data = {"question": args.question, "providers": names, "claims": research.as_json(merged)}
+    (directory / "research.json").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    if args.json:
+        print(json.dumps({**data, "saved": str(directory)}, ensure_ascii=False, indent=2))
+    else:
+        print(text, end="")
+        print(f"\n{_cost_line(cost(round_))}\nsaved: {directory}")
+    return 0
 
 
 def run_discover(args, providers, post) -> int:

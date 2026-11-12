@@ -24,20 +24,6 @@ context on what a command could have answered.
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-### §AR25 Research mode
-
-Beyond visibility, the session needed research: which open image-to-3D models allow
-commercial use, which competitors exist, what users ask for. Each was done by separate
-searches and reading, with care to mark what was verified against what was inferred.
-
-A research mode sends one research question to every provider with search, then merges
-the answers: the claims, how many providers support each, the sources each cites, and
-the primary sources (official repositories, licence texts) set apart from secondary
-ones.
-
-Done when a research question returns a merged answer with claims grouped by support and
-sources ranked primary first.
-
 ### §AR26 Disagreements to check
 
 During the model research, one third-party page described every Depth Anything 3

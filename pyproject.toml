@@ -45,6 +45,7 @@ select = ["E", "F", "I", "UP", "C4", "B"]
 "askround/discover.py" = ["E501"]
 # tool descriptions are prose an agent reads
 "askround/mcp.py" = ["E501"]
+"askround/research.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

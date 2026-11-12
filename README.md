@@ -225,6 +225,19 @@ provider by share of runs and positions, what the answers claim about it, which 
 pages they cite, then the rivals. The JSON holds the same facts and never the answers'
 text, which stays in `round.json`.
 
+## Research mode
+
+```
+askround research "Which open-source image-to-3D models allow commercial use?"
+```
+
+asks every provider once with search, reads each answer for the factual statements it
+makes (each with a quote found in the answer), merges the statements that say the same
+thing, and lists the claims by how many providers support them, each with every
+provider's passage and the sources, those naming the claim's subject first and primary
+ones (repositories, licence texts, papers, official docs) before secondary ones.
+Support is agreement among assistants, not proof: check a claim at its primary source.
+
 ## For agents: the MCP server
 
 `askround mcp` serves askround over stdio to an agent. In Claude Code:
@@ -238,6 +251,7 @@ claude mcp add askround -- askround mcp
 | `askround_ask` | ask a question across providers; returns the report and lists the answers |
 | `askround_answer` | the full text of one answer, with its sources |
 | `askround_run` | run a prompt set (a product file); returns the set's report |
+| `askround_research` | a research question everywhere, its claims merged by support |
 | `askround_report` | the report of a stored round or set |
 | `askround_diff` | what changed between two runs of the same questions |
 | `askround_doctor` | which providers can run (key variable names, never values) |

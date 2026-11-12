@@ -4,8 +4,7 @@
 
 ## Block F — For agents: an MCP server, a skill and research across assistants
 
-- 📋 **AR25** (deps: AR24 ✅) **Researching a question across assistants means reading each answer and merging the sources by hand** — The same session researched model licences and competitors; asking several assistants with search and merging their sources would have cut that work. → §AR25
-- 📋 **AR26** (deps: AR25) **Disagreements between assistants on a fact, such as a model's licence, are not flagged for a check at the source** — Where assistants disagree is where a decision is at risk; a third-party page on 12/11/2026 had called an Apache-2.0 model non-commercial. → §AR26
+- 📋 **AR26** (deps: AR25 ✅) **Disagreements between assistants on a fact, such as a model's licence, are not flagged for a check at the source** — Where assistants disagree is where a decision is at risk; a third-party page on 12/11/2026 had called an Apache-2.0 model non-commercial. → §AR26
 - 📋 **AR27** (deps: AR24 ✅) **No Claude Code skill tells an agent when to use askround instead of asking the user to test a prompt** — A tool an agent does not know to reach for is a tool it does not use; the skill is what turns the MCP server into a habit. → §AR27
 
 ## Block G — Shipping: package, tests and the first screen
