@@ -1,7 +1,5 @@
 # Set aside
 
-## Block B — Reading the answers: mentions, rank, rivals, citations and claims
-
 ## Block C — Trust: checking what the answers say
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product

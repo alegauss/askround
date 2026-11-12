@@ -3,6 +3,7 @@
     askround ask "<question>" [--provider NAME ...] [--model PROVIDER=MODEL ...]
                  [--runs N] [--product NAME[,ALIAS...]] [--locale COUNTRY[:LANG] ...]
                  [--no-search] [--out DIR] [--json]
+    askround report [ROUND] [--product NAME[,ALIAS...] ...] [--out DIR] [--json]
     askround doctor [--provider NAME ...] [--model PROVIDER=MODEL ...] [--no-check] [--json]
 
 `ask` sends the question to every provider whose API key is in the environment (or the
@@ -10,6 +11,9 @@ ones named with --provider), --runs times each (default 3), with web search on u
 --no-search, prints each answer under its provider's heading with the sources it
 cited, then for each --product the share of runs that named it and its positions, and
 saves the round under --out (default `.askround/rounds`, or `ASKROUND_DIR`).
+
+`report` reads a stored round back (by default the latest) and sums it up in one short
+report, Markdown or --json, without the answers' text.
 
 `doctor` says which providers can run here: key variable (never the value), model,
 search tool and a free check call. It exits 2 when no provider can run.
@@ -24,6 +28,7 @@ import sys
 from pathlib import Path
 
 from askround import __version__, citations
+from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
@@ -106,6 +111,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
+    report = commands.add_parser(
+        "report", help="sum a stored round up: Markdown for a person, JSON for a pipeline"
+    )
+    report.add_argument(
+        "round",
+        nargs="?",
+        type=Path,
+        help="a round's directory or round.json (default: the latest round under --out)",
+    )
+    report.add_argument(
+        "--product",
+        action="append",
+        dest="products",
+        type=_names,
+        metavar="NAME[,ALIAS...]",
+        help="report on this product (default: the products the round was asked about)",
+    )
+    report.add_argument("--out", type=Path, help="where rounds are saved")
+    report.add_argument("--json", action="store_true", help="print the report as JSON")
     doctor = commands.add_parser(
         "doctor", parents=[common], help="say which providers can run here"
     )
@@ -146,6 +170,8 @@ def _names(value: str) -> list[str]:
 
 def main(argv: list[str] | None = None, post=None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "report":
+        return run_report(args)
     kwargs = {"post": post} if post is not None else {}
     kwargs["models"] = dict(args.models or [])
     try:
@@ -167,7 +193,7 @@ def run_ask(args, providers, post) -> int:
             file=sys.stderr,
         )
         return 2
-    out = args.out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
+    out = _rounds_dir(args.out)
     products = args.products or []
     extractor = None
     if args.extract:
@@ -189,6 +215,25 @@ def run_ask(args, providers, post) -> int:
     else:
         print(render(round_, directory, products))
     return 0 if any(r.ok for r in round_.results) else 1
+
+
+def _rounds_dir(out: Path | None) -> Path:
+    return out or Path(os.environ.get("ASKROUND_DIR", ".askround/rounds"))
+
+
+def run_report(args) -> int:
+    try:
+        path = report_.find_round(args.round, _rounds_dir(args.out))
+        round_, asked = report_.load_round(path)
+    except (FileNotFoundError, KeyError, ValueError) as error:
+        print(f"askround: {error}", file=sys.stderr)
+        return 2
+    data = report_.build(round_, args.products or asked, str(path))
+    if args.json:
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        print(report_.markdown(data), end="")
+    return 0
 
 
 def run_doctor(providers, check: bool, as_json_: bool) -> int:

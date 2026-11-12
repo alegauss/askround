@@ -80,6 +80,19 @@ on, and the report lists the failures at the end.
 The model per provider is overridden with `ASKROUND_OPENAI_MODEL`,
 `ASKROUND_GEMINI_MODEL`, `ASKROUND_ANTHROPIC_MODEL` and `ASKROUND_PERPLEXITY_MODEL`.
 
+## The report
+
+```
+askround report                     # the latest round, as Markdown
+askround report <round dir> --json  # one round, as JSON for a pipeline
+askround report --product Blender   # the same round, read for another product
+```
+
+`report` reads a stored round back and sums it up: for each product, a table of
+provider by share of runs and positions, what the answers claim about it, which of its
+pages they cite, then the rivals. The JSON holds the same facts and never the answers'
+text, which stays in `round.json`.
+
 ## Development
 
 ```

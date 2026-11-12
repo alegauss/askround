@@ -16,6 +16,7 @@
 - ✅ **AR9** **The rivals an answer recommends are not listed, so a competitor like Modly is found only by reading** — With --extract a round lists every rival the answers recommend, with answer counts, ranks, providers and a quote; on 12/11 Modly led, but a live round today ranks it lower.
 - ✅ **AR10** **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Each answer's cited pages are normalised; given its domains, a product's cited pages are counted per provider by kind, and third-party domains and rivals' pages are counted too.
 - ✅ **AR11** **What an answer claims about the product is not captured, such as 'CPU only: Check build' in a table** — With --extract each answer's claims about every product (table cells and prose) are read as attribute and value with a verified quote, and a product's claims are aggregated per provider.
+- ✅ **AR12** **There is no short report of a round; reading it means opening every raw answer** — askround report turns a stored round (the latest by default) into one Markdown or JSON report: frequency and ranks per provider, claims, cited pages and rivals, without the answers' text.
 
 ## Block C — Trust: checking what the answers say
 

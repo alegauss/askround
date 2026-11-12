@@ -2,10 +2,6 @@
 
 ## Priority
 
-## Block B — Reading the answers: mentions, rank, rivals, citations and claims
-
-- 📋 **AR12** (deps: AR8 ✅) **There is no short report of a round; reading it means opening every raw answer** — The person deciding needs one table: question by provider, with rank, frequency and the rivals around the product. → §AR12
-
 ## Block C — Trust: checking what the answers say
 
 - 📋 **AR13** (deps: AR9 ✅) **A product an answer names may not exist, like two Windows apps no search could find** — An answer recommended 'Presidium Shape Studio' and 'MeshForge3D' as apps; research could not find either, so an invented rival could steer a decision. → §AR13
@@ -40,8 +36,8 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- 📋 **AR31** (deps: AR12, AR24) **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — roadkeep's answer to context cost is 'ask instead of read'; askround returns the extracted result and one raw answer only when asked. → §AR31
-- 📋 **AR32** (deps: AR12) **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every roadkeep command takes --json and says which file and line an answer came from; askround's agents need the same contract. → §AR32
+- 📋 **AR31** (deps: AR12 ✅, AR24) **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — roadkeep's answer to context cost is 'ask instead of read'; askround returns the extracted result and one raw answer only when asked. → §AR31
+- 📋 **AR32** (deps: AR12 ✅) **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every roadkeep command takes --json and says which file and line an answer came from; askround's agents need the same contract. → §AR32
 - 📋 **AR33** (deps: AR18, AR19, AR22, AR24) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33
 - 📋 **AR34** (deps: AR22, AR24) **An agent could spend the user's API money on rounds without the user ever agreeing to the amount** — A tool an agent can call in a loop needs a spending limit the person sets, and a stop that asks before going past it. → §AR34
 - 📋 **AR35** (deps: AR24) **A round takes minutes of searched calls, longer than an MCP call should block the agent** — An agent waiting on one tool call for minutes stalls its session, or times out and loses a round it already paid for. → §AR35

@@ -22,19 +22,6 @@ L1 and L3 are the ones that pay for the rest: one round is several searched answ
 thousand words each, and an agent that reads them all to learn one rank has spent its
 context on what a command could have answered.
 
-## Block B — Reading the answers: mentions, rank, rivals, citations and claims
-
-### §AR12 The round report
-
-After each test on 12/11/2026 the agent summarised the answer in a table by hand:
-position, what it said, the rivals.
-
-`askround report` prints, for a round, a table of question by provider with the
-product's frequency and ranks, the top rivals, the product's cited pages and its claims,
-in Markdown for a person and JSON for a pipeline.
-
-Done when one command turns a stored round into that report in both formats.
-
 ## Block C — Trust: checking what the answers say
 
 ### §AR13 Rivals that may not exist
