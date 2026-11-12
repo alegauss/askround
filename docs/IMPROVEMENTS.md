@@ -35,27 +35,6 @@ not the apps.
 Done when pip install askround works on Windows, macOS and Linux, and the README's first
 screen shows a real round report.
 
-### §AR29 Recorded fixtures
-
-Every provider returns a different shape, with search metadata that changes between API
-versions.
-
-Each adapter is tested against recorded responses (with keys and identifying headers
-stripped), including real answers as fixtures for the extraction tests (the 12/11/2026
-answers were never kept verbatim, only summarised in visibility/estrategia/modelado.md,
-so `tests/test_extract.py` uses synthetic answers in their shape; the first recorded
-'without NVIDIA' round should replace them); a separate, opt-in live test checks each
-adapter against its real API with the smallest call. CI runs only the recorded tests.
-
-Today `tests/conftest.py` holds hand-written responses shaped from each provider's
-documentation, not recordings. OpenAI and Gemini were run live when AR2 shipped; the
-Anthropic and Perplexity adapters (web search tool, `pause_turn` resume, Sonar's
-`search_results`) have never answered a live call, because no key was present, so their
-first live run is the one most likely to find a wrong field.
-
-Done when the test suite runs with no key and no network, and the live tests run when
-keys are present and are asked for.
-
 ## Block H — Agent-first, with roadkeep as the reference
 
 ### §AR31 Ask instead of read

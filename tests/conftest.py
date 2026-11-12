@@ -143,6 +143,28 @@ class FakePost:
         raise AssertionError(f"unexpected url {url}")
 
 
+class NetworkUsed(AssertionError):
+    pass
+
+
+@pytest.fixture(autouse=True)
+def no_network(monkeypatch, request):
+    """The suite runs with no key and no network: a real HTTP call fails the test.
+    Only the live tests (test_live.py, opt-in) lift this, through `allow_network`."""
+    if "allow_network" in request.fixturenames:
+        return
+
+    def refuse(*args, **kwargs):
+        raise NetworkUsed("a test reached the network; give it a fake `post` or `get`")
+
+    monkeypatch.setattr("urllib.request.urlopen", refuse)
+
+
+@pytest.fixture
+def allow_network():
+    """Requested by the live tests to keep the real urlopen."""
+
+
 @pytest.fixture(autouse=True)
 def no_private_list(monkeypatch):
     """The person's own private terms, cap and prices never leak into a test's verdict."""

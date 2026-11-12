@@ -295,7 +295,12 @@ the report first and the answers it needs.
 
 ```
 pip install -e .[dev]
-python -m pytest
+python -m pytest                     # no key and no network: a test that calls out fails
 python -m ruff check .
 python -m ruff format --check .
+ASKROUND_LIVE=1 python -m pytest -m live   # each adapter with a key, against its real API
 ```
+
+The adapters are tested against real responses recorded from a live round
+(`tests/fixtures/`, ids scrubbed), so a provider changing its shape shows up as a
+failing recording rather than a silent miss.

@@ -59,8 +59,11 @@ Validated means the project's own build and test were run, not that the edit loo
 | `python -m ruff check .` | Lint (`.claude/` is excluded: roadkeep's installed hooks). | Every task that touches code. |
 | `python -m ruff format --check .` | Formatting. | Every task that touches code. |
 
+| `ASKROUND_LIVE=1 python -m pytest -m live` | Each adapter with a key against its real API, the smallest call. Costs a little. | When an adapter or a provider's request changes. |
+
 Tests replace `askround.http.post_json` (or pass `post=` to a provider), so a gate run
-never spends money on an API call.
+never spends money on an API call; a test that reaches the network fails. Real responses
+for the adapters live in `tests/fixtures/`, recorded with their ids scrubbed.
 
 **Name EVERY task id an assertion holds, not just the one you are working**, once tests
 exist: a test that names no id is a test nobody can trace back to what it was for.

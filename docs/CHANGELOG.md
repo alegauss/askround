@@ -48,6 +48,7 @@
 ## Block G — Shipping: package, tests and the first screen
 
 - ✅ **AR28 (package and first screen)** **askround cannot be installed: there is no package, no release and no README first screen** — The wheel and sdist build, pass twine check and install with no dependencies in a fresh venv; the README opens with the problem and a real round.
+- ✅ **AR29** **Tests would call live APIs, costing money and breaking on every provider change** — The suite runs with no key and fails any network call; adapters are tested on a recorded live round, and ASKROUND_LIVE=1 runs each keyed adapter against its API.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
