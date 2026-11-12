@@ -47,6 +47,8 @@
 
 ## Block G — Shipping: package, tests and the first screen
 
+- ✅ **AR28 (package and first screen)** **askround cannot be installed: there is no package, no release and no README first screen** — The wheel and sdist build, pass twine check and install with no dependencies in a fresh venv; the README opens with the problem and a real round.
+
 ## Block H — Agent-first, with roadkeep as the reference
 
 - ✅ **AR30** **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — askround's six laws open IMPROVEMENTS.md as §0.1, from context is cost to the person sets the money, and the project skill says a rationale names the law it serves.

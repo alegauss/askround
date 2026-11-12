@@ -4,16 +4,47 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "askround"
-description = "Ask several AI assistants the same question and keep their answers side by side."
+description = "See what ChatGPT, Gemini, Claude and Perplexity recommend: ask them all the same question with web search and read whether your product is named, where, beside which rivals, and what they claim about it."
 readme = "README.md"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"  # tomllib reads the product files
 authors = [{ name = "Alexandre Oliveira" }]
+keywords = [
+    "ai-visibility",
+    "llm-visibility",
+    "generative-engine-optimization",
+    "chatgpt",
+    "gemini",
+    "claude",
+    "perplexity",
+    "mcp",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Utilities",
+]
 # askround has NO runtime dependencies, by design: every provider is one HTTPS POST
 # through the standard library, which keeps the adapters symmetric and testable
 # without a network.
 dependencies = []
 dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/alegauss/askround"
+Repository = "https://github.com/alegauss/askround"
+Issues = "https://github.com/alegauss/askround/issues"
+Changelog = "https://github.com/alegauss/askround/blob/main/docs/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]

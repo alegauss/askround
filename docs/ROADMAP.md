@@ -2,11 +2,8 @@
 
 ## Priority
 
-## Block F — For agents: an MCP server, a skill and research across assistants
-
 ## Block G — Shipping: package, tests and the first screen
 
-- 📋 **AR28** (deps: AR1 ✅) **askround cannot be installed: there is no package, no release and no README first screen** — Someone with the same pain needs pip install askround and a first screen that says what a round tells them. → §AR28
 - 📋 **AR29** (deps: AR1 ✅) **Tests would call live APIs, costing money and breaking on every provider change** — An adapter test that pays for a search on every run is skipped, and then the adapters rot. → §AR29
 
 ## Block H — Agent-first, with roadkeep as the reference
@@ -27,6 +24,12 @@
 - 📋 **AR41** (deps: AR40) **Nothing builds and deploys the site when it changes** — In the other products a push that changes content.ts is built and live within minutes; a site deployed by hand goes stale. → §AR41
 - 📋 **AR42** (deps: AR40) **There are no docs pages: install, a first session in Claude Code, the MCP tools and the CLI reference live nowhere** — roadkeep's docs (install, adopting, in a session) are what lets an agent's user set it up without reading the code. → §AR42
 - 📋 **AR43** (deps: AR40, AR16 ✅) **The site is not built to be read by assistants, and askround never measures whether they name askround itself** — A tool that measures how assistants see a product should be readable by them and should measure itself first, publicly. → §AR43
+
+## Done when — AR28
+
+- **pip install askround installs the published package on Windows, macOS and Linux**
+  Checked by installing from PyPI into a fresh virtual environment on each system and
+  running askround doctor --no-check.
 
 ## Non-goals
 

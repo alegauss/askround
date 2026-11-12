@@ -1,18 +1,40 @@
 # askround
 
-Ask several AI assistants the same question and keep their answers side by side.
+People now ask ChatGPT or Gemini which app to use, and you cannot see the answer they
+get. askround asks the assistants for you: the same question to OpenAI, Gemini,
+Anthropic and Perplexity, with web search on, several times each. It tells you whether
+your product is named and in which position, which rivals sit around it, what the
+answers claim about it, and which of your pages they cite.
 
-**askround measures the APIs, not the apps.** An answer from the OpenAI, Gemini,
-Anthropic or Perplexity API, with web search on, is close to what their chat apps say
-but is not the same page: the apps add memory, personalisation and their own choice of
-model. askround cannot close that gap, so it records exactly what produced each answer
-(the model asked for and the model that answered, the search tool, the settings, the
-time) and every report is about the API.
+A real run, from 12/11/2026: four questions about Modelado, a Windows photo-to-3D app,
+one run each on two providers (`askround run examples/modelado.toml --runs 1`):
+
+| # | question | purpose | openai | gemini |
+|---|---|---|---|---|
+| 1 | What is a free offline app to turn a photo into a 3D model on Windows? | generic | 0/1 | 0/1 |
+| 2 | What app can turn a photo into a 3D model on Windows without an NVIDIA GPU (AMD or CPU only)? | constraint | 1/1 | 0/1 |
+| 3 | What Windows app can turn a photo into a relief STL for 3D printing? | use case | 0/1 | 0/1 |
+| 4 | Qual app de Windows transforma uma foto em modelo 3D usando só a CPU, sem placa NVIDIA? | language | 1/1, #1 | 0/1 |
+
+Each cell is the number of runs that named the app, then its position. ChatGPT finds
+Modelado when the asker has no NVIDIA card, and Gemini doesn't find it at all. That is
+who the app is for, and what its first screen has to say.
+
+**askround measures the APIs, not the apps.** An API answer with web search is close to
+what the chat apps say but not the same page: the apps add memory, personalisation and
+their own choice of model. askround records what produced each answer (the model asked
+for and the one that answered, the search tool, the settings, the time), and every
+report is about the API.
 
 ```
-pip install -e .
-askround ask "What is the best free app to turn a photo into a 3D model on Windows?"
+pip install askround          # from a checkout until the first release: pip install .
+askround doctor               # which providers have a key
+askround ask "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?" \
+    --product "Modelado,alegauss.github.io/modelado" --extract
 ```
+
+Python 3.11 or later and the standard library only, so nothing in it is specific to one
+system; it is tested on Windows.
 
 Every provider whose API key is in the environment is asked in parallel:
 `OPENAI_API_KEY`, `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), `ANTHROPIC_API_KEY` and
