@@ -123,6 +123,18 @@ one set directory, and prints one table of question by provider before each ques
 report. `askround report` on the set's directory prints it again.
 [`examples/modelado.toml`](examples/modelado.toml) is the set this tool was built from.
 
+## Which question leads to the product?
+
+```
+askround discover modelado.toml --seed "free offline app photo to 3D model on Windows"
+```
+
+From the seed and the product file's facts, a model writes variants (a constraint the
+product meets, a use case, another language) that never name the product; askround
+runs them with the seed and ranks them by how often and how high the product appears.
+It runs once per question by default, which is a sketch: add the promising questions
+to the product file and `askround run` them with more runs.
+
 ## Does a recommended product exist?
 
 ```

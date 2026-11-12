@@ -23,12 +23,13 @@ search tool and a free check call. It exits 2 when no provider can run.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations, gaps, links, lookup, product, sets
+from askround import __version__, citations, discover, gaps, links, lookup, product, sets
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
@@ -154,6 +155,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--check-links", action="store_true", help="follow the product's links")
     run.add_argument("--out", type=Path, help="where rounds are saved")
+    disc = commands.add_parser(
+        "discover",
+        parents=[common],
+        help="find which way of asking leads the assistants to a product",
+    )
+    disc.add_argument("file", type=Path, metavar="PRODUCT.toml")
+    disc.add_argument("--seed", help="the question to vary (default: the file's first one)")
+    disc.add_argument("--variants", type=_positive, default=6, help="how many (default 6)")
+    disc.add_argument("--runs", type=_positive, default=1, help="runs per question (default 1)")
+    disc.add_argument(
+        "--extract",
+        nargs="?",
+        const="auto",
+        metavar="PROVIDER",
+        help="also rank by the extraction pass (one more call per answer)",
+    )
+    disc.add_argument("--out", type=Path, help="where rounds are saved")
     find = commands.add_parser(
         "lookup", help="check whether products exist: GitHub, then one searched call each"
     )
@@ -235,7 +253,63 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return run_doctor(providers, args.check, args.json)
     if args.command == "run":
         return run_prompt_set(args, providers, post, fetch)
+    if args.command == "discover":
+        return run_discover(args, providers, post)
     return run_ask(args, providers, post, fetch)
+
+
+def run_discover(args, providers, post) -> int:
+    providers = [p for p in providers if p.configured()]
+    try:
+        if not providers:
+            raise Refused("no provider has an API key in the environment")
+        try:
+            item = product.load(args.file)
+            writer = choose(args.extract or "auto", **_post(post))
+        except (OSError, ValueError) as error:
+            raise Refused(str(error)) from None
+        seed = args.seed or (item.questions[0].text if item.questions else "")
+        if not seed:
+            raise Refused(f"{args.file} has no [[question]]; give a --seed")
+    except Refused as refusal:
+        print(f"askround: {refusal}", file=sys.stderr)
+        return 2
+    variants, dropped = discover.generate(seed, item, writer, args.variants)
+    questions = [product.Question(seed, "seed"), *variants]
+    trial = dataclasses.replace(item, questions=questions)
+    directory, rounds = sets.run_set(
+        trial,
+        providers,
+        _rounds_dir(args.out),
+        runs=args.runs,
+        extractor=writer if args.extract else None,
+        source=str(args.file),
+    )
+    ranked = discover.rank(questions, rounds, item.names)
+    lines = [f"# Discovery: which question leads to {item.name}", ""]
+    lines += ["| rank | score | named | best | axis | question |", "|---|---|---|---|---|---|"]
+    for n, r in enumerate(ranked, 1):
+        q = r.question
+        where = f" ({q.locale})" if q.locale else ""
+        best = f"#{r.best}" if r.best else "-"
+        named = f"{r.named}/{r.answers}"
+        lines.append(f"| {n} | {r.score:.2f} | {named} | {best} | {q.purpose} | {q.text}{where} |")
+    lines += [
+        "",
+        "score: 1/position where it is recommended, 1/2 where only named, over every answer.",
+    ]
+    if args.runs < 3:
+        lines += [
+            f"With {args.runs} run(s) per question this is a sketch: answers vary from run to "
+            "run. Add the promising questions to the product file and `askround run` them.",
+        ]
+    if dropped:
+        lines += ["", "Dropped for naming the product: " + "; ".join(dropped)]
+    text = "\n".join(lines) + "\n"
+    (directory / "discovery.md").write_text(text, encoding="utf-8")
+    print(text, end="")
+    print(f"\nsaved: {directory}")
+    return 0
 
 
 def run_prompt_set(args, providers, post, fetch=None) -> int:

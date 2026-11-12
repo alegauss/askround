@@ -27,6 +27,7 @@
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
 - ✅ **AR16** **Questions live in chat history; there is no prompt set per product to run again next week** — A product file's [[question]] entries form a prompt set; askround run asks them all as one set with a question-by-provider table, and examples/modelado.toml holds the four 12/11 questions.
+- ✅ **AR17** **Finding which question leads an assistant to a product took four manual tries** — askround discover writes variants of a seed that never name the product, runs them and ranks them by rank and frequency; a 1-run live test ranked the seed first.
 
 ## Block E — Over time: the series, the diff, the cost and the export
 

@@ -24,20 +24,6 @@ context on what a command could have answered.
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
-### §AR17 Discovering the question that leads to a product
-
-The analysis guessed variants by hand: generic, without an NVIDIA GPU, relief for 3D
-printing, Portuguese and CPU only. Only some named the product, and that set told which
-feature brings people.
-
-From the product's facts and a seed question, askround generates variants along each
-axis (a constraint the product meets, a use case it serves, a language) without naming
-the product, runs them, and ranks the variants by how often and how high the product
-appears.
-
-Done when, from the seed 'free offline app photo to 3D model on Windows' and Modelado's
-facts, a discovery run ranks a no-NVIDIA variant above the generic one.
-
 ### §AR18 Leading questions
 
 The tests on 12/11/2026 were written to stay neutral: no product name, no domain, no

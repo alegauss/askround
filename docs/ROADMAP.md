@@ -4,7 +4,6 @@
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
-- 📋 **AR17** (deps: AR8 ✅, AR16 ✅) **Finding which question leads an assistant to a product took four manual tries** — The generic question never named the app; only the 'without NVIDIA' one did, which explained its audience and set its messaging. → §AR17
 - 📋 **AR18** (deps: AR16 ✅) **Nothing warns when a question names the product it tests, which makes its answer worthless** — A question that mentions the product, or its domain, steers the assistant toward it and measures nothing. → §AR18
 - 📋 **AR19** (deps: AR16 ✅) **A question could carry personal data, an email or a person's name, to every provider at once** — One round sends the same text to four companies; a slip in a prompt is a leak to all of them. → §AR19
 
