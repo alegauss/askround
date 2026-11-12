@@ -39,18 +39,82 @@ RIVALS_SHOWN = 10
 
 
 def find_round(path: Path | None, out: Path) -> Path:
-    """The round.json a path names: the file, a round's directory, or with no path the
-    latest round under `out`."""
+    """The round.json or set.json a path names: the file, a round's or a set's
+    directory, or with no path the latest round or set under `out`."""
     if path is None:
-        found = sorted(out.glob("*/*/round.json"))
+        found = sorted(
+            [*out.glob("*/*/round.json"), *out.glob("*/*/set.json")],
+            key=lambda p: (p.parent.parent.name, p.parent.name),
+        )
         if not found:
             raise FileNotFoundError(f"no round under {out}")
         return found[-1]
     if path.is_dir():
-        path = path / "round.json"
+        path = path / "set.json" if (path / "set.json").is_file() else path / "round.json"
     if not path.is_file():
         raise FileNotFoundError(f"no round.json at {path}")
     return path
+
+
+def build_set(path: Path) -> dict:
+    """A prompt set run as data: its index, and each question's report."""
+    index = json.loads(path.read_text(encoding="utf-8"))
+    questions = []
+    for q in index["questions"]:
+        round_path = path.parent / q["round"]
+        round_, products = load_round(round_path)
+        questions.append(
+            {**q, "report": build(round_, products or [index["names"]], str(round_path))}
+        )
+    return {
+        "set": str(path),
+        "product": index["product"],
+        "asked_at": index["asked_at"],
+        "questions": questions,
+    }
+
+
+def set_markdown(report: dict) -> str:
+    product = report["product"]
+    providers: list[str] = []
+    for q in report["questions"]:
+        for row in _rows(q["report"], product):
+            if row["provider"] not in providers:
+                providers.append(row["provider"])
+    lines = [
+        f"# {_cell(product)}: prompt set",
+        "",
+        f"asked {report['asked_at'][:16].replace('T', ' ')} UTC, {len(report['questions'])} "
+        "questions. API answers, not the chat apps.",
+        "",
+        "| # | question | purpose | " + " | ".join(providers) + " |",
+        "|---|---|---|" + "---|" * len(providers),
+    ]
+    for q in report["questions"]:
+        cells = {}
+        for row in _rows(q["report"], product):
+            cells[row["provider"]] = f"{row['named']}/{row['runs']} {_positions(row)}"
+        question = _cell(q["text"]) + (f" ({q['locale']})" if q["locale"] else "")
+        shown = " | ".join(cells.get(p, "-") for p in providers)
+        lines.append(f"| {q['n']} | {question} | {_cell(q['purpose']) or '-'} | {shown} |")
+    lines += ["", "Each cell: runs naming it, then its position in each run.", ""]
+    for q in report["questions"]:
+        body = markdown(q["report"])
+        demoted = "\n".join(
+            "#" + line if line.startswith("#") else line for line in body.splitlines()
+        )
+        lines += [
+            demoted.replace(f"# {_cell(q['text'])}", f"# {q['n']}. {_cell(q['text'])}", 1),
+            "",
+        ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _rows(report: dict, product: str) -> list[dict]:
+    for p in report["products"]:
+        if p["product"] == product:
+            return p["frequency"]
+    return []
 
 
 def _locale(data: dict | None) -> Locale | None:

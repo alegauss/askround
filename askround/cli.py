@@ -3,6 +3,7 @@
     askround ask "<question>" [--provider NAME ...] [--model PROVIDER=MODEL ...]
                  [--runs N] [--product NAME[,ALIAS...]] [--locale COUNTRY[:LANG] ...]
                  [--no-search] [--out DIR] [--json]
+    askround run PRODUCT.toml [--provider NAME ...] [--runs N] [--extract] [--out DIR]
     askround report [ROUND] [--product NAME[,ALIAS...] ...] [--out DIR] [--json]
     askround doctor [--provider NAME ...] [--model PROVIDER=MODEL ...] [--no-check] [--json]
 
@@ -27,7 +28,7 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__, citations, gaps, links, lookup, product
+from askround import __version__, citations, gaps, links, lookup, product, sets
 from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
@@ -136,6 +137,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.add_argument("--out", type=Path, help="where rounds are saved")
     ask.add_argument("--json", action="store_true", help="print the round as JSON")
+    run = commands.add_parser(
+        "run", parents=[common], help="ask every question of a product file (a prompt set)"
+    )
+    run.add_argument("file", type=Path, metavar="PRODUCT.toml")
+    run.add_argument(
+        "--runs", type=_positive, help="runs per question, over what the file sets for each"
+    )
+    run.add_argument("--no-search", dest="search", action="store_false", help="no web search")
+    run.add_argument(
+        "--extract",
+        nargs="?",
+        const="auto",
+        metavar="PROVIDER",
+        help="read recommendations and claims, and compare the claims with the file's facts",
+    )
+    run.add_argument("--check-links", action="store_true", help="follow the product's links")
+    run.add_argument("--out", type=Path, help="where rounds are saved")
     find = commands.add_parser(
         "lookup", help="check whether products exist: GitHub, then one searched call each"
     )
@@ -215,7 +233,43 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         return 2
     if args.command == "doctor":
         return run_doctor(providers, args.check, args.json)
+    if args.command == "run":
+        return run_prompt_set(args, providers, post, fetch)
     return run_ask(args, providers, post, fetch)
+
+
+def run_prompt_set(args, providers, post, fetch=None) -> int:
+    providers = [p for p in providers if p.configured()]
+    try:
+        if not providers:
+            raise Refused("no provider has an API key in the environment")
+        try:
+            item = product.load(args.file)
+        except (OSError, ValueError) as error:
+            raise Refused(str(error)) from None
+        if not item.questions:
+            raise Refused(f"{args.file} has no [[question]] to ask")
+        try:
+            extractor = choose(args.extract, **_post(post)) if args.extract else None
+        except ValueError as error:
+            raise Refused(str(error)) from None
+    except Refused as refusal:
+        print(f"askround: {refusal}", file=sys.stderr)
+        return 2
+    get = (fetch or links.fetch) if args.check_links else None
+    directory, _ = sets.run_set(
+        item,
+        providers,
+        _rounds_dir(args.out),
+        search=args.search,
+        runs=args.runs,
+        extractor=extractor,
+        get=get,
+        source=str(args.file),
+    )
+    print(report_.set_markdown(report_.build_set(directory / "set.json")), end="")
+    print(f"\nsaved: {directory}")
+    return 0
 
 
 class Refused(Exception):
@@ -312,15 +366,20 @@ def run_lookup(args, post) -> int:
 def run_report(args) -> int:
     try:
         path = report_.find_round(args.round, _rounds_dir(args.out))
-        round_, asked = report_.load_round(path)
+        if path.name == "set.json":
+            data = report_.build_set(path)
+            text = report_.set_markdown(data)
+        else:
+            round_, asked = report_.load_round(path)
+            data = report_.build(round_, args.products or asked, str(path))
+            text = report_.markdown(data)
     except (FileNotFoundError, KeyError, ValueError) as error:
         print(f"askround: {error}", file=sys.stderr)
         return 2
-    data = report_.build(round_, args.products or asked, str(path))
     if args.json:
         print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
-        print(report_.markdown(data), end="")
+        print(text, end="")
     return 0
 
 

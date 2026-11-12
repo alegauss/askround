@@ -24,18 +24,6 @@ context on what a command could have answered.
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
-### §AR16 Prompt sets
-
-The questions of 12/11/2026 (the generic one, without NVIDIA, the relief for printing,
-and the Portuguese CPU-only one) exist only in a chat transcript.
-
-A prompt set is a file per product: AR15's product file (askround/product.py, TOML with
-[product] name, aliases, places and [[fact]]) gains [[question]] entries, each with a
-purpose (generic, constraint, use case, language), a locale and the number of runs.
-`askround run <set>` runs the whole set as one round.
-
-Done when the four questions of 12/11/2026 live in a prompt set and run as one round.
-
 ### §AR17 Discovering the question that leads to a product
 
 The analysis guessed variants by hand: generic, without an NVIDIA GPU, relief for 3D

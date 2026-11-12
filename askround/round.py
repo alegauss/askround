@@ -366,11 +366,17 @@ def slug(text: str, limit: int = 40) -> str:
     return words[:limit].rstrip("-") or "question"
 
 
-def save_round(round_: Round, out: Path, products: list[list[str]] | None = None) -> Path:
-    stamp = round_.asked_at.astimezone(UTC)
-    directory = (
-        out / stamp.strftime("%Y-%m-%d") / f"{stamp.strftime('%H%M%S')}-{slug(round_.question)}"
-    )
+def save_round(
+    round_: Round,
+    out: Path,
+    products: list[list[str]] | None = None,
+    directory: Path | None = None,
+) -> Path:
+    """Write the round under `out`, or into `directory` when given (a set's question)."""
+    if directory is None:
+        stamp = round_.asked_at.astimezone(UTC)
+        name = f"{stamp.strftime('%H%M%S')}-{slug(round_.question)}"
+        directory = out / stamp.strftime("%Y-%m-%d") / name
     directory.mkdir(parents=True, exist_ok=True)
     _write(directory / "round.json", summary(round_, products))
     for r in round_.results:

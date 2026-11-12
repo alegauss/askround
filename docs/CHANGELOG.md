@@ -26,6 +26,8 @@
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product
 
+- ✅ **AR16** **Questions live in chat history; there is no prompt set per product to run again next week** — A product file's [[question]] entries form a prompt set; askround run asks them all as one set with a question-by-provider table, and examples/modelado.toml holds the four 12/11 questions.
+
 ## Block E — Over time: the series, the diff, the cost and the export
 
 ## Block F — For agents: an MCP server, a skill and research across assistants

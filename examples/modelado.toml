@@ -1,0 +1,56 @@
+# The prompt set askround was built from: Modelado, a Windows app that turns a photo
+# into a 3D model. Run it with
+#
+#     askround run examples/modelado.toml --extract
+#
+# The facts are taken from Modelado's README; `page` is where each should be said
+# plainly. The four questions are the ones asked by hand in ChatGPT on 12/11/2026.
+# Only the first was recorded word for word; the other three are rebuilt from the
+# notes of that day (visibility/estrategia/modelado.md), so their wording is close to
+# the original, not the same.
+
+[product]
+name = "Modelado"
+aliases = []
+places = [
+    "alegauss.github.io/modelado",
+    "github.com/alegauss/modelado",
+    "apps.microsoft.com/detail/9PB86WW5NRR2",
+    "huggingface.co/alegauss/modelado-models",
+]
+
+[[fact]]
+attribute = "Runs without an NVIDIA GPU"
+value = "Yes: on any DirectX 12 GPU through DirectML (NVIDIA, AMD or Intel), or on the CPU without one"
+page = "https://alegauss.github.io/modelado/"
+
+[[fact]]
+attribute = "Needs CUDA"
+value = "No"
+page = "https://alegauss.github.io/modelado/"
+
+[[fact]]
+attribute = "Platform"
+value = "Windows 10 (1903+) or 11, x64"
+page = "https://alegauss.github.io/modelado/"
+
+[[question]]
+# the general question: ChatGPT did not name Modelado, and led with Modly
+text = "What is a free offline app to turn a photo into a 3D model on Windows?"
+purpose = "generic"
+
+[[question]]
+# the constraint that made ChatGPT put Modelado first, as "best fit"
+text = "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU (AMD or CPU only)?"
+purpose = "constraint"
+
+[[question]]
+# the second door: a relief for 3D printing
+text = "What Windows app can turn a photo into a relief STL for 3D printing?"
+purpose = "use case"
+
+[[question]]
+# the same need, asked in Portuguese by someone who wants to use only the CPU
+text = "Qual app de Windows transforma uma foto em modelo 3D usando só a CPU, sem placa NVIDIA?"
+purpose = "language"
+locale = "BR:pt-BR"

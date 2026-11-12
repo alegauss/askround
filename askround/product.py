@@ -12,10 +12,18 @@
     value = "Yes: on the CPU, or any DirectML GPU (AMD, Intel)"
     page = "https://alegauss.github.io/modelado/"  # the page that should say it plainly
 
+    [[question]]
+    text = "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?"
+    purpose = "constraint"       # generic, constraint, use case, language: why it is asked
+    locale = "BR:pt-BR"          # optional: asked as someone in this country
+    runs = 3                     # optional: the round's default otherwise
+
 A fact is what is true about the product, with the page a reader (and an assistant)
 should find it on. `askround ask --product-file modelado.toml` asks about the product
 the file describes; with `--extract`, the claims the answers make are compared with its
-facts (gaps.py).
+facts (gaps.py). The questions make the file a prompt set: `askround run modelado.toml`
+asks them all, the same way every time, so next week's answers can be set beside this
+week's.
 """
 
 from __future__ import annotations
@@ -23,6 +31,8 @@ from __future__ import annotations
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from askround.providers import Locale
 
 
 @dataclass(frozen=True)
@@ -32,12 +42,21 @@ class Fact:
     page: str = ""
 
 
+@dataclass(frozen=True)
+class Question:
+    text: str
+    purpose: str = ""
+    locale: Locale | None = None
+    runs: int | None = None
+
+
 @dataclass
 class Product:
     name: str
     aliases: list[str] = field(default_factory=list)
     places: list[str] = field(default_factory=list)
     facts: list[Fact] = field(default_factory=list)
+    questions: list[Question] = field(default_factory=list)
 
     @property
     def names(self) -> list[str]:
@@ -61,9 +80,25 @@ def load(path: Path) -> Product:
         if not attribute or not value:
             raise ValueError(f"{path}: fact {i} needs an attribute and a value")
         facts.append(Fact(attribute, value, str(item.get("page") or "").strip()))
+    questions = [_question(path, i, item) for i, item in enumerate(data.get("question") or [], 1)]
     return Product(
         name,
         [str(a) for a in head.get("aliases") or []],
         [str(p) for p in head.get("places") or []],
         facts,
+        questions,
     )
+
+
+def _question(path: Path, i: int, item: dict) -> Question:
+    text = str(item.get("text") or "").strip()
+    if not text:
+        raise ValueError(f"{path}: question {i} needs a text")
+    try:
+        locale = Locale.parse(str(item["locale"])) if item.get("locale") else None
+    except ValueError as error:
+        raise ValueError(f"{path}: question {i}: {error}") from None
+    runs = item.get("runs")
+    if runs is not None and (not isinstance(runs, int) or runs < 1):
+        raise ValueError(f"{path}: question {i}: runs must be a whole number of at least 1")
+    return Question(text, str(item.get("purpose") or "").strip(), locale, runs)

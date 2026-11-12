@@ -106,6 +106,23 @@ claim that contradicts a fact, or doubts it ('CPU only: Check build'), is report
 fact gap with the page that should state the fact plainly and the product's pages the
 answers did cite.
 
+## Prompt sets: the same questions every week
+
+Add `[[question]]` entries to the product file and it becomes a prompt set:
+
+```toml
+[[question]]
+text = "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?"
+purpose = "constraint"     # generic, constraint, use case, language
+locale = "BR:pt-BR"        # optional
+runs = 3                   # optional
+```
+
+`askround run modelado.toml` asks every question as its own round, kept together in
+one set directory, and prints one table of question by provider before each question's
+report. `askround report` on the set's directory prints it again.
+[`examples/modelado.toml`](examples/modelado.toml) is the set this tool was built from.
+
 ## Does a recommended product exist?
 
 ```
