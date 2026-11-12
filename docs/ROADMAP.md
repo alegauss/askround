@@ -2,8 +2,6 @@
 
 ## Priority
 
-- AR30
-
 ## Block A — The round: one question to every assistant, with web search
 
 - 📋 **AR3** (deps: AR1 ✅) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
@@ -54,7 +52,6 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-- 📋 **AR30** (deps: —) **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — roadkeep, the author's most mature tool, binds its design with six laws a change may not break; askround needs its own before code exists. → §AR30
 - 📋 **AR31** (deps: AR12, AR24) **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — roadkeep's answer to context cost is 'ask instead of read'; askround returns the extracted result and one raw answer only when asked. → §AR31
 - 📋 **AR32** (deps: AR12) **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every roadkeep command takes --json and says which file and line an answer came from; askround's agents need the same contract. → §AR32
 - 📋 **AR33** (deps: AR18, AR19, AR22, AR24) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33

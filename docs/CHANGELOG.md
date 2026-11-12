@@ -19,5 +19,7 @@
 
 ## Block H — Agent-first, with roadkeep as the reference
 
+- ✅ **AR30** **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — askround's six laws open IMPROVEMENTS.md as §0.1, from context is cost to the person sets the money, and the project skill says a rationale names the law it serves.
+
 ## Block I — The site at alegauss.github.io/askround
 

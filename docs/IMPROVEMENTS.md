@@ -1,5 +1,27 @@
 # Improvements
 
+## §0 Principles
+
+What every task below is held to. These sections are not tasks and no ship deletes them.
+
+### §0.1 The six laws
+
+askround is used by agents first. A change that breaks one of these laws is wrong even
+when it is asked for; a rationale written after this section names the law it serves.
+
+| # | Law |
+|---|---|
+| L1 | **Context is cost** — an agent gets the extracted result of a round; a raw answer is fetched on request, one at a time. |
+| L2 | **Refuse before paying** — a leading question, personal data or a cost over the limit is refused before the first paid call. |
+| L3 | **Ask instead of read** — every question about a round or a series is a command, so answering it costs no context. |
+| L4 | **Every fact traces to its passage** — a rank, a rival or a claim names the provider, the run and the passage it came from, and the raw response is kept as the evidence. |
+| L5 | **The person sets the money** — an agent never raises a spending limit or agrees to a cost on the person's behalf. |
+| L6 | **askround measures the APIs, not the apps** — an API answer with search is not the page a consumer chat app shows, and every report says so. |
+
+L1 and L3 are the ones that pay for the rest: one round is several searched answers of a
+thousand words each, and an agent that reads them all to learn one rank has spent its
+context on what a command could have answered.
+
 ## Block A — The round: one question to every assistant, with web search
 
 ### §AR3 askround doctor
@@ -370,23 +392,6 @@ Done when the test suite runs with no key and no network, and the live tests run
 keys are present and are asked for.
 
 ## Block H — Agent-first, with roadkeep as the reference
-
-### §AR30 The laws, before the code
-
-roadkeep states six laws in its IMPROVEMENTS.md (section 0.3), and a change that breaks
-one is wrong even if requested. That is what kept it small for agents while it grew.
-askround is meant to be used the same way, by agents first, and is the place where a
-convenient feature (return the raw answers, run without asking about money) would
-quietly undo that.
-
-Write askround's laws before the first command, modelled on roadkeep's: context is cost,
-so answers are extracted and raw text is fetched on request; a bad round is refused
-before it is paid for; ask instead of read; every fact traces to its passage; the
-person, never the agent, sets the money; askround measures the APIs, not the apps, and
-says so.
-
-Done when the laws are written as the first section of IMPROVEMENTS.md, and each later
-task's rationale names the law it serves.
 
 ### §AR31 Ask instead of read
 

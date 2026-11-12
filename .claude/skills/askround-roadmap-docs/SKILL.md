@@ -103,6 +103,12 @@ Each file has one job — never duplicate content between them:
 - **Keep a task line terse** — symptom (what does not work, never a fix name) + one
   sentence of why + the pointer. The reasoning belongs in the section.
 
+## The laws
+
+`§0.1` of `docs/IMPROVEMENTS.md` holds askround's six laws (`section show 0.1`). A change
+that breaks one is wrong even when asked for, and a rationale written after them names
+the law it serves.
+
 ## The two lists that bind a proposal
 
 - **`non-goal list`** — every entry binds. A proposal a non-goal forbids is not filed.

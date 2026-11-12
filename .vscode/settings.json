@@ -1,0 +1,3 @@
+{
+  "window.title": "Askround ${separator} ${dirty}${activeEditorShort} ${separator} ${appName}"
+}
