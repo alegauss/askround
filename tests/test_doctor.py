@@ -38,7 +38,7 @@ def test_absent_key_is_reported_without_a_call(no_keys, monkeypatch, capsys):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     post = FakePost()
     code = main(["doctor", "--json"], post=post)
-    data = {s["provider"]: s for s in json.loads(capsys.readouterr().out)}
+    data = {s["provider"]: s for s in json.loads(capsys.readouterr().out)["providers"]}
     assert code == 0
     assert data["openai"]["can_run"] is True
     assert data["gemini"]["key_var"] is None
@@ -51,7 +51,7 @@ def test_invalid_key_and_missing_model(all_keys, capsys):
     post = FakePost(fail={"api.openai.com": 401, "api.anthropic.com": 404})
     code = main(["doctor", "--json"], post=post)
     out = capsys.readouterr().out
-    data = {s["provider"]: s for s in json.loads(out)}
+    data = {s["provider"]: s for s in json.loads(out)["providers"]}
     assert code == 0
     assert data["openai"]["detail"] == "key rejected (HTTP 401)"
     assert data["openai"]["can_run"] is False

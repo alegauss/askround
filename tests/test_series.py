@@ -115,8 +115,9 @@ def test_cli_series(all_keys, tmp_path, capsys):
         main(["series", "--product", "Modelado", "--by", "day", "--json", "--out", str(tmp_path)])
         == 0
     )
-    table = json.loads(capsys.readouterr().out)
-    assert list(table.values())[0]["openai"] == {"named": 2, "answers": 2}
+    data = json.loads(capsys.readouterr().out)
+    assert (data["product"], data["by"]) == ("Modelado", "day")
+    assert list(data["periods"].values())[0]["openai"] == {"named": 2, "answers": 2}
 
 
 def test_cli_series_needs_a_product(tmp_path, capsys):

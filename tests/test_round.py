@@ -92,6 +92,11 @@ def test_save_round_writes_summary_and_raw(all_keys, tmp_path):
         "positions": [None, None],
         "ranked_by": ["text", "text"],
         "evidence": ["", ""],
+        # where it is named in each answer: "OpenAI says Modelado." -> characters 12 to 20
+        "in": [
+            {"answer": "openai#1", "range": [12, 20]},
+            {"answer": "openai#2", "range": [12, 20]},
+        ],
     }
 
 
@@ -175,6 +180,18 @@ def test_round_without_search(all_keys):
     round_ = run_round("q", all_providers(post=post), now=NOW, search=False, runs=1)
     assert round_.search is False
     assert all(r.answer.search is False for r in round_.results)
+
+
+def test_two_rounds_in_the_same_second_never_overwrite(all_keys, tmp_path):
+    first = save_round(
+        run_round("q", by_name(["openai"], post=FakePost()), now=NOW, runs=1), tmp_path
+    )
+    second = save_round(
+        run_round("q", by_name(["openai"], post=FakePost()), now=NOW, runs=1), tmp_path
+    )
+    assert first != second
+    assert second.name == first.name + "-2"
+    assert (first / "round.json").exists() and (second / "round.json").exists()
 
 
 def test_slug():

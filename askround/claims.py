@@ -16,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from askround import mention
+from askround.provenance import answer_id, span
 
 
 @dataclass
@@ -26,6 +27,8 @@ class ProductClaim:
     providers: dict[str, int] = field(default_factory=dict)
     quote: str = ""
     unverified: int = 0
+    # each answer that made it: {"answer": "openai#2", "range": [start, end]}
+    found_in: list[dict] = field(default_factory=list)
 
 
 def _fold(text: str) -> str:
@@ -54,4 +57,5 @@ def product_claims(round_, names: list[str]) -> list[ProductClaim]:
             row.answers += 1
             row.providers[r.provider] = row.providers.get(r.provider, 0) + 1
             row.quote = row.quote or claim.quote
+            row.found_in.append({"answer": answer_id(r), "range": span(answer.text, claim.quote)})
     return sorted(table.values(), key=lambda c: (-c.answers, _fold(c.attribute), _fold(c.value)))

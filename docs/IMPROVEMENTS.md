@@ -37,21 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR32 --json everywhere, with provenance
-
-Every roadkeep command takes --json, which also says which file and line the answer came
-from, and its exit code is the whole contract a hook, a pre-commit hook and a GitHub
-Action share. An agent parsing prose breaks when the wording changes and cannot cite
-what it read.
-
-Every askround command takes --json with a versioned schema published in the repository.
-Each fact carries its provenance: round, question, provider, model, run, answer id and,
-for a claim or a mention, the character range of its passage. Exit codes say success,
-partial round, refused and failed, and are documented as the contract.
-
-Done when every command has a JSON form validated against the published schema in tests,
-and each fact in it resolves to its passage.
-
 ### §AR33 Refused before it is paid for
 
 roadkeep puts its limits in its MCP input schemas, so a field that would be refused

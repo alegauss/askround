@@ -296,6 +296,21 @@ ids of the answers it came from (`openai#2`, `openai@BR#2`); `askround_answer` w
 id returns that answer, or with `around: "<quote>"` only the passage behind the fact.
 `detail: true` returns the full report. On the command line: `askround report --brief`.
 
+## The output contract
+
+Every command takes `--json` (`export` takes `--format json`). Each JSON object names
+its schema, `"schema": "askround/round@1"`, and the schemas are published in
+[`schema/`](schema/) as JSON Schema. In a round, every fact says where it came from: the
+answer's id (`openai#2`, `openai@BR#2`) and the character range of its passage in that
+answer's text (`"range": [412, 437]`, end excluded), so a script or an agent can cite it.
+
+| Exit code | Means |
+| --- | --- |
+| 0 | every answer came back |
+| 3 | a partial round: it finished, some answers failed (they are listed) |
+| 1 | no answer came back |
+| 2 | refused before anything was sent (personal data, a leading question, over the cost cap, no key) or a usage error |
+
 ## Development
 
 ```

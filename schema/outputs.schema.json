@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "askround/outputs@1",
+  "title": "The other JSON outputs of askround, one definition per schema name",
+  "$defs": {
+    "report": {
+      "description": "askround report --json",
+      "type": "object",
+      "required": ["schema", "round", "question", "asked_at", "runs", "answered", "failed", "products", "rivals", "cost"],
+      "properties": {"schema": {"const": "askround/report@1"}, "products": {"type": "array"}, "failed": {"type": "array"}}
+    },
+    "set": {
+      "description": "askround run --json, askround report <set> --json",
+      "type": "object",
+      "required": ["schema", "set", "product", "asked_at", "questions"],
+      "properties": {
+        "schema": {"const": "askround/set@1"},
+        "questions": {
+          "type": "array",
+          "items": {"type": "object", "required": ["n", "text", "purpose", "runs", "round", "report"]}
+        }
+      }
+    },
+    "doctor": {
+      "description": "askround doctor --json",
+      "type": "object",
+      "required": ["schema", "providers"],
+      "properties": {
+        "schema": {"const": "askround/doctor@1"},
+        "providers": {
+          "type": "array",
+          "items": {"type": "object", "required": ["provider", "model", "key_var", "checked", "ok", "can_run", "detail"]}
+        }
+      }
+    },
+    "lookup": {
+      "description": "askround lookup --json",
+      "type": "object",
+      "required": ["schema", "verdicts"],
+      "properties": {
+        "schema": {"const": "askround/lookup@1"},
+        "verdicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "status", "url", "evidence", "via"],
+            "properties": {"status": {"enum": ["found", "ambiguous", "not_found", "unknown"]}}
+          }
+        }
+      }
+    },
+    "export": {
+      "description": "askround export --format json",
+      "type": "object",
+      "required": ["schema", "product", "rows"],
+      "properties": {"schema": {"const": "askround/export@1"}, "rows": {"type": "array"}}
+    },
+    "series": {
+      "description": "askround series --json",
+      "type": "object",
+      "required": ["schema", "product", "by", "periods"],
+      "properties": {"schema": {"const": "askround/series@1"}, "by": {"enum": ["day", "week", "month"]}, "periods": {"type": "object"}}
+    },
+    "diff": {
+      "description": "askround diff --json",
+      "type": "object",
+      "required": ["schema", "old", "new", "changes", "only_old", "only_new"],
+      "properties": {
+        "schema": {"const": "askround/diff@1"},
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["question", "provider", "kind", "detail"],
+            "properties": {"kind": {"enum": ["share", "rival", "cited", "claims"]}}
+          }
+        }
+      }
+    },
+    "research": {
+      "description": "askround research --json",
+      "type": "object",
+      "required": ["schema", "question", "providers", "claims", "disagreements"],
+      "properties": {
+        "schema": {"const": "askround/research@1"},
+        "claims": {"type": "array", "items": {"type": "object", "required": ["claim", "providers", "passages", "sources"]}},
+        "disagreements": {"type": "array", "items": {"type": "object", "required": ["fact", "sides", "check"]}}
+      }
+    },
+    "discovery": {
+      "description": "askround discover --json",
+      "type": "object",
+      "required": ["schema", "product", "ranked", "dropped"],
+      "properties": {
+        "schema": {"const": "askround/discovery@1"},
+        "ranked": {"type": "array", "items": {"type": "object", "required": ["question", "score", "named", "answers", "best"]}}
+      }
+    }
+  }
+}

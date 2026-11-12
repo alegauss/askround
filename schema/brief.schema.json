@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "askround/brief@1",
+  "title": "A round in a few hundred tokens (askround report --brief, askround_ask)",
+  "type": "object",
+  "required": ["schema", "q", "round", "answers", "failed", "cost", "products"],
+  "properties": {
+    "schema": {"const": "askround/brief@1"},
+    "q": {"type": "string"},
+    "round": {"type": "string"},
+    "answers": {"type": "integer"},
+    "failed": {"type": "array", "items": {"type": "string"}},
+    "cost": {"type": ["number", "null"]},
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "named", "in"],
+        "properties": {
+          "name": {"type": "string"},
+          "named": {"type": "object"},
+          "in": {"type": "array", "items": {"type": "string"}},
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["c", "in"],
+              "properties": {"c": {"type": "string"}, "in": {"type": "array", "items": {"type": "string"}}}
+            }
+          }
+        }
+      }
+    },
+    "rivals": {
+      "type": "array",
+      "items": {"type": "object", "required": ["name", "n", "best"]}
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "askround/round@1",
+  "title": "A round: one question asked across providers (round.json, askround ask --json)",
+  "type": "object",
+  "required": ["schema", "question", "asked_at", "search", "runs", "answered", "failed", "cost", "results"],
+  "properties": {
+    "schema": {"const": "askround/round@1"},
+    "question": {"type": "string"},
+    "asked_at": {"type": "string"},
+    "search": {"type": "boolean"},
+    "runs": {"type": "integer"},
+    "brand": {"type": "boolean"},
+    "answered": {"type": "integer"},
+    "failed": {"type": "integer"},
+    "cost": {
+      "type": "object",
+      "required": ["estimate", "actual", "total", "prices_as_of"],
+      "properties": {"total": {"type": ["number", "null"]}}
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provider", "run", "model", "text", "sources", "error"],
+        "properties": {
+          "provider": {"type": "string"},
+          "run": {"type": "integer"},
+          "model": {"type": "string"},
+          "served_model": {"type": ["string", "null"]},
+          "text": {"type": ["string", "null"]},
+          "sources": {
+            "type": "array",
+            "items": {"type": "object", "required": ["url", "title"]}
+          },
+          "error": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["product", "names", "providers", "claims"],
+        "properties": {
+          "product": {"type": "string"},
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["provider", "model", "runs", "named", "positions", "in"],
+              "properties": {
+                "in": {"type": "array", "items": {"$ref": "#/$defs/fact"}}
+              }
+            }
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["attribute", "value", "quote", "in"],
+              "properties": {
+                "in": {"type": "array", "items": {"$ref": "#/$defs/fact"}}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fact": {
+      "description": "Where a fact came from: the answer's id and the character range of its passage in that answer's text, end excluded (null when it is not named there).",
+      "type": "object",
+      "required": ["answer", "range"],
+      "properties": {
+        "answer": {"type": "string", "pattern": "^[a-z]+(@[A-Z]{2})?#[0-9]+$"},
+        "range": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2}
+          ]
+        }
+      }
+    }
+  }
+}

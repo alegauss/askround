@@ -23,6 +23,7 @@ from askround.extract import Claim, Recommendation
 from askround.gaps import Gap
 from askround.links import LinkCheck
 from askround.lookup import Verdict
+from askround.provenance import answer_id, schema
 from askround.providers import Answer, Locale, Source
 from askround.rivals import key, rivals
 from askround.round import (
@@ -68,6 +69,7 @@ def build_set(path: Path) -> dict:
             {**q, "report": build(round_, products or [index["names"]], str(round_path))}
         )
     return {
+        "schema": schema("set"),
         "set": str(path),
         "product": index["product"],
         "asked_at": index["asked_at"],
@@ -210,17 +212,12 @@ def _restore_checks(round_: Round, data: dict) -> None:
 TOP = 5
 
 
-def answer_id(r) -> str:
-    """'openai#2', or 'openai@BR#2' in a locale: how a fact points at its answer."""
-    place = f"@{r.locale.country}" if r.locale else ""
-    return f"{r.provider}{place}#{r.run}"
-
-
 def brief(round_: Round, products: list[list[str]], source: str = "") -> dict:
     """The round in a few hundred tokens (law L1): what was found, each fact with the
     ids of the answers it came from; the text stays behind askround_answer."""
     answered = [r for r in round_.results if r.answer is not None]
     out: dict = {
+        "schema": schema("brief"),
         "q": round_.question,
         "round": source,
         "answers": len(answered),
@@ -281,6 +278,7 @@ def build(round_: Round, products: list[list[str]], source: str = "") -> dict:
     """The report as data: the same facts the Markdown shows."""
     found = rivals(round_, products)
     return {
+        "schema": schema("report"),
         "round": source,
         "question": round_.question,
         "asked_at": round_.asked_at.isoformat(),

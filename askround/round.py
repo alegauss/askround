@@ -28,6 +28,7 @@ from pathlib import Path
 from askround import citations, costs, mention, series
 from askround.claims import product_claims
 from askround.http import HttpError
+from askround.provenance import answer_id, schema, span
 from askround.providers import Answer, Locale, Provider
 from askround.rivals import key, rivals
 
@@ -90,6 +91,9 @@ class Frequency:
     # per run: "text" or "extraction", and the passage that ranked it ("" if none)
     ranked_by: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
+    # per run: the answer's id, and the characters that name or rank it (None if unnamed)
+    answers: list[str] = field(default_factory=list)
+    ranges: list[list[int] | None] = field(default_factory=list)
 
     @property
     def share(self) -> str:
@@ -169,6 +173,8 @@ def frequency(round_: Round, names: list[str]) -> list[Frequency]:
         row.positions.append(found.position)
         row.ranked_by.append(found.by)
         row.evidence.append(found.evidence)
+        row.answers.append(answer_id(r))
+        row.ranges.append(_where(r.answer.text, names, found) if found.named else None)
     for (provider, place), model in slots.items():
         if not any(key[:2] == (provider, place) for key in table):
             table[(provider, place, model)] = Frequency(provider, model, 0, 0, [], locale=place)
@@ -176,9 +182,20 @@ def frequency(round_: Round, names: list[str]) -> list[Frequency]:
     return sorted(table.values(), key=lambda f: order.index((f.provider, f.locale)))
 
 
+def _where(text: str, names: list[str], found) -> list[int] | None:
+    """The passage that ranks the product (the extraction's quote), else its first name."""
+    if found.evidence:
+        at = span(text, found.evidence)
+        if at:
+            return at
+    match = mention.pattern(names).search(text)
+    return [match.start(), match.end()] if match else None
+
+
 def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
     """The round as `round.json` holds it: everything but the raw responses."""
     data = {
+        "schema": schema("round"),
         "question": round_.question,
         "asked_at": round_.asked_at.astimezone(UTC).isoformat(),
         "search": round_.search,
@@ -207,6 +224,10 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                         "positions": f.positions,
                         "ranked_by": f.ranked_by,
                         "evidence": f.evidence,
+                        "in": [
+                            {"answer": a, "range": rng}
+                            for a, rng in zip(f.answers, f.ranges, strict=True)
+                        ],
                     }
                     for f in frequency(round_, names)
                 ],
@@ -218,6 +239,7 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                         "providers": c.providers,
                         "quote": c.quote,
                         "unverified": c.unverified,
+                        "in": c.found_in,
                     }
                     for c in product_claims(round_, names)
                 ],
@@ -404,7 +426,7 @@ def save_round(
     if directory is None:
         stamp = round_.asked_at.astimezone(UTC)
         name = f"{stamp.strftime('%H%M%S')}-{slug(round_.question)}"
-        directory = out / stamp.strftime("%Y-%m-%d") / name
+        directory = _fresh(out / stamp.strftime("%Y-%m-%d") / name)
     directory.mkdir(parents=True, exist_ok=True)
     _write(directory / "round.json", summary(round_, products))
     for r in round_.results:
@@ -416,6 +438,16 @@ def save_round(
         source = (directory / "round.json").as_posix()
     series.append(out, series.rows(round_, products or [], source))
     return directory
+
+
+def _fresh(directory: Path) -> Path:
+    """The directory, or `<name>-2`, `-3`... when a round of the same question in the
+    same second is already there: a round never overwrites another."""
+    candidate, n = directory, 1
+    while (candidate / "round.json").exists():
+        n += 1
+        candidate = directory.with_name(f"{directory.name}-{n}")
+    return candidate
 
 
 def raw_name(r: Result) -> str:

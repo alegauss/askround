@@ -50,6 +50,7 @@ from askround import report as report_
 from askround.claims import product_claims
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
+from askround.provenance import schema
 from askround.providers import Answer, Locale, all_providers, by_name
 from askround.rivals import key as rival_key
 from askround.rivals import rivals
@@ -184,6 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--check-links", action="store_true", help="follow the product's links")
     run.add_argument("--out", type=Path, help="where rounds are saved")
+    run.add_argument("--json", action="store_true", help="print the set's report as JSON")
     disc = commands.add_parser(
         "discover",
         parents=[common, paid],
@@ -201,6 +203,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="also rank by the extraction pass (one more call per answer)",
     )
     disc.add_argument("--out", type=Path, help="where rounds are saved")
+    disc.add_argument("--json", action="store_true", help="print the ranking as JSON")
     find = commands.add_parser(
         "lookup", help="check whether products exist: GitHub, then one searched call each"
     )
@@ -383,7 +386,12 @@ def run_research(args, providers, post) -> int:
     names = list(dict.fromkeys(r.provider for r in round_.results if r.answer))
     text = research.markdown(args.question, found, names)
     (directory / "research.md").write_text(text, encoding="utf-8")
-    data = {"question": args.question, "providers": names, **research.as_json(found)}
+    data = {
+        "schema": schema("research"),
+        "question": args.question,
+        "providers": names,
+        **research.as_json(found),
+    }
     (directory / "research.json").write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -457,9 +465,30 @@ def run_discover(args, providers, post) -> int:
         ]
     text = "\n".join(lines) + "\n"
     (directory / "discovery.md").write_text(text, encoding="utf-8")
-    print(text, end="")
-    print(f"\nsaved: {directory}")
-    return 0
+    if args.json:
+        data = {
+            "schema": schema("discovery"),
+            "product": item.name,
+            "saved": str(directory),
+            "ranked": [
+                {
+                    "question": r.question.text,
+                    "axis": r.question.purpose,
+                    "locale": str(r.question.locale) if r.question.locale else None,
+                    "score": round(r.score, 4),
+                    "named": r.named,
+                    "answers": r.answers,
+                    "best": r.best,
+                }
+                for r in ranked
+            ],
+            "dropped": dropped,
+        }
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        print(text, end="")
+        print(f"\nsaved: {directory}")
+    return outcome([r for round_ in rounds for r in round_.results])
 
 
 def run_prompt_set(args, providers, post, fetch=None) -> int:
@@ -486,7 +515,7 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
         print(f"askround: {refusal}", file=sys.stderr)
         return 2
     get = (fetch or links.fetch) if args.check_links else None
-    directory, _ = sets.run_set(
+    directory, rounds = sets.run_set(
         item,
         providers,
         _rounds_dir(args.out),
@@ -496,13 +525,29 @@ def run_prompt_set(args, providers, post, fetch=None) -> int:
         get=get,
         source=str(args.file),
     )
-    print(report_.set_markdown(report_.build_set(directory / "set.json")), end="")
-    print(f"\nsaved: {directory}")
-    return 0
+    data = report_.build_set(directory / "set.json")
+    if args.json:
+        print(json.dumps({**data, "saved": str(directory)}, ensure_ascii=False, indent=2))
+    else:
+        print(report_.set_markdown(data), end="")
+        print(f"\nsaved: {directory}")
+    return outcome([r for round_ in rounds for r in round_.results])
 
 
 class Refused(Exception):
     """A run stopped before anything was paid for (law L2)."""
+
+
+# the exit codes are the contract a script, a hook or a CI job reads
+OK, FAILED, REFUSED, PARTIAL = 0, 1, 2, 3
+
+
+def outcome(results) -> int:
+    """OK when every answer came back, PARTIAL when some failed, FAILED when none did."""
+    answered = sum(r.ok for r in results)
+    if answered == len(results):
+        return OK
+    return PARTIAL if answered else FAILED
 
 
 def _preflight(args, providers, post):
@@ -584,7 +629,7 @@ def run_ask(args, providers, post, fetch=None) -> int:
         print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
         print(render(round_, directory, products))
-    return 0 if any(r.ok for r in round_.results) else 1
+    return outcome(round_.results)
 
 
 def _rounds_dir(out: Path | None) -> Path:
@@ -608,7 +653,8 @@ def run_lookup(args, post) -> int:
     web = lookup.web_lookup(**_post(post)) if args.web else None
     verdicts = lookup.check(args.names, args.context, web=web, **_post(post))
     if args.json:
-        print(json.dumps([v.__dict__ for v in verdicts], ensure_ascii=False, indent=2))
+        data = {"schema": schema("lookup"), "verdicts": [v.__dict__ for v in verdicts]}
+        print(json.dumps(data, ensure_ascii=False, indent=2))
     else:
         for v in verdicts:
             where = f" <{v.url}>" if v.url else ""
@@ -623,7 +669,8 @@ def run_export(args) -> int:
     if args.format == "csv":
         text = export.to_csv(items)
     elif args.format == "json":
-        text = json.dumps(items, ensure_ascii=False, indent=2) + "\n"
+        data = {"schema": schema("export"), "product": args.product, "rows": items}
+        text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     else:
         key = args.key or args.product.lower()
         text = json.dumps(export.daily(items, key), ensure_ascii=False, indent=2) + "\n"
@@ -652,6 +699,7 @@ def run_diff(args) -> int:
         return 2
     if args.json:
         data = {
+            "schema": schema("diff"),
             "old": str(old),
             "new": str(new),
             "changes": [c.__dict__ for c in changes],
@@ -678,7 +726,13 @@ def run_series(args) -> int:
         return 2
     table = series.frequency(series.load(out), args.product, args.by, args.question)
     if args.json:
-        print(json.dumps(table, ensure_ascii=False, indent=2))
+        data = {
+            "schema": schema("series"),
+            "product": args.product,
+            "by": args.by,
+            "periods": table,
+        }
+        print(json.dumps(data, ensure_ascii=False, indent=2))
         return 0
     if not table:
         print(f"no answers tracked {args.product} under {out}; ask with --product first")
@@ -723,7 +777,8 @@ def run_report(args) -> int:
 def run_doctor(providers, check: bool, as_json_: bool) -> int:
     statuses = diagnose(providers, check=check)
     if as_json_:
-        print(json.dumps([_status_json(s) for s in statuses], indent=2))
+        data = {"schema": schema("doctor"), "providers": [_status_json(s) for s in statuses]}
+        print(json.dumps(data, indent=2))
     else:
         print(render_doctor(statuses))
     return 0 if any(s.can_run for s in statuses) else 2

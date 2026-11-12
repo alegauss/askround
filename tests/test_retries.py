@@ -91,7 +91,7 @@ def test_a_round_with_a_failing_provider_finishes_and_reports_it(all_keys, tmp_p
     argv = ["ask", "q", "--provider", "openai", "--provider", "anthropic", "--runs", "2"]
     code = main([*argv, "--out", str(tmp_path)], post=post)
     out = capsys.readouterr().out
-    assert code == 0
+    assert code == 3  # a partial round: it finished, and the exit code says some failed
     assert out.count("OpenAI says Modelado.") == 2
     assert "failed: 2 of 4 answers" in out
     assert "anthropic run 1: HttpError: HTTP 503: boom" in out
