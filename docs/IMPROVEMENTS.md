@@ -65,18 +65,3 @@ anchor.
 
 Done when a push changing content.ts is built by site.yml and live at
 alegauss.github.io/askround/.
-
-### §AR43 Readable by assistants, measured by itself
-
-The family's sites carry an llms.txt and structured data so assistants can read them;
-askround's site must do it best, since its whole subject is what assistants say.
-
-The site ships llms.txt with the product in a paragraph and links to the docs, JSON-LD
-for a SoftwareApplication (licence, platforms, price, repository, PyPI), a sitemap and
-the social card. askround keeps a prompt set about itself (questions a developer would
-ask: track whether ChatGPT recommends my app, an MCP server to ask several LLMs with web
-search) and the site shows its latest round, honestly, including when askround is not
-named.
-
-Done when llms.txt and the JSON-LD validate, and the site shows a dated round of
-askround's own prompt set.

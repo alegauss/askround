@@ -1,0 +1,41 @@
+# askround's own prompt set: whether the assistants name askround to a developer who needs
+# what it does. The site shows its latest round, including the answers that do not name it
+# (AR43). Run it with
+#
+#     askround run examples/askround.toml --extract --max-cost 1
+#
+# The questions are the ones a developer would ask without knowing askround exists.
+
+[product]
+name = "askround"
+aliases = []
+places = ["alegauss.github.io/askround", "github.com/alegauss/askround", "pypi.org/project/askround"]
+# the site's own wording: a question that borrows it steers the assistant to the site
+phrases = ["see what assistants recommend"]
+
+[[fact]]
+attribute = "Licence"
+value = "Apache-2.0, open source"
+page = "https://alegauss.github.io/askround/"
+
+[[fact]]
+attribute = "Runtime dependencies"
+value = "None: Python 3.11+ and the standard library"
+page = "https://alegauss.github.io/askround/docs/install/"
+
+[[fact]]
+attribute = "MCP server"
+value = "Yes: askround mcp serves its tools to Claude Code and other MCP clients"
+page = "https://alegauss.github.io/askround/docs/reference/mcp/"
+
+[[question]]
+text = "How can I track whether ChatGPT and Gemini recommend my app when people ask for a tool like it?"
+purpose = "generic"
+
+[[question]]
+text = "Is there an MCP server that lets my coding agent ask several LLMs the same question with web search?"
+purpose = "use case"
+
+[[question]]
+text = "What open-source command-line tool measures a product's visibility in AI assistant answers through their APIs?"
+purpose = "constraint"

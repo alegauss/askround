@@ -60,6 +60,20 @@ export const words = {
     note:
       "Answers vary from run to run, so a real round asks each question several times and reports how many runs name the product. askround measures the APIs, not the chat apps, which add memory and personalisation of their own.",
   },
+  self: {
+    eyebrow: "Measured on itself",
+    title: "Do the assistants name askround? Not yet.",
+    lead: (date: string, cost: string) =>
+      `askround keeps a prompt set about itself, the questions a developer would ask without knowing it exists, and this is its latest round, from ${date}: one run per question on each provider, ${cost} in all. It is shown as it came back.`,
+    head: { question: "Question", rivals: "What they named instead" },
+    cell: (named: number, runs: number, best: number | null) => {
+      if (!named) return `not named (0/${runs})`;
+      const at = best ? `, #${best}` : "";
+      return `named ${named}/${runs}${at}`;
+    },
+    tableLabel: "askround's own prompt set, by question and provider",
+    file: "The set is examples/askround.toml in the repository.",
+  },
   how: {
     eyebrow: "What a round reports",
     title: "Read the answers as data, not anecdotes",

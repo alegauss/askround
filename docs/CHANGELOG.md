@@ -71,3 +71,6 @@
 - ✅ **AR41 (site.yml written)** **Nothing builds and deploys the site when it changes** — site.yml builds and gates the site on every change and deploys it to Pages.
 - ✅ **AR42** **There are no docs pages: install, a first session in Claude Code, the MCP tools and the CLI reference live nowhere** — site/docs builds the docs at /askround/docs/, its MCP and CLI reference generated from the package.
   checked **Each page exists under /askround/docs/, linked from the README and the nav** npm run build in site/ writes the nine docs pages into dist/docs; the README and the site nav link /askround/docs/.
+- ✅ **AR43** **The site is not built to be read by assistants, and askround never measures whether they name askround itself** — The site ships a checked llms.txt and JSON-LD, and shows askround's own dated round: named by no assistant yet.
+  checked **llms.txt and the JSON-LD validate** The prerender checks llms.txt against the llmstxt.org shape and the JSON-LD's SoftwareApplication fields, and fails the build otherwise.
+  checked **The site shows a dated round of askround's own prompt set** examples/askround.toml ran live on 2026-11-12; the page shows it, askround named in none, and tests/test_site.py ties it to the set.

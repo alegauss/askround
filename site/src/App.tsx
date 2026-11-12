@@ -1,5 +1,5 @@
 import { Footer, Nav } from "./components/Chrome";
-import { Agents, Cost, How, Install, Intro, Round } from "./components/Sections";
+import { Agents, Cost, How, Install, Intro, Round, Self } from "./components/Sections";
 
 // The page between the design system's nav and footer is askround's own: the pain and the
 // promise, a real recorded round, what a round reports, the agent-first design, install and
@@ -15,6 +15,7 @@ export function App() {
         <Agents />
         <Install />
         <Cost />
+        <Self />
       </main>
       <Footer />
     </>

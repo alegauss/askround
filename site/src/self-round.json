@@ -1,0 +1,88 @@
+{
+  "product": "askround",
+  "asked_on": "2026-11-12",
+  "cost": 0.34,
+  "questions": [
+    {
+      "text": "How can I track whether ChatGPT and Gemini recommend my app when people ask for a tool like it?",
+      "purpose": "generic",
+      "answers": [
+        {
+          "provider": "openai",
+          "model": "gpt-5-2025-08-07",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        },
+        {
+          "provider": "gemini",
+          "model": "gemini-2.5-flash",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        }
+      ],
+      "rivals": [
+        "Reddit",
+        "X",
+        "App Store analytics",
+        "GA4",
+        "Looker/Data Studio"
+      ]
+    },
+    {
+      "text": "Is there an MCP server that lets my coding agent ask several LLMs the same question with web search?",
+      "purpose": "use case",
+      "answers": [
+        {
+          "provider": "openai",
+          "model": "gpt-5-2025-08-07",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        },
+        {
+          "provider": "gemini",
+          "model": "gemini-2.5-flash",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        }
+      ],
+      "rivals": [
+        "LangChain/LangGraph",
+        "OpenRouter MCP server",
+        "LiteLLM MCP gateway",
+        "Microsoft AutoGen",
+        "LiteLLM Agent MCP Server"
+      ]
+    },
+    {
+      "text": "What open-source command-line tool measures a product's visibility in AI assistant answers through their APIs?",
+      "purpose": "constraint",
+      "answers": [
+        {
+          "provider": "openai",
+          "model": "gpt-5-2025-08-07",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        },
+        {
+          "provider": "gemini",
+          "model": "gemini-2.5-flash",
+          "runs": 1,
+          "named": 0,
+          "best": null
+        }
+      ],
+      "rivals": [
+        "aeo-platform",
+        "AVM",
+        "Genwolf AI",
+        "OneGlanse",
+        "Elmo"
+      ]
+    }
+  ]
+}

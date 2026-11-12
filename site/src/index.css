@@ -270,6 +270,23 @@ section.tinted {
   font-variant-numeric: tabular-nums;
 }
 
+/* The self round: the question is prose, the cells are short verdicts. */
+.self-scroll {
+  overflow-x: auto;
+}
+.self-scroll:focus-visible {
+  outline: 3px solid var(--vg-brand);
+  outline-offset: 3px;
+}
+.self-table td,
+.self-table thead th:not(:first-child) {
+  text-align: left;
+}
+.self-table tbody th {
+  font-weight: 600;
+  min-width: 16em;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

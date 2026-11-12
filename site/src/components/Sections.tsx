@@ -1,6 +1,7 @@
 import { SiteButton } from "@viglet/viglet-design-system/site";
 import { BASE, PROVIDER_NAMES, repoUrl, roadkeepUrl, words } from "../content";
 import round from "../round.json";
+import self from "../self-round.json";
 
 function Head({ id, eyebrow, title }: { id: string; eyebrow: string; title: string }) {
   return (
@@ -76,6 +77,49 @@ export function Round() {
         </ul>
         <p className="sec-note">
           {w.cost(`$${round.cost.toFixed(2)}`)} {w.note}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export function Self() {
+  const w = words.self;
+  const providers = self.questions[0]?.answers.map((a) => a.provider) ?? [];
+  return (
+    <section aria-labelledby="self">
+      <div className="wrap">
+        <Head id="self" eyebrow={w.eyebrow} title={w.title} />
+        <p className="sec-lead">{w.lead(self.asked_on, `$${self.cost.toFixed(2)}`)}</p>
+        {/* It scrolls sideways on a phone, so it takes focus for a keyboard to scroll it. */}
+        <div className="self-scroll" tabIndex={0} role="region" aria-label={w.tableLabel}>
+        <table className="facts self-table">
+          <thead>
+            <tr>
+              <th scope="col">{w.head.question}</th>
+              {providers.map((p) => (
+                <th scope="col" key={p}>
+                  {PROVIDER_NAMES[p] ?? p}
+                </th>
+              ))}
+              <th scope="col">{w.head.rivals}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {self.questions.map((q) => (
+              <tr key={q.text}>
+                <th scope="row">{q.text}</th>
+                {q.answers.map((a) => (
+                  <td key={a.provider}>{w.cell(a.named, a.runs, a.best)}</td>
+                ))}
+                <td>{q.rivals.join(", ")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        <p className="sec-note">
+          {w.file} <a href={`${repoUrl}/blob/main/examples/askround.toml`}>examples/askround.toml</a>
         </p>
       </div>
     </section>

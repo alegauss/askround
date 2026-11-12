@@ -8,8 +8,6 @@
 
 ## Block I — The site at alegauss.github.io/askround
 
-- 📋 **AR43** (deps: AR40 ✅, AR16 ✅) **The site is not built to be read by assistants, and askround never measures whether they name askround itself** — A tool that measures how assistants see a product should be readable by them and should measure itself first, publicly. → §AR43
-
 ## Done when — AR28
 
 - **pip install askround installs the published package on Windows, macOS and Linux**

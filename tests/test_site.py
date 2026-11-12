@@ -74,6 +74,18 @@ def test_the_site_shows_the_recorded_round(all_keys):
     assert json.loads(SITE_ROUND.read_text(encoding="utf-8")) == recorded_round()
 
 
+def test_the_self_round_on_the_site_is_a_run_of_askround_own_prompt_set():
+    """AR43: the page's self round asks exactly the questions examples/askround.toml holds,
+    so a question changed in the set without running it again fails here."""
+    from askround import product
+
+    shown = json.loads((SITE_ROUND.parent / "self-round.json").read_text(encoding="utf-8"))
+    own = product.load(HERE.parent / "examples" / "askround.toml")
+    assert shown["product"] == own.name
+    assert [q["text"] for q in shown["questions"]] == [q.text for q in own.questions]
+    assert all(q["answers"] for q in shown["questions"])
+
+
 if __name__ == "__main__":
     sys.path[:0] = [str(HERE), str(HERE.parent / "plugin" / "src")]
     for name in [n for n in os.environ if n.startswith("ASKROUND_")]:

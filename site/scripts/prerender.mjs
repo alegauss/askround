@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { Resvg } from "@resvg/resvg-js";
 import { ogCardSvg, prerenderSite, renderOgCard } from "@viglet/viglet-design-system/vite";
 
-import { render, ROUTES, canonicalUrl, jsonLd, outputDir, OG_IMAGE } from "../dist-server/entry-server.js";
+import { render, ROUTES, canonicalUrl, jsonLd, llmsTxt, outputDir, OG_IMAGE } from "../dist-server/entry-server.js";
 
 const siteDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = join(siteDir, "dist");
@@ -51,7 +51,44 @@ const written = prerenderSite({
 const page = join(distDir, "index.html");
 const html = readFileSync(page, "utf8");
 if (!html.includes("</head>")) throw new Error(`${page} lost its </head>`);
-const ld = JSON.stringify(jsonLd()).replace(/</g, "\\u003c");
+const data = jsonLd();
+checkJsonLd(data);
+const ld = JSON.stringify(data).replace(/</g, "\\u003c");
 writeFileSync(page, html.replace("</head>", () => `<script type="application/ld+json">${ld}</script>\n  </head>`));
+
+// AR43: llms.txt for an assistant that reads the site, checked against the format llmstxt.org
+// sets before it is written: an H1 with the name, a blockquote summary, then H2 sections of
+// Markdown links. A file that broke the format would fail the build, not ship.
+const llms = llmsTxt();
+checkLlmsTxt(llms);
+writeFileSync(join(distDir, "llms.txt"), llms);
+console.log(`llms.txt: dist/llms.txt  ${llms.split("\n").length} lines`);
+
+/** The fields a SoftwareApplication needs for a rich result, and absolute URLs. */
+function checkJsonLd(ld) {
+  const need = ["@context", "@type", "name", "description", "url", "applicationCategory", "operatingSystem", "offers", "license", "author"];
+  const missing = need.filter((key) => ld[key] === undefined || ld[key] === "");
+  if (missing.length) throw new Error(`JSON-LD lacks ${missing.join(", ")}`);
+  if (ld["@context"] !== "https://schema.org" || ld["@type"] !== "SoftwareApplication") {
+    throw new Error("JSON-LD is not a schema.org SoftwareApplication");
+  }
+  if (ld.offers["@type"] !== "Offer" || ld.offers.price === undefined || !ld.offers.priceCurrency) {
+    throw new Error("JSON-LD offers needs @type Offer, price and priceCurrency");
+  }
+  for (const url of [ld.url, ld.image, ld.license, ...(ld.sameAs ?? [])]) {
+    if (url && !/^https:\/\//.test(url)) throw new Error(`JSON-LD URL is not absolute: ${url}`);
+  }
+}
+
+function checkLlmsTxt(text) {
+  const lines = text.split("\n");
+  if (!/^# \S/.test(lines[0])) throw new Error("llms.txt must open with an H1 naming the project");
+  if (!lines.some((line) => line.startsWith("> "))) throw new Error("llms.txt needs a blockquote summary");
+  const links = lines.filter((line) => line.startsWith("- ["));
+  if (!links.length) throw new Error("llms.txt lists no links");
+  for (const line of links) {
+    if (!/^- \[[^\]]+\]\(https:\/\/[^)]+\)(: .+)?$/.test(line)) throw new Error(`llms.txt link is malformed: ${line}`);
+  }
+}
 
 console.log(`prerender: ${written.length} route(s), sitemap.xml and robots.txt written to dist/`);
