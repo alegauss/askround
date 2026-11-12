@@ -136,7 +136,7 @@ cap you set (`--max-cost 0.50`, or `ASKROUND_MAX_COST`) before anything is sent.
 it, the report gives the actual cost per provider from the usage each API reported,
 the extraction pass included.
 
-The prices are a dated table in `askround/costs.py`: Anthropic's from its model table
+The prices are a dated table in `plugin/src/askround/costs.py`: Anthropic's from its model table
 of 2026-11-03, the others the last known list prices, to be checked against the
 providers' pages. `ASKROUND_PRICES` names a JSON file that replaces any of them:
 `{"models": {"gpt-5": {"input": 1.25, "output": 10.0}}, "search": {"openai": 0.01}}`.
@@ -296,15 +296,23 @@ and the primary sources to read to settle it.
 
 ## For agents: the plugin and the MCP server
 
-In Claude Code, the plugin installs the MCP server and a skill that tells the agent to
+In Claude Code, the plugin installs the MCP server, four slash commands (`/askround:ask`,
+`/askround:run`, `/askround:report`, `/askround:diff`) and a skill that tells the agent to
 run a question across assistants itself, instead of asking you to paste ChatGPT's
-answer (askround itself must be installed, `pip install -e .`, and on the PATH):
+answer. The plugin carries the package (`plugin/src/askround`) and runs it with the
+Python on the machine, so nothing else is installed and nothing has to be on the PATH:
 
 ```
-/plugin install askround --marketplace alegauss/askround
+/plugin marketplace add alegauss/askround
+/plugin install askround@askround
 ```
 
-or the server alone: `claude mcp add askround -- askround mcp`. Either serves:
+To wire a project for everyone who clones it, run `askround install` in it (or
+`python plugin/scripts/askround.py install <project>` from a checkout) and commit
+`.claude/settings.json`: it names the marketplace and enables the plugin, keeping every
+other setting, so each clone is offered the plugin on its first session.
+`askround install --check` writes nothing and exits 1 when the entries are missing, for
+CI. The server alone: `claude mcp add askround -- askround mcp`. Either serves:
 
 | Tool | What it does |
 | --- | --- |

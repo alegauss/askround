@@ -13,7 +13,7 @@ from conftest import FakePost
 from askround import mcp, refusals
 from askround.cli import main
 
-CLI = Path(__file__).parent.parent / "askround" / "cli.py"
+CLI = Path(__file__).parent.parent / "plugin" / "src" / "askround" / "cli.py"
 
 
 def test_every_problem_is_listed_at_once_and_nothing_is_sent(

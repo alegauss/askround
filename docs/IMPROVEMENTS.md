@@ -50,10 +50,11 @@ askround ships the same way: a marketplace with the plugin at project scope, its
 tools, slash commands (ask, run, report, diff), the skill, install and install --check
 from a checkout, and the launcher for the web. AR27 shipped the first piece:
 .claude-plugin/marketplace.json and plugin/ (plugin.json, the askround skill, an MCP
-config running the installed askround mcp); the plugin does not yet bundle the package,
-so the machine needs askround on the PATH, which the launcher should remove. Its MCP
-schemas carry the project's own prompt sets, providers and budget, as roadkeep's carry
-its limits.
+config running the installed askround mcp); the package now lives in plugin/src/askround
+and plugin/scripts/askround.py runs it with nothing installed; the four commands and
+askround install (--check) landed too. Left: the launcher for the web, and the project's
+own values in the schemas. Its MCP schemas carry the project's own prompt sets,
+providers and budget, as roadkeep's carry its limits.
 
 Done when a repository that commits the settings gets askround's tools, commands and
 skill on a fresh clone, and on Claude Code on the web through the launcher.

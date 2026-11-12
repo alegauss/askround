@@ -21,6 +21,7 @@ done (with its result), refused, failed, or interrupted (with what it finished).
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import subprocess
 import sys
@@ -45,6 +46,14 @@ def new_id() -> str:
 COMMAND = [sys.executable, "-m", "askround"]
 
 
+def _environment() -> dict[str, str]:
+    """The job imports the copy of askround that started it: the plugin runs askround from
+    its own source tree with nothing installed, and `-m askround` alone would not find it."""
+    here = str(Path(__file__).resolve().parents[1])
+    paths = [here, *filter(None, os.environ.get("PYTHONPATH", "").split(os.pathsep))]
+    return {**os.environ, "PYTHONPATH": os.pathsep.join(paths)}
+
+
 def start(argv: list[str], out: Path, command: list[str] | None = None) -> str:
     """Run `askround <argv> --json --job <dir> --out <out>` in its own process."""
     job = new_id()
@@ -57,6 +66,7 @@ def start(argv: list[str], out: Path, command: list[str] | None = None) -> str:
         stdout=(directory / "result.json").open("w", encoding="utf-8"),
         stderr=(directory / "stderr.log").open("w", encoding="utf-8"),
         stdin=subprocess.DEVNULL,
+        env=_environment(),
     )
     _RUNNING[job] = process
     return job

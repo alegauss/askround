@@ -53,6 +53,9 @@ dev = ["pytest>=8", "ruff>=0.6"]
 askround = "askround.cli:main"
 
 [tool.setuptools]
+# the package lives inside the plugin, so the marketplace copy carries it and the plugin
+# runs with nothing installed (AR38)
+package-dir = { "" = "plugin/src" }
 packages = ["askround"]
 
 [tool.setuptools.dynamic]
@@ -67,21 +70,25 @@ extend-exclude = [".claude"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "C4", "B"]
 
+[tool.ruff.lint.isort]
+# the package lives in plugin/src (AR38)
+known-first-party = ["askround"]
+
 [tool.ruff.lint.per-file-ignores]
 # the extraction instructions are prose a model reads: hard line breaks inside one
 # instruction would change what it is told
-"askround/extract.py" = ["E501"]
-"askround/lookup.py" = ["E501"]
-"askround/gaps.py" = ["E501"]
-"askround/discover.py" = ["E501"]
+"plugin/src/askround/extract.py" = ["E501"]
+"plugin/src/askround/lookup.py" = ["E501"]
+"plugin/src/askround/gaps.py" = ["E501"]
+"plugin/src/askround/discover.py" = ["E501"]
 # tool descriptions are prose an agent reads
-"askround/mcp.py" = ["E501"]
-"askround/research.py" = ["E501"]
-"askround/refusals.py" = ["E501"]
-"askround/budget.py" = ["E501"]
-"askround/jobs.py" = ["E501"]
+"plugin/src/askround/mcp.py" = ["E501"]
+"plugin/src/askround/research.py" = ["E501"]
+"plugin/src/askround/refusals.py" = ["E501"]
+"plugin/src/askround/budget.py" = ["E501"]
+"plugin/src/askround/jobs.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", "tests"]
+pythonpath = ["plugin/src", "tests"]
 markers = ["live: calls the real provider APIs; runs only with ASKROUND_LIVE=1"]

@@ -1,6 +1,6 @@
 {
   "name": "askround",
-  "description": "Ask ChatGPT, Gemini, Claude and Perplexity the same question through their APIs, with web search, and read what they recommend: whether a product is named and where, the rivals, the claims and the pages cited. An MCP server and a skill that tells the agent to run the question itself instead of asking the user to paste answers.",
+  "description": "Ask ChatGPT, Gemini, Claude and Perplexity the same question through their APIs, with web search, and read what they recommend: whether a product is named and where, the rivals, the claims and the pages cited. An MCP server, slash commands (ask, run, report, diff) and a skill that tells the agent to run the question itself instead of asking the user to paste answers.",
   "version": "0.1.0",
   "author": {
     "name": "Alexandre Oliveira"

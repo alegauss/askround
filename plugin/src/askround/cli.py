@@ -49,6 +49,7 @@ from askround import (
     reuse,
     series,
     sets,
+    wiring,
 )
 from askround import report as report_
 from askround.claims import product_claims
@@ -272,6 +273,15 @@ def build_parser() -> argparse.ArgumentParser:
     why.add_argument("code", nargs="?", help="e.g. question.leading (default: list them)")
     serve = commands.add_parser("mcp", help="serve askround to an agent as an MCP server (stdio)")
     serve.add_argument("--out", type=Path, help="where rounds are saved")
+    wire = commands.add_parser(
+        "install", help="wire a project to the askround plugin in its .claude/settings.json"
+    )
+    wire.add_argument(
+        "project", nargs="?", type=Path, default=Path("."), help="the project (default: here)"
+    )
+    wire.add_argument(
+        "--check", action="store_true", help="write nothing; exit 1 when it is not wired"
+    )
     exp = commands.add_parser("export", help="a product's numbers from the series, for a dashboard")
     exp.add_argument("--product", required=True, metavar="NAME", help="the product to export")
     exp.add_argument("--from", dest="since", metavar="YYYY-MM-DD", default="", help="first day")
@@ -354,6 +364,7 @@ def main(argv: list[str] | None = None, post=None, fetch=None) -> int:
         "export": lambda: run_export(args),
         "budget": lambda: run_budget(args),
         "mcp": lambda: run_mcp(args),
+        "install": lambda: run_install(args),
     }
     if args.command in local:
         return local[args.command]()
@@ -400,6 +411,26 @@ def run_mcp(args) -> int:
     from askround import mcp
 
     mcp.serve(out=str(args.out) if args.out else None)
+    return OK
+
+
+def run_install(args) -> int:
+    """Write the marketplace and the plugin into the project's settings, or check them."""
+    try:
+        path, gaps = wiring.install(args.project, check=args.check)
+    except (ValueError, OSError) as error:
+        print(f"askround: {error}", file=sys.stderr)
+        return REFUSED
+    if not gaps:
+        print(f"wired: {path} names the askround marketplace and enables {wiring.PLUGIN}")
+        return OK
+    if args.check:
+        print(f"not wired: {path}", file=sys.stderr)
+        for gap in gaps:
+            print(f"  {gap}", file=sys.stderr)
+        print("  askround install writes them", file=sys.stderr)
+        return FAILED
+    print(f"wired: wrote {path}; commit it and every clone gets the askround plugin")
     return OK
 
 
