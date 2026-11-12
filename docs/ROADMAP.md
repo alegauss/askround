@@ -4,14 +4,13 @@
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-- 📋 **AR10** (deps: AR8 ✅) **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Knowing that an assistant cites the product's site and not its GitHub or Store page tells which page to improve first. → §AR10
 - 📋 **AR11** (deps: AR8 ✅) **What an answer claims about the product is not captured, such as 'CPU only: Check build' in a table** — The answer that ranked the app first also doubted its CPU support, a claim that decides a reader's choice and that the product can fix. → §AR11
 - 📋 **AR12** (deps: AR8 ✅) **There is no short report of a round; reading it means opening every raw answer** — The person deciding needs one table: question by provider, with rank, frequency and the rivals around the product. → §AR12
 
 ## Block C — Trust: checking what the answers say
 
 - 📋 **AR13** (deps: AR9 ✅) **A product an answer names may not exist, like two Windows apps no search could find** — An answer recommended 'Presidium Shape Studio' and 'MeshForge3D' as apps; research could not find either, so an invented rival could steer a decision. → §AR13
-- 📋 **AR14** (deps: AR10) **A cited link or picture may belong to another product, like a Store page of a different app shown for Modelado** — A reader who clicks the picture beside the recommended app can install a rival; the product owner never learns it happened. → §AR14
+- 📋 **AR14** (deps: AR10 ✅) **A cited link or picture may belong to another product, like a Store page of a different app shown for Modelado** — A reader who clicks the picture beside the recommended app can install a rival; the product owner never learns it happened. → §AR14
 - 📋 **AR15** (deps: AR11) **Claims about the product are not checked against what is true, so a wrong 'needs NVIDIA' goes unnoticed** — The fix for a wrong claim is a sentence on the page the assistant reads; askround can say which claim is wrong and which page lacks it. → §AR15
 
 ## Block D — Questions: prompt sets and finding the question that leads to a product

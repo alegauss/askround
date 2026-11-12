@@ -24,25 +24,6 @@ context on what a command could have answered.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-### §AR10 Citations and which page was cited
-
-The answers on 12/11/2026 cited the app's site, its GitHub repository and, wrongly,
-other apps' Store pages. Which page an assistant reads is the page whose wording decides
-the answer.
-
-Each answer's citations (from the provider's search metadata and from the links in the
-text) are stored, and those on the product's own domains are classified (site,
-repository, store, docs); third-party pages are counted per rival.
-
-AR2 already keeps each answer's sources in `round.json`, as the provider reports them,
-and two shapes need normalising before a URL can be classified: OpenAI appends
-`?utm_source=openai` to the links it cites, and Gemini's grounding chunks are
-`vertexaisearch.cloud.google.com/grounding-api-redirect/...` links whose title is the
-domain, so its real page needs the redirect followed or the domain read from the title.
-
-Done when a report shows, per provider, which of the product's pages were cited and how
-often.
-
 ### §AR11 Claims about the product
 
 On 12/11/2026, the answer that put Modelado first wrote 'Check build' in its CPU-only

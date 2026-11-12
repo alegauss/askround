@@ -23,7 +23,7 @@ import os
 import sys
 from pathlib import Path
 
-from askround import __version__
+from askround import __version__, citations
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
 from askround.providers import Answer, Locale, all_providers, by_name
@@ -301,6 +301,22 @@ def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
         )
     if extracted:
         lines.append("  * ranked by the extraction pass")
+    lines.extend(_cited_lines(round_, names))
+    return lines
+
+
+def _cited_lines(round_: Round, names: list[str]) -> list[str]:
+    if not citations.places(names):
+        return [
+            f"  (give {names[0]}'s domain, e.g. --product {names[0]},example.com, to see "
+            "which of its pages are cited)"
+        ]
+    lines = [f"{names[0]}: its pages cited in"]
+    for c in citations.product_citations(round_, names):
+        kinds = ", ".join(f"{k} {n}" for k, n in sorted(c.kinds.items())) or "none"
+        lines.append(f"  {c.provider:<11} {c.citing}/{c.answers} answers   ({kinds})")
+        for page, n in sorted(c.pages.items(), key=lambda kv: -kv[1]):
+            lines.append(f"      {n}x {page}")
     return lines
 
 

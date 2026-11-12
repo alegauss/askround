@@ -14,6 +14,7 @@
 
 - ✅ **AR8** **Whether a product is named, and in which position, is read by eye in each answer** — --extract lists each answer's recommendations in order with quotes, checked against its text, so a product ranks by "Best fit" or prose; live and synthetic answers checked, 12/11 originals not kept.
 - ✅ **AR9** **The rivals an answer recommends are not listed, so a competitor like Modly is found only by reading** — With --extract a round lists every rival the answers recommend, with answer counts, ranks, providers and a quote; on 12/11 Modly led, but a live round today ranks it lower.
+- ✅ **AR10** **The links an answer cites are not collected, so which page brought the product (site, repo, store) is unknown** — Each answer's cited pages are normalised; given its domains, a product's cited pages are counted per provider by kind, and third-party domains and rivals' pages are counted too.
 
 ## Block C — Trust: checking what the answers say
 

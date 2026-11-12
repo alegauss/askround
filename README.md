@@ -48,6 +48,13 @@ quote. The text stays the check: a product counts as named only if its name is i
 answer, and a quote not found in the answer is marked `(?)`. Positions ranked this way
 show a `*`.
 
+Give the product's own places among its names, anything with a dot: a domain or a URL
+prefix (`--product "Modelado,alegauss.github.io/modelado,github.com/alegauss/modelado"`).
+The report then says, per provider, how many answers cited one of its pages and which
+kind (site, repository, store, docs), and `round.json` lists every page and the
+third-party domains cited. Tracking parameters are dropped; Gemini's redirect links are
+counted by the domain in their title.
+
 With `--extract`, the report also lists the rivals: every other product the answers
 recommend, with how many answers named it, its rank in each and which providers did
 (the first ten in the report, all of them in `round.json`, each with the quote that

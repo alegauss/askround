@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from askround import mention
+from askround import citations, mention
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
 from askround.rivals import rivals
@@ -188,10 +188,24 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                     }
                     for f in frequency(round_, names)
                 ],
+                "places": citations.places(names),
+                "cited": [
+                    {
+                        "provider": c.provider,
+                        "answers": c.answers,
+                        "citing": c.citing,
+                        "kinds": c.kinds,
+                        "pages": c.pages,
+                    }
+                    for c in citations.product_citations(round_, names)
+                ],
             }
             for names in products
         ]
     found = rivals(round_, products)
+    data["third_party"] = citations.third_party(
+        round_, products or [], [rival.name for rival in found.rivals]
+    )
     data["rivals"] = {
         "read": found.read,
         "missing": found.missing or None,
