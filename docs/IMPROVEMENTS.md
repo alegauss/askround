@@ -53,15 +53,3 @@ Done when pip install askround installs nothing else, uvx askround doctor runs o
 clean machine, and the plugin works with only Python present.
 
 ## Block I — The site at alegauss.github.io/askround
-
-### §AR41 site.yml
-
-Modelado's site.yml builds the site on every push that touches site/ and publishes it to
-GitHub Pages under /modelado/; a template missing an anchor fails the same build.
-
-askround gets the same workflow: on a push touching site/, npm ci, npm run build as the
-gate, and the deploy to /askround/, with the build failing on a missing prerender
-anchor.
-
-Done when a push changing content.ts is built by site.yml and live at
-alegauss.github.io/askround/.
