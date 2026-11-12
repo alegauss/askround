@@ -159,6 +159,18 @@ estimate would pass the day's or the month's budget is refused before any call
 raise the budget; an agent using the MCP tools cannot do either, and every paid result
 it gets says what has been spent against the budget. `askround budget` shows it.
 
+### The same question twice costs once
+
+A question asked again the same way within a day (the same text, providers, models,
+locales and search, as many runs, extraction if wanted) returns the stored round, marked
+with its age, and calls no provider. A round where some answers failed is asked again.
+`--fresh` (or `fresh: true` over MCP) asks anew; the window is set in the config file:
+
+```toml
+[reuse]
+max_age_hours = 24   # 0 turns reuse off
+```
+
 ## Prompt sets: the same questions every week
 
 Add `[[question]]` entries to the product file and it becomes a prompt set:

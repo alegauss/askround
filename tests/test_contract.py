@@ -88,7 +88,7 @@ def rounds(all_keys, tmp_path, capsys):
     argv = ["ask", "photo to 3D?", "--provider", "openai", "--runs", "2", "--extract", "openai"]
     argv += ["--product", "Modelado,modelado.app", "--json", "--out", str(tmp_path)]
     first = _json(argv, capsys)
-    _json(argv, capsys)
+    _json([*argv, "--fresh"], capsys)  # a second round, not the first one reused
     return tmp_path, first
 
 
@@ -152,7 +152,7 @@ def test_the_checker_catches_a_broken_output(rounds):
 
 
 def test_exit_codes(all_keys, tmp_path, capsys):
-    where = ["--out", str(tmp_path), "--runs", "1"]
+    where = ["--out", str(tmp_path), "--runs", "1", "--fresh"]
     assert main(["ask", "q", "--provider", "openai", *where], post=FakePost()) == 0
     partial = FakePost(fail={"api.anthropic.com": 404})
     assert (

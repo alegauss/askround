@@ -37,19 +37,6 @@ screen shows a real round report.
 
 ## Block H — Agent-first, with roadkeep as the reference
 
-### §AR36 Reuse a recent round
-
-An agent that lost a result from its context, or a second session on the same task, asks
-the same question again, and each repeat pays for every search again.
-
-A question already asked with the same provider, model and locale within a freshness
-window (default one day, configurable) returns the stored result, marked with its age,
-at no cost; a fresh run is an explicit flag, and it counts against the budget like any
-other.
-
-Done when a repeated question within the window returns the stored result with its date
-and calls no provider.
-
 ### §AR37 A token budget in the tests
 
 roadkeep started from measurements (142 words a line, a 186 KB agents.md, about 46k

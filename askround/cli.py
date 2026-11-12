@@ -46,6 +46,7 @@ from askround import (
     product,
     refusals,
     research,
+    reuse,
     series,
     sets,
 )
@@ -85,6 +86,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--approve",
         action="store_true",
         help="the person approves this run past the day or month budget (agents cannot)",
+    )
+    paid.add_argument(
+        "--fresh",
+        action="store_true",
+        help="ask again even if the same round was asked recently (it counts against the budget)",
     )
     paid.add_argument(
         "--estimate-only",
@@ -704,7 +710,53 @@ def _after(args, round_, files, products, extractor, post, fetch) -> None:
             round_.links[names[0]] = links.check_links(round_, names, **_fetch(fetch))
 
 
+def _reused(args, providers) -> int | None:
+    """Answer from a recent round asked the same way, calling nothing; None when there
+    is none (or --fresh asks again)."""
+    if args.fresh or args.estimate_only or getattr(args, "job", None):
+        return None
+    usable = [p for p in providers if p.configured()]
+    if not usable:
+        return None
+    found = reuse.find(
+        _rounds_dir(args.out),
+        args.question,
+        usable,
+        args.runs,
+        args.search,
+        args.locales or [],
+        bool(args.extract),
+    )
+    if found is None:
+        return None
+    path, hours = found
+    round_, asked = report_.load_round(path)
+    files = [f for f in (_try_load(p) for p in args.product_files or []) if f]
+    products = [*(args.products or []), *(f.names for f in files)] or asked
+    note = {"from": round_.asked_at.isoformat(), "age_hours": hours, "round": str(path.parent)}
+    if args.json:
+        data = {**summary(round_, products), "saved": str(path.parent), "reused": note}
+        print(json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        print(
+            f"reused the round asked {hours:g} h ago ({round_.asked_at:%Y-%m-%d %H:%M} UTC), "
+            "at no cost; --fresh asks again\n"
+        )
+        print(render(round_, path.parent, products))
+    return outcome(round_.results)
+
+
+def _try_load(path: Path):
+    try:
+        return product.load(path)
+    except (OSError, ValueError):
+        return None
+
+
 def run_ask(args, providers, post, fetch=None) -> int:
+    reused = _reused(args, providers)
+    if reused is not None:
+        return reused
     try:
         providers, files, products, extractor = _preflight(args, providers, post)
     except Refused as refusal:

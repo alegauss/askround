@@ -77,6 +77,10 @@ TOOLS: list[dict[str, Any]] = [
                 "search": {"type": "boolean", "description": "web search (default true)"},
                 "max_cost": _COST,
                 "detail": {"type": "boolean", "description": "the full report, not the brief"},
+                "fresh": {
+                    "type": "boolean",
+                    "description": "ask again even if the same round was asked within the day; by default a recent one is returned at no cost",
+                },
                 "background": {
                     "type": "boolean",
                     "description": "start it as a job and return at once (a round takes minutes); read it with askround_job",
@@ -262,6 +266,8 @@ def _ask_argv(args: dict) -> list[str]:
         argv += ["--locale", locale]
     if args.get("search") is False:
         argv.append("--no-search")
+    if args.get("fresh"):
+        argv.append("--fresh")
     return argv
 
 
@@ -285,10 +291,17 @@ def ask(args: dict, out: str | None, post=None) -> dict:
         return _background(argv, out, post)
     data = _json([*argv, "--json", *(["--out", out] if out else [])], post)
     path = Path(data["saved"]) / "round.json"
-    round_, products = report_.load_round(path)
+    round_, stored = report_.load_round(path)
+    # the products asked about now, even when the round is a reused one
+    products = [p["names"] for p in data.get("products") or []] or stored
+    reused = {"reused": data["reused"]} if data.get("reused") else {}
     if args.get("detail"):
-        return {"round": data["saved"], "report": report_.build(round_, products, str(path))}
-    return report_.brief(round_, products, data["saved"])
+        return {
+            "round": data["saved"],
+            "report": report_.build(round_, products, str(path)),
+            **reused,
+        }
+    return {**report_.brief(round_, products, data["saved"]), **reused}
 
 
 AROUND = 300  # characters either side of a quote in a passage
