@@ -370,3 +370,158 @@ call. CI runs only the recorded tests.
 
 Done when the test suite runs with no key and no network, and the live tests run when
 keys are present and are asked for.
+
+## Block H — Agent-first, with roadkeep as the reference
+
+### §AR30 The laws, before the code
+
+roadkeep states six laws in its IMPROVEMENTS.md (section 0.3), and a change that breaks
+one is wrong even if requested. That is what kept it small for agents while it grew.
+askround is meant to be used the same way, by agents first, and is the place where a
+convenient feature (return the raw answers, run without asking about money) would
+quietly undo that.
+
+Write askround's laws before the first command, modelled on roadkeep's: context is cost,
+so answers are extracted and raw text is fetched on request; a bad round is refused
+before it is paid for; ask instead of read; every fact traces to its passage; the
+person, never the agent, sets the money; askround measures the APIs, not the apps, and
+says so.
+
+Done when the laws are written as the first section of IMPROVEMENTS.md, and each later
+task's rationale names the law it serves.
+
+### §AR31 Ask instead of read
+
+One answer from an assistant with search runs to a few thousand tokens, with tables,
+links and follow-up questions. A round of four questions, four providers and three runs
+is 48 of them. Handing those to an agent repeats what roadkeep was built against: a
+roadmap whose words the agent reads again every turn. roadkeep answers with pick, brief
+and list instead of letting the agent read the file.
+
+By default every command and MCP tool returns the extracted result only (frequency,
+ranks, rivals, cited pages, claims, failures), each item pointing to the answer it came
+from by id. A separate call returns one raw answer, or the quoted passage behind one
+claim, when the agent asks.
+
+Done when a full round returns to the agent in a few hundred tokens, and any fact in it
+reaches its passage with one more call.
+
+### §AR32 --json everywhere, with provenance
+
+Every roadkeep command takes --json, which also says which file and line the answer came
+from, and its exit code is the whole contract a hook, a pre-commit hook and a GitHub
+Action share. An agent parsing prose breaks when the wording changes and cannot cite
+what it read.
+
+Every askround command takes --json with a versioned schema published in the repository.
+Each fact carries its provenance: round, question, provider, model, run, answer id and,
+for a claim or a mention, the character range of its passage. Exit codes say success,
+partial round, refused and failed, and are documented as the contract.
+
+Done when every command has a JSON form validated against the published schema in tests,
+and each fact in it resolves to its passage.
+
+### §AR33 Refused before it is paid for
+
+roadkeep puts its limits in its MCP input schemas, so a field that would be refused
+fails before anything is written; every finding names the command that closes it, and
+roadkeep explain says what a code means. A round has the same kind of mistake, except
+each one costs money: a question that names the product, an email in a prompt, a
+provider without a key, a cost above the budget.
+
+Every check that can run before a call runs first: limits declared as maxLength and
+enums in the MCP schemas (questions, providers that have keys, prompt sets that exist),
+leading questions, personal data, missing keys, the estimate against the budget. A
+refusal lists every problem at once, each with a code and the change that passes it, and
+askround explain <code> describes the code.
+
+Done when each of those cases is refused with no provider called, every refusal names
+its fix, and explain covers every code.
+
+### §AR34 Money needs the person's consent
+
+The session that started askround could only estimate the cost of a weekly round. An
+agent with an MCP tool can run rounds on its own, and every round with web search costs
+money on the user's keys. roadkeep never spends anything; askround does, so it needs a
+rule roadkeep did not.
+
+The user sets a budget per day and per month in askround's config, which the agent
+cannot change through the MCP tools. Within it, rounds run; a round that would pass it
+is not run, and the tool returns the estimate and asks the person to approve it or raise
+the budget. Spending so far is reported with every result.
+
+Done when an agent's round above the budget returns an approval request with no provider
+called, and the month's spending appears in every result.
+
+### §AR35 Rounds as jobs
+
+Dozens of calls with web search, each taking seconds to tens of seconds, make a round of
+several minutes. roadkeep's tools answer in milliseconds; askround's cannot, and an MCP
+tool that blocks that long freezes the agent and risks a client timeout that throws away
+results already paid for.
+
+A round can start as a job: the tool returns a job id and the estimate at once, progress
+can be read, and the result is fetched when done, with finished answers kept if the job
+is interrupted. A single question stays synchronous.
+
+Done when an agent starts a round, keeps working, and reads the finished result later
+through the MCP server, and an interrupted job keeps what it finished.
+
+### §AR36 Reuse a recent round
+
+An agent that lost a result from its context, or a second session on the same task, asks
+the same question again, and each repeat pays for every search again.
+
+A question already asked with the same provider, model and locale within a freshness
+window (default one day, configurable) returns the stored result, marked with its age,
+at no cost; a fresh run is an explicit flag, and it counts against the budget like any
+other.
+
+Done when a repeated question within the window returns the stored result with its date
+and calls no provider.
+
+### §AR37 A token budget in the tests
+
+roadkeep started from measurements (142 words a line, a 186 KB agents.md, about 46k
+tokens read every turn) and keeps its answers small on purpose. Responses grow one field
+at a time, and nobody notices until the agent's context is full.
+
+The tests run the recorded rounds through every MCP tool and count the tokens of each
+response, against a budget per tool written in the repository. A response over its
+budget fails the test, raising a budget is a reviewed change, and the README publishes
+the figures as roadkeep does.
+
+Done when every MCP tool has a token budget enforced by the recorded tests and the
+README states it.
+
+### §AR38 Wired like roadkeep
+
+roadkeep installs with two commands at project scope, which write the marketplace and
+the plugin into the repository's .claude/settings.json, so every clone is wired with no
+step per machine. What arrives is the MCP server, slash commands, a skill loaded only
+when relevant, and a hook; install writes the same into a project from a checkout,
+install --check tells CI whether they are still in step, and a committed launcher covers
+Claude Code on the web, which never installs a marketplace plugin.
+
+askround ships the same way: a marketplace with the plugin at project scope, its MCP
+tools, slash commands (ask, run, report, diff), the skill, install and install --check
+from a checkout, and the launcher for the web. Its MCP schemas carry the project's own
+prompt sets, providers and budget, as roadkeep's carry its limits.
+
+Done when a repository that commits the settings gets askround's tools, commands and
+skill on a fresh clone, and on Claude Code on the web through the launcher.
+
+### §AR39 Zero runtime dependencies
+
+roadkeep needs a Python 3.11+ interpreter and nothing else: zero runtime dependencies,
+uvx roadkeep with no install, and a plugin that carries the package itself. Provider
+SDKs (openai, google-genai, anthropic) each pull their own dependency trees and change
+often.
+
+askround's adapters call each provider's HTTP API with the standard library (urllib,
+json), so the package has no runtime dependencies; uvx askround runs it, and the plugin
+carries it. A provider whose API cannot reasonably be called without its SDK is an
+optional extra, never a requirement.
+
+Done when pip install askround installs nothing else, uvx askround doctor runs on a
+clean machine, and the plugin works with only Python present.

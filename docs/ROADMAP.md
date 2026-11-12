@@ -1,8 +1,12 @@
 # Roadmap (active backlog)
 
+## Priority
+
+- AR30
+
 ## Block A — The round: one question to every assistant, with web search
 
-- 📋 **AR2** (deps: AR1 ✅) **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Assistants recommend apps through search with links; a plain completion never names a two-week-old app that ChatGPT sends people to. → §AR2
+- 🛠 **AR2** (deps: AR1 ✅) **Providers are called without web search, so an answer cannot name a product newer than the model's training** — Assistants recommend apps through search with links; a plain completion never names a two-week-old app that ChatGPT sends people to. → §AR2
 - 📋 **AR3** (deps: AR1 ✅) **Which providers can run depends on keys in the environment, and nothing says which ones are there** — On 12/11/2026 the agent checked environment variables by hand to learn that OpenAI and Gemini were usable and Anthropic was not. → §AR3
 - 📋 **AR4** (deps: AR1 ✅) **One answer is taken as the answer, though the same question gives a different list on the next run** — Assistants vary run to run, so 'it named the app first' means nothing until it is 'first in 3 of 3 runs'. → §AR4
 - 📋 **AR5** (deps: AR2) **The model, tools and settings behind an answer are not recorded, so a change cannot be told from drift** — Providers update models and search silently; a product dropping out of answers must be traceable to a new model or to the product itself. → §AR5
@@ -48,6 +52,19 @@
 
 - 📋 **AR28** (deps: AR1 ✅) **askround cannot be installed: there is no package, no release and no README first screen** — Someone with the same pain needs pip install askround and a first screen that says what a round tells them. → §AR28
 - 📋 **AR29** (deps: AR1 ✅) **Tests would call live APIs, costing money and breaking on every provider change** — An adapter test that pays for a search on every run is skipped, and then the adapters rot. → §AR29
+
+## Block H — Agent-first, with roadkeep as the reference
+
+- 📋 **AR30** (deps: —) **No written laws bind askround's design, so the agent-first rules can erode one feature at a time** — roadkeep, the author's most mature tool, binds its design with six laws a change may not break; askround needs its own before code exists. → §AR30
+- 📋 **AR31** (deps: AR12, AR24) **A round hands the agent every raw answer, so one check of a product spends tens of thousands of tokens of context** — roadkeep's answer to context cost is 'ask instead of read'; askround returns the extracted result and one raw answer only when asked. → §AR31
+- 📋 **AR32** (deps: AR12) **Output is meant for a person to read, with no stable schema an agent or a script can rely on** — Every roadkeep command takes --json and says which file and line an answer came from; askround's agents need the same contract. → §AR32
+- 📋 **AR33** (deps: AR18, AR19, AR22, AR24) **A bad round is discovered after it is paid for: a leading question, personal data or a cost over budget** — roadkeep refuses an over-long line in the MCP schema before the prose exists; askround must refuse a bad round before the first paid call. → §AR33
+- 📋 **AR34** (deps: AR22, AR24) **An agent could spend the user's API money on rounds without the user ever agreeing to the amount** — A tool an agent can call in a loop needs a spending limit the person sets, and a stop that asks before going past it. → §AR34
+- 📋 **AR35** (deps: AR24) **A round takes minutes of searched calls, longer than an MCP call should block the agent** — An agent waiting on one tool call for minutes stalls its session, or times out and loses a round it already paid for. → §AR35
+- 📋 **AR36** (deps: AR20) **An agent asking the same question again the same day pays for the same round twice** — Agents repeat themselves across turns and sessions; a repeated round should cost nothing unless a fresh answer is asked for. → §AR36
+- 📋 **AR37** (deps: AR29, AR31) **Nothing measures how many tokens each MCP response costs the agent, so outputs grow unnoticed** — roadkeep was born from measuring what its files cost an agent; without a measured budget, each new field makes askround heavier. → §AR37
+- 📋 **AR38** (deps: AR24, AR27) **askround is not wired into a project the way roadkeep is: one install that every clone and every surface gets** — roadkeep's project-scoped plugin wires every clone with the MCP tools, slash commands and skill; askround should arrive the same way. → §AR38
+- 📋 **AR39** (deps: AR1 ✅) **Running askround would mean installing provider SDKs and their dependency trees** — roadkeep is Python 3.11+ with zero runtime dependencies and runs under uvx with no install; askround should start as easily. → §AR39
 
 ## Non-goals
 
