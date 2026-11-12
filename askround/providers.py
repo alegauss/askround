@@ -82,6 +82,7 @@ class Answer:
     locale_ignored: list[str] = field(default_factory=list)
     # filled by the extraction pass (extract.py); None where it did not run
     recommendations: list[Any] | None = None
+    claims: list[Any] | None = None
     extracted_by: str = ""
     extraction_error: str | None = None
 

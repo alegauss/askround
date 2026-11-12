@@ -24,19 +24,6 @@ context on what a command could have answered.
 
 ## Block B — Reading the answers: mentions, rank, rivals, citations and claims
 
-### §AR11 Claims about the product
-
-On 12/11/2026, the answer that put Modelado first wrote 'Check build' in its CPU-only
-column, while a rival that states CPU support plainly got 'Yes'. Comparison tables and
-lists of requirements are where assistants make claims a reader acts on.
-
-For the target product, askround extracts the claims an answer makes (requirements,
-platforms, price, licence, features, from tables and prose) as attribute and value
-pairs, with the sentence they came from.
-
-Done when the recorded answers yield 'CPU only: Check build' and 'NVIDIA GPU required:
-No' as claims about the app.
-
 ### §AR12 The round report
 
 After each test on 12/11/2026 the agent summarised the answer in a table by hand:

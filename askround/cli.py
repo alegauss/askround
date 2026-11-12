@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 from askround import __version__, citations
+from askround.claims import product_claims
 from askround.doctor import Status, diagnose
 from askround.extract import choose, extract_round
 from askround.providers import Answer, Locale, all_providers, by_name
@@ -301,7 +302,24 @@ def _frequency_lines(round_: Round, names: list[str]) -> list[str]:
         )
     if extracted:
         lines.append("  * ranked by the extraction pass")
+    lines.extend(_claim_lines(round_, names))
     lines.extend(_cited_lines(round_, names))
+    return lines
+
+
+def _claim_lines(round_: Round, names: list[str]) -> list[str]:
+    found = product_claims(round_, names)
+    if not found:
+        return []
+    lines = [f"{names[0]}: what the answers claim"]
+    for c in found:
+        if c.answers:
+            by = ", ".join(f"{p} {n}" for p, n in c.providers.items())
+            lines.append(f"  {c.attribute}: {c.value}   ({by})")
+            lines.append(f'      "{c.quote}"')
+    unverified = sum(c.unverified for c in found)
+    if unverified:
+        lines.append(f"  ({unverified} more not found in the answer's text, in round.json)")
     return lines
 
 

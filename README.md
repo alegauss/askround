@@ -55,6 +55,11 @@ kind (site, repository, store, docs), and `round.json` lists every page and the
 third-party domains cited. Tracking parameters are dropped; Gemini's redirect links are
 counted by the domain in their title.
 
+With `--extract`, the report also lists what the answers claim about the product, from
+tables and prose: `CPU only: Check build`, `Cost: Free, open-source`, each with the
+providers that said it and the passage it came from. A claim whose quote is not in the
+answer is counted apart and never shown as a finding.
+
 With `--extract`, the report also lists the rivals: every other product the answers
 recommend, with how many answers named it, its rank in each and which providers did
 (the first ten in the report, all of them in `round.json`, each with the quote that

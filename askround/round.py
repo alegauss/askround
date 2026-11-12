@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from askround import citations, mention
+from askround.claims import product_claims
 from askround.http import HttpError
 from askround.providers import Answer, Locale, Provider
 from askround.rivals import rivals
@@ -188,6 +189,17 @@ def summary(round_: Round, products: list[list[str]] | None = None) -> dict:
                     }
                     for f in frequency(round_, names)
                 ],
+                "claims": [
+                    {
+                        "attribute": c.attribute,
+                        "value": c.value,
+                        "answers": c.answers,
+                        "providers": c.providers,
+                        "quote": c.quote,
+                        "unverified": c.unverified,
+                    }
+                    for c in product_claims(round_, names)
+                ],
                 "places": citations.places(names),
                 "cited": [
                     {
@@ -254,6 +266,7 @@ def _result(r: Result) -> dict:
             "queries": [],
             "sources": [],
             "recommendations": None,
+            "claims": None,
             "extracted_by": None,
             "extraction_error": None,
             "error": r.error,
@@ -279,6 +292,20 @@ def _result(r: Result) -> dict:
             else [
                 {"name": rec.name, "quote": rec.quote, "verified": rec.verified}
                 for rec in answer.recommendations
+            ]
+        ),
+        "claims": (
+            None
+            if answer.claims is None
+            else [
+                {
+                    "product": c.product,
+                    "attribute": c.attribute,
+                    "value": c.value,
+                    "quote": c.quote,
+                    "verified": c.verified,
+                }
+                for c in answer.claims
             ]
         ),
         "extracted_by": answer.extracted_by or None,

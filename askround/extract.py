@@ -1,11 +1,14 @@
-"""The extraction pass: what an answer recommends, in its order, each with its passage.
+"""The extraction pass: what an answer recommends, in its order, and what it claims
+about each product, every item with its passage.
 
 Plain text matching (`mention.py`) sees list items and table rows; it cannot tell that
 "Best fit" in a table's last column or "my first choice" in a paragraph puts a product
 first. So a model reads each answer once, with a JSON schema, and returns the products
 the answer recommends in the order it recommends them, each with a short verbatim quote.
 The list does not depend on any product asked about: a product's rank is where it falls
-in it, and the same list names the rivals around it.
+in it, and the same list names the rivals around it. The same call lists the claims the
+answer makes about every product it names (a requirement, a platform, a price, a table
+cell such as 'CPU only: Check build'), as attribute and value with the quote.
 
 Plain text is the check (law L4, every fact traces to its passage): a recommendation
 whose quote is not in the answer is kept but marked unverified and does not rank, and a
@@ -32,7 +35,9 @@ INSTRUCTIONS = """You read one answer an AI assistant gave to a user, and list w
 
 List every product, app, tool, model or service the answer recommends or suggests to the user, in the answer's order of preference: first the one it presents as its top pick ("best fit", "my first choice", "start with", the first item of its list or table), then the rest in the order the answer gives them. Include products recommended inside tables. Leave out products the answer mentions only to rule them out.
 
-For each, give its name exactly as the answer writes it, and a short quote copied verbatim from the answer (one phrase or table row, at most 25 words) that recommends it. Do not add products the answer does not name. If it recommends nothing, return an empty list."""
+For each, give its name exactly as the answer writes it, and a short quote copied verbatim from the answer (one phrase or table row, at most 25 words) that recommends it. Do not add products the answer does not name. If it recommends nothing, return an empty list.
+
+Then list the claims the answer makes about any product it names, recommended or not: requirements (GPU, CPU, memory, operating system), platforms, price, licence, features, limits. Give each as the product's name as the answer writes it, a short attribute ("CPU only", "NVIDIA GPU required", "Price", "Licence"), the value the answer gives exactly as it gives it ("Check build", "No", "Free"), and a quote copied verbatim from the answer (a phrase or the table row) that makes the claim. A table cell is a claim: its column header is the attribute and the cell is the value. Do not infer claims the answer does not make."""
 
 SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -48,9 +53,23 @@ SCHEMA: dict[str, Any] = {
                 "required": ["name", "quote"],
                 "additionalProperties": False,
             },
-        }
+        },
+        "claims": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "product": {"type": "string"},
+                    "attribute": {"type": "string"},
+                    "value": {"type": "string"},
+                    "quote": {"type": "string"},
+                },
+                "required": ["product", "attribute", "value", "quote"],
+                "additionalProperties": False,
+            },
+        },
     },
-    "required": ["recommendations"],
+    "required": ["recommendations", "claims"],
     "additionalProperties": False,
 }
 
@@ -60,6 +79,21 @@ class Recommendation:
     name: str
     quote: str
     verified: bool
+
+
+@dataclass(frozen=True)
+class Claim:
+    product: str
+    attribute: str
+    value: str
+    quote: str
+    verified: bool
+
+
+@dataclass(frozen=True)
+class Reading:
+    recommendations: list[Recommendation]
+    claims: list[Claim]
 
 
 def _squash(text: str) -> str:
@@ -79,6 +113,21 @@ def verify(answer_text: str, items: list[dict]) -> list[Recommendation]:
             continue
         verified = bool(quote) and _squash(quote) in haystack
         out.append(Recommendation(name, quote, verified))
+    return out
+
+
+def verify_claims(answer_text: str, items: list[dict]) -> list[Claim]:
+    """Claims as the model read them, each marked verified when its quote is in the
+    answer; a claim with no product, attribute or value is dropped."""
+    haystack = _squash(answer_text)
+    out = []
+    for item in items:
+        fields = [str(item.get(k, "")).strip() for k in ("product", "attribute", "value", "quote")]
+        product, attribute, value, quote = fields
+        if not (product and attribute and value):
+            continue
+        verified = bool(quote) and _squash(quote) in haystack
+        out.append(Claim(product, attribute, value, quote, verified))
     return out
 
 
@@ -104,7 +153,7 @@ class Extractor:
     def configured(self) -> bool:
         return self._source.configured()
 
-    def recommendations(self, answer_text: str) -> list[Recommendation]:
+    def read(self, answer_text: str) -> Reading:
         key = self._source.api_key()
         if key is None:
             raise RuntimeError(f"{self.name}: no API key for the extraction pass")
@@ -112,7 +161,10 @@ class Extractor:
         url, headers, body = self.request(prompt, key)
         raw = self._post(url, headers, body, self.timeout)
         data = json.loads(self.json_text(raw))
-        return verify(answer_text, data.get("recommendations") or [])
+        return Reading(
+            verify(answer_text, data.get("recommendations") or []),
+            verify_claims(answer_text, data.get("claims") or []),
+        )
 
     def request(self, prompt: str, key: str) -> tuple[str, dict[str, str], dict[str, Any]]:
         raise NotImplementedError
@@ -212,7 +264,9 @@ def extract_round(round_, extractor: Extractor, parallel: int = 8) -> None:
 
     def one(answer) -> None:
         try:
-            answer.recommendations = extractor.recommendations(answer.text)
+            reading = extractor.read(answer.text)
+            answer.recommendations = reading.recommendations
+            answer.claims = reading.claims
             answer.extracted_by = f"{extractor.name}:{extractor.model}"
         except Exception as error:  # noqa: BLE001 - the plain-text reading still stands
             answer.extraction_error = f"{type(error).__name__}: {error}"[:300]

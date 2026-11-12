@@ -117,7 +117,7 @@ def test_each_extractor_asks_for_the_schema(all_keys, cls, path):
     node = body
     for step in path:
         node = node[step]
-    assert node["required"] == ["recommendations"]
+    assert node["required"] == ["recommendations", "claims"]
 
 
 def test_choose_auto_takes_the_first_configured(no_keys, monkeypatch):
