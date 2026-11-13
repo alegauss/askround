@@ -1,0 +1,136 @@
+# Publishes askround to PyPI from a version tag, after polyweave's publish.yml.
+#
+# No token is stored: PyPI's Trusted Publishing trusts this workflow by name. Before the
+# first release the project's publisher is registered once on pypi.org (owner alegauss,
+# repository askround, workflow publish.yml, environment pypi), and the same on
+# test.pypi.org with environment testpypi:
+#   https://pypi.org/manage/account/publishing/
+#   https://test.pypi.org/manage/account/publishing/
+#
+# A tag `vX.Y.Z` goes to TestPyPI first and to PyPI only once that upload passed; a manual
+# run goes to TestPyPI alone, as a rehearsal. Once PyPI has it, the tag's GitHub release is
+# made with the wheel and the sdist.
+#
+# Cutting a release: set the same number in plugin/src/askround/__init__.py and
+# plugin/.claude-plugin/plugin.json, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two releases racing each other would fight over the same version number.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: test, build the sdist and the wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      # The suite and the lint run before anything is built: PyPI never lets a version
+      # number be reused, so a broken upload can only be corrected by a new number.
+      - name: lint and test
+        run: |
+          python -m pip install ".[dev]"
+          python -m ruff check .
+          python -m pytest -q
+
+      # A tag that disagrees with the package is a release that would publish one number
+      # under another's name; the plugin manifest states the version too and must agree.
+      - name: the tag names the package's version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(PYTHONPATH=plugin/src python -c "import askround; print(askround.__version__)")
+          plugin=$(python -c "import json; print(json.load(open('plugin/.claude-plugin/plugin.json'))['version'])")
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "::error::tag $GITHUB_REF_NAME, package $version"; exit 1; }
+          test "$plugin" = "$version" || { echo "::error::plugin.json says $plugin, package $version"; exit 1; }
+
+      - name: build
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check --strict dist/*
+
+      # Installed from the built wheel and run as the console script: what is uploaded is
+      # what gets tested, which a `pip install .` of the source tree cannot claim.
+      - name: the wheel runs as `askround`
+        run: |
+          python -m venv /tmp/probe
+          /tmp/probe/bin/pip install --quiet dist/*.whl
+          /tmp/probe/bin/askround --version
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  testpypi:
+    name: publish to TestPyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/askround
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # TestPyPI never takes a version twice, so a rehearsal of a number already
+          # there passes rather than blocking the tag that follows it.
+          skip-existing: true
+
+  pypi:
+    name: publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/askround
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # The same tag makes the GitHub release, once PyPI has the version: with none, the
+  # repository reads as never shipped while PyPI holds the package.
+  release:
+    name: a GitHub release beside the PyPI one
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - name: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
+            --title "askround ${GITHUB_REF_NAME#v}" --generate-notes
