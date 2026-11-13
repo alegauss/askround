@@ -77,3 +77,5 @@
 
 ## Block J — Found in use: the first real rounds
 
+## Block K — Local engines: rounds through the assistants' own CLIs, on the user's plan
+

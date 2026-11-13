@@ -14,6 +14,15 @@
 - 📋 **AR45** (deps: —) **A run whose output is redirected on Windows crashes on the report after paying for every answer** — The console's cp1252 cannot encode a character an answer holds (U+2011), so a scheduled or piped run exits 1 though its round is saved. → §AR45
 - 📋 **AR46** (deps: —) **report refuses an interrupted set, so its paid answers are read only by finding each question's folder** — A set stopped mid-way keeps its finished rounds, but report needs the set summary written only at the end, and run cannot resume it. → §AR46
 
+## Block K — Local engines: rounds through the assistants' own CLIs, on the user's plan
+
+- 📋 **AR47** (deps: —) **Every answer is a paid API call, though the user's Claude, ChatGPT and Google plans can answer the same question locally** — A round costs dollars per question while a subscription already paid for answers it for nothing; the engine is a choice per provider. → §AR47
+- 📋 **AR48** (deps: AR47, AR52) **Claude can only be asked through ANTHROPIC_API_KEY, though Claude Code on the Max plan searches the web locally** — The Max plan answers a searched question at no marginal cost, and roadkeep-gui already proved `claude -p` runs headless on it. → §AR48
+- 📋 **AR49** (deps: AR47, AR52) **OpenAI can only be asked through OPENAI_API_KEY, though the Codex CLI signed in with ChatGPT can search locally** — A ChatGPT plan already pays for Codex, whose `exec --json` mode answers a question with web search and no per-token bill. → §AR49
+- 📋 **AR50** (deps: AR47, AR52) **Gemini can only be asked through GEMINI_API_KEY, though the Gemini CLI signed in with Google searches locally** — The Gemini CLI answers on a Google account's quota with its own google_web_search tool, so a Gemini answer needs no paid key. → §AR50
+- 📋 **AR51** (deps: AR48, AR52) **--extract always reads answers through a paid API, even when every answer was asked on a plan** — Extraction is one more model call per answer; a round asked for free should be readable for free too. → §AR51
+- 📋 **AR52** (deps: AR47) **A CLI answer could be shaped by the user's memory, global instructions or plugins rather than by the question alone** — askround measures what an assistant tells anyone; a CLAUDE.md, AGENTS.md or GEMINI.md naming the user's own products would bias every mention. → §AR52
+
 ## Done when — AR28
 
 - **pip install askround installs the published package on Windows, macOS and Linux**
