@@ -74,3 +74,6 @@
 - ✅ **AR43** **The site is not built to be read by assistants, and askround never measures whether they name askround itself** — The site ships a checked llms.txt and JSON-LD, and shows askround's own dated round: named by no assistant yet.
   checked **llms.txt and the JSON-LD validate** The prerender checks llms.txt against the llmstxt.org shape and the JSON-LD's SoftwareApplication fields, and fails the build otherwise.
   checked **The site shows a dated round of askround's own prompt set** examples/askround.toml ran live on 2026-11-12; the page shows it, askround named in none, and tests/test_site.py ties it to the set.
+
+## Block J — Found in use: the first real rounds
+

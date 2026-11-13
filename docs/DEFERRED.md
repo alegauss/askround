@@ -9,3 +9,6 @@
 - ⏸ **AR39** (deps: AR1 ✅) **Running askround would mean installing provider SDKs and their dependency trees** — set aside (Needs the PyPI release, which the person publishes, and a machine with uv.): uvx askround doctor is unverified until the package is on PyPI and run on a machine with uv. → §AR39
 
 ## Block I — The site at alegauss.github.io/askround
+
+## Block J — Found in use: the first real rounds
+

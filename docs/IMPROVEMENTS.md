@@ -53,3 +53,61 @@ Done when pip install askround installs nothing else, uvx askround doctor runs o
 clean machine, and the plugin works with only Python present.
 
 ## Block I — The site at alegauss.github.io/askround
+
+## Block J — Found in use: the first real rounds
+
+### §AR44 The estimate and the cap hold to the actual cost
+
+On 13/11/2026 the visibility repository ran its first real prompt sets with askround
+(OpenAI gpt-5 and Gemini 2.5 Flash, web search on, two runs, --extract). The Modelado
+set was estimated at $0.8300 and run with --max-cost 1.00; the spent.jsonl lines for its
+four questions add up to $1.3637, 64% above the estimate and 36% above the cap. The
+first claude-tray question cost $0.3212 against about $0.21 estimated per question. The
+user had approved a total from the estimates, so the run was stopped by hand.
+
+Two things are wrong. The estimate under-counts a searched answer (likely the search
+calls per answer and the input tokens of the fetched pages, which gpt-5 bills as input),
+and --max-cost only gates the estimate: nothing stops a set once the actual spend passes
+the cap.
+
+The estimate learns from the spend already recorded: per provider and model, the mean
+actual cost of a searched answer in spent.jsonl replaces the table's guess once a few
+answers exist, and the estimate says which it used. During a set, the actual cost is
+summed after each question, and the set stops before the next question when the cap
+would be passed, keeping what it has and saying so (a partial set, exit 3).
+
+Done when a set run with a cap below its actual cost stops at the cap with its finished
+questions saved, and the estimate of a repeated set lands within 20% of its last actual
+cost.
+
+### §AR45 Print UTF-8 whatever the console encoding
+
+On 13/11/2026 a prompt set run on Windows with its output redirected to a file finished
+all four questions, recorded their cost, and then exited 1 with a UnicodeEncodeError:
+Python wrote the report through the console's cp1252 encoding, and an answer contained a
+non-breaking hyphen (U+2011). Every answer was saved and paid for; the report, the exit
+code and any script reading them saw a failure.
+
+askround reconfigures stdout and stderr to UTF-8 (errors replaced, never raised) at
+startup, so a redirected or piped run on Windows prints the same report as a console
+run, and a test runs the CLI with PYTHONIOENCODING=cp1252 against a recorded answer
+containing characters outside that code page.
+
+Done when that test passes and the exit code of a finished round no longer depends on
+the output encoding.
+
+### §AR46 Report and resume a partial set
+
+On 13/11/2026 a claude-tray prompt set was stopped after its first question had been
+answered and paid for ($0.3212). `askround report` on the set's directory refused with
+"no round.json at .../123419-set-claude-tray/round.json", because a set directory holds
+one round per question and the set's own summary is only written when the set finishes.
+The paid answer could only be read by finding the question's subdirectory by hand.
+
+`report` on a set directory reads the questions that finished, prints the set table with
+the unfinished ones marked as not run, and says the set is partial; `run` on the same
+product file can resume it, asking only the questions without a round. The same holds
+for the MCP report tool.
+
+Done when a set interrupted after one question reports that question and resumes the
+rest without asking it again.

@@ -8,6 +8,12 @@
 
 ## Block I — The site at alegauss.github.io/askround
 
+## Block J — Found in use: the first real rounds
+
+- 📋 **AR44** (deps: —) **A round's actual cost runs 64% over its estimate, and --max-cost never stops a set that passes it** — On 13/11/2026 a set estimated at $0.83 with a $1.00 cap cost $1.36; a user who approves an estimate must be able to trust the cap. → §AR44
+- 📋 **AR45** (deps: —) **A run whose output is redirected on Windows crashes on the report after paying for every answer** — The console's cp1252 cannot encode a character an answer holds (U+2011), so a scheduled or piped run exits 1 though its round is saved. → §AR45
+- 📋 **AR46** (deps: —) **report refuses an interrupted set, so its paid answers are read only by finding each question's folder** — A set stopped mid-way keeps its finished rounds, but report needs the set summary written only at the end, and run cannot resume it. → §AR46
+
 ## Done when — AR28
 
 - **pip install askround installs the published package on Windows, macOS and Linux**
