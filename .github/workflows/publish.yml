@@ -7,18 +7,29 @@
 #   https://pypi.org/manage/account/publishing/
 #   https://test.pypi.org/manage/account/publishing/
 #
-# A tag `vX.Y.Z` goes to TestPyPI first and to PyPI only once that upload passed; a manual
-# run goes to TestPyPI alone, as a rehearsal. Once PyPI has it, the tag's GitHub release is
-# made with the wheel and the sdist.
+# Every path goes to TestPyPI first and to PyPI only once that upload passed:
+#
+#   * Pushing a tag `vX.Y.Z` -> TestPyPI, PyPI, and the tag's GitHub release.
+#   * Run manually, target=testpypi (default) -> TestPyPI alone, as a rehearsal.
+#   * Run manually, target=pypi -> publishes the version the branch already carries, then
+#     creates the tag `vX.Y.Z` and its GitHub release on the commit that was built. A version
+#     that already has a tag is refused before anything is built: PyPI never takes it twice.
 #
 # Cutting a release: set the same number in plugin/src/askround/__init__.py and
-# plugin/.claude-plugin/plugin.json, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+# plugin/.claude-plugin/plugin.json, commit and push, then either push the tag or run this
+# workflow with target=pypi.
 name: publish
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      target:
+        description: Which index to publish to
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
 
 permissions:
   contents: read
@@ -32,11 +43,32 @@ jobs:
   build:
     name: test, build the sdist and the wheel
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+
+      # The two files that state the version must agree on every path; a manual release to
+      # PyPI must also carry a number no tag has claimed yet.
+      - name: read the package's version
+        id: version
+        run: |
+          version=$(PYTHONPATH=plugin/src python -c "import askround; print(askround.__version__)")
+          plugin=$(python -c "import json; print(json.load(open('plugin/.claude-plugin/plugin.json'))['version'])")
+          test "$plugin" = "$version" || { echo "::error::plugin.json says $plugin, package $version"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: the version is not released yet
+        if: github.event_name == 'workflow_dispatch' && inputs.target == 'pypi'
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "::error::v$version is already tagged: bump the version in __init__.py and plugin.json first"
+            exit 1
+          fi
 
       # The suite and the lint run before anything is built: PyPI never lets a version
       # number be reused, so a broken upload can only be corrected by a new number.
@@ -47,14 +79,12 @@ jobs:
           python -m pytest -q
 
       # A tag that disagrees with the package is a release that would publish one number
-      # under another's name; the plugin manifest states the version too and must agree.
+      # under another's name.
       - name: the tag names the package's version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          version=$(PYTHONPATH=plugin/src python -c "import askround; print(askround.__version__)")
-          plugin=$(python -c "import json; print(json.load(open('plugin/.claude-plugin/plugin.json'))['version'])")
+          version="${{ steps.version.outputs.version }}"
           test "v$version" = "$GITHUB_REF_NAME" || { echo "::error::tag $GITHUB_REF_NAME, package $version"; exit 1; }
-          test "$plugin" = "$version" || { echo "::error::plugin.json says $plugin, package $version"; exit 1; }
 
       - name: build
         run: |
@@ -98,7 +128,7 @@ jobs:
 
   pypi:
     name: publish to PyPI
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
     needs: testpypi
     runs-on: ubuntu-latest
     environment:
@@ -117,8 +147,8 @@ jobs:
   # repository reads as never shipped while PyPI holds the package.
   release:
     name: a GitHub release beside the PyPI one
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: pypi
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+    needs: [build, pypi]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -128,9 +158,17 @@ jobs:
         with:
           name: dist
           path: dist/
+      # On a tag push the tag exists already; on a manual run `gh` creates it on the commit
+      # that was built and published.
       - name: release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag \
-            --title "askround ${GITHUB_REF_NAME#v}" --generate-notes
+          if [ "${{ github.event_name }}" = "push" ]; then
+            gh release create "v$VERSION" dist/* --verify-tag \
+              --title "askround $VERSION" --generate-notes
+          else
+            gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
+              --title "askround $VERSION" --generate-notes
+          fi
