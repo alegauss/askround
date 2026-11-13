@@ -20,7 +20,7 @@ EXAMPLE = Path(__file__).parent.parent / "examples" / "modelado.toml"
 SEED = "free offline app photo to 3D model on Windows"
 PRODUCT = Product(
     "Modelado",
-    places=["alegauss.github.io/modelado"],
+    places=["alegauss.com/modelado"],
     facts=[Fact("Runs without an NVIDIA GPU", "Yes")],
 )
 
@@ -34,7 +34,7 @@ VARIANTS = {
         {"text": "photo to a relief STL for 3D printing", "axis": "use case", "locale": ""},
         {"text": "app de foto para 3D só na CPU", "axis": "language", "locale": "BR:pt-BR"},
         {"text": "is Modelado good for photo to 3D?", "axis": "constraint", "locale": ""},
-        {"text": "see alegauss.github.io/modelado for 3D", "axis": "use case", "locale": ""},
+        {"text": "see alegauss.com/modelado for 3D", "axis": "use case", "locale": ""},
     ]
 }
 
@@ -57,7 +57,7 @@ def test_generate_drops_variants_that_name_the_product():
     assert kept[2].locale == Locale("BR", "pt-BR")
     assert dropped == [
         "is Modelado good for photo to 3D?",
-        "see alegauss.github.io/modelado for 3D",
+        "see alegauss.com/modelado for 3D",
     ]
     assert "Runs without an NVIDIA GPU: Yes" in writer.prompts[0]
     assert "Never name the product" in writer.prompts[0]

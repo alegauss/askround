@@ -31,7 +31,7 @@ def test_openai_recorded_answer():
     assert "Modelado" in parsed.text
     assert parsed.sources, "a searched answer cites its pages"
     assert any(
-        "alegauss.github.io/modelado" in s.url or "github.com/alegauss/modelado" in s.url
+        "alegauss.com/modelado" in s.url or "github.com/alegauss/modelado" in s.url
         for s in parsed.sources
     )
     assert parsed.queries, "the web_search_call items carry the queries"

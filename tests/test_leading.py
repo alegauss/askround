@@ -10,19 +10,19 @@ from conftest import FakePost
 from askround.cli import main
 from askround.leading import leads, terms
 
-NAMES = ["Modelado", "alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+NAMES = ["Modelado", "alegauss.com/modelado", "github.com/alegauss/modelado"]
 
 
 def test_terms_include_own_hosts_but_not_shared_ones():
     found = terms(NAMES, ["a photo becomes a 3D model"])
-    assert "alegauss.github.io" in found
+    assert "alegauss.com" in found
     assert "github.com" not in found
     assert "a photo becomes a 3D model" in found
 
 
 def test_leads():
     assert leads("Is Modelado any good?", NAMES) == ["Modelado"]
-    assert leads("what is on alegauss.github.io?", NAMES) == ["alegauss.github.io"]
+    assert leads("what is on alegauss.com?", NAMES) == ["alegauss.com"]
     assert leads("an app where a photo becomes a 3D model", NAMES, ["a photo becomes a 3D model"])
     assert leads("best photo to 3D app on GitHub?", NAMES) == []
     assert leads("Modelados3D or Meshroom?", NAMES) == []  # whole words only
@@ -52,7 +52,7 @@ def test_a_brand_question_runs_and_is_marked(all_keys, tmp_path, capsys):
 
 SET = """[product]
 name = "Modelado"
-places = ["alegauss.github.io/modelado"]
+places = ["alegauss.com/modelado"]
 phrases = ["a photo becomes a 3D model"]
 
 [[question]]

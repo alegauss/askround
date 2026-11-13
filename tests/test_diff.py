@@ -11,7 +11,7 @@ from askround.extract import verify, verify_claims
 from askround.providers import Answer, Source
 from askround.round import Result, Round, save_round
 
-PRODUCT = ["Modelado", "alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+PRODUCT = ["Modelado", "alegauss.com/modelado", "github.com/alegauss/modelado"]
 
 
 def _round(day, text, recs, claims, sources):
@@ -48,7 +48,7 @@ def _store(tmp_path):
                 "quote": "CPU only: Yes",
             }
         ],
-        ["https://alegauss.github.io/modelado/"],
+        ["https://alegauss.com/modelado/"],
     )
     a = save_round(week1, tmp_path, [PRODUCT])
     b = save_round(week2, tmp_path, [PRODUCT])
@@ -61,7 +61,7 @@ def test_every_change_is_named(tmp_path):
     assert ("share", "1/1, best #1 -> 1/1, best #2") in found
     assert ("rival", "new: Modly") in found
     assert ("rival", "gone: Meshroom") in found
-    assert ("cited", "new: https://alegauss.github.io/modelado") in found
+    assert ("cited", "new: https://alegauss.com/modelado") in found
     assert ("cited", "gone: https://github.com/alegauss/modelado") in found
     assert ("claims", "new: CPU only: Yes") in found
     assert ("claims", "gone: CPU only: Check build") in found

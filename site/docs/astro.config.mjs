@@ -1,4 +1,4 @@
-// The documentation area, at https://alegauss.github.io/askround/docs/, after roadkeep's.
+// The documentation area, at https://alegauss.com/askround/docs/, after roadkeep's.
 //
 // The README is the first screen; these pages are the reads a person needs to set askround up
 // and an agent's user needs to trust what it reports. Starlight gives the sidebar, the
@@ -11,7 +11,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
 export default defineConfig({
-  site: "https://alegauss.github.io",
+  site: "https://alegauss.com",
   base: "/askround/docs",
   outDir: "../dist/docs",
 

@@ -13,7 +13,7 @@
 name = "Modelado"
 aliases = []
 places = [
-    "alegauss.github.io/modelado",
+    "alegauss.com/modelado",
     "github.com/alegauss/modelado",
     "apps.microsoft.com/detail/9PB86WW5NRR2",
     "huggingface.co/alegauss/modelado-models",
@@ -24,17 +24,17 @@ phrases = ["a photo becomes a 3D model"]
 [[fact]]
 attribute = "Runs without an NVIDIA GPU"
 value = "Yes: on any DirectX 12 GPU through DirectML (NVIDIA, AMD or Intel), or on the CPU without one"
-page = "https://alegauss.github.io/modelado/"
+page = "https://alegauss.com/modelado/"
 
 [[fact]]
 attribute = "Needs CUDA"
 value = "No"
-page = "https://alegauss.github.io/modelado/"
+page = "https://alegauss.com/modelado/"
 
 [[fact]]
 attribute = "Platform"
 value = "Windows 10 (1903+) or 11, x64"
-page = "https://alegauss.github.io/modelado/"
+page = "https://alegauss.com/modelado/"
 
 [[question]]
 # the general question: ChatGPT did not name Modelado, and led with Modly

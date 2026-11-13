@@ -1,5 +1,5 @@
 # AR41: the site (site/), built on every change to it and published to GitHub Pages at
-# https://alegauss.github.io/askround/, the base vite.config.ts names. After Modelado's site.yml.
+# https://alegauss.com/askround/, the base vite.config.ts names. After Modelado's site.yml.
 #
 # The gate is the build: `npm run build` runs tsc, the client build, the SSR build, the social
 # card and the prerender, whose replace-or-throw head patch fails on a template that lost an

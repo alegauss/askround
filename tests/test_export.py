@@ -13,7 +13,7 @@ from askround.extract import verify
 from askround.providers import Answer, Source
 from askround.round import Result, Round, save_round
 
-PRODUCT = ["Modelado", "alegauss.github.io/modelado"]
+PRODUCT = ["Modelado", "alegauss.com/modelado"]
 
 
 def _round(day, texts, question="without NVIDIA?"):
@@ -25,7 +25,7 @@ def _round(day, texts, question="without NVIDIA?"):
                 "m",
                 text,
                 {},
-                sources=[Source("https://alegauss.github.io/modelado/")],
+                sources=[Source("https://alegauss.com/modelado/")],
                 answered_at=day,
             )
             names = [line.split(". ", 1)[1] for line in text.splitlines()]

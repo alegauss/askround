@@ -61,7 +61,7 @@ def measured(all_keys, tmp_path):
     out = str(tmp_path)
     post = Recorded()
     two = ["openai", "gemini"]
-    product = ["Modelado,alegauss.github.io/modelado"]
+    product = ["Modelado,alegauss.com/modelado"]
     asked = {
         "question": QUESTION,
         "providers": two,

@@ -7,8 +7,8 @@ import type { SiteRichRuns, SponsorDeclaration } from "@viglet/viglet-design-sys
 export const THEME_KEY = "askround-theme";
 export const BASE = "/askround/";
 export const repoUrl = "https://github.com/alegauss/askround";
-export const roadkeepUrl = "https://alegauss.github.io/roadkeep/";
-export const parentUrl = "https://alegauss.github.io/";
+export const roadkeepUrl = "https://alegauss.com/roadkeep/";
+export const parentUrl = "https://alegauss.com/";
 
 /* ------------------------------------------------------------------ hero */
 
@@ -71,7 +71,7 @@ export const session = {
 
 /* --------------------------------------------------------------- sponsor */
 
-// Mirrors alegauss.github.io/sponsor.json, as the family's other sites transcribe it: the
+// Mirrors alegauss.com/sponsor.json, as the family's other sites transcribe it: the
 // page is prerendered, and a sponsor is named so that crawlers and assistants read it.
 export const sponsor: SponsorDeclaration = {
   sponsor: {

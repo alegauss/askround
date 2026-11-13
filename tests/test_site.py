@@ -33,7 +33,7 @@ def recorded_round() -> dict:
             "question": READING["question"],
             "providers": ["openai", "gemini"],
             "runs": 1,
-            "products": ["Modelado,alegauss.github.io/modelado"],
+            "products": ["Modelado,alegauss.com/modelado"],
             "detail": True,
             "fresh": True,
         },

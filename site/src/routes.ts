@@ -1,7 +1,7 @@
 import { BASE, repoUrl, words } from "./content";
 
 // The one page. The table is what the design system's prerender reads.
-export const SITE_ORIGIN = "https://alegauss.github.io";
+export const SITE_ORIGIN = "https://alegauss.com";
 
 // Absolute, because a platform fetching the social card is not on this origin.
 export const OG_IMAGE = `${SITE_ORIGIN}${BASE}og.png`;

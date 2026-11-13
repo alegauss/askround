@@ -4,14 +4,14 @@
     [product]
     name = "Modelado"
     aliases = []                                   # other names it goes by
-    places = ["alegauss.github.io/modelado",       # its pages: a domain or a URL prefix
+    places = ["alegauss.com/modelado",       # its pages: a domain or a URL prefix
               "github.com/alegauss/modelado"]
     phrases = ["a photo becomes a 3D model"]       # its own wording, kept out of questions
 
     [[fact]]
     attribute = "Runs without an NVIDIA GPU"
     value = "Yes: on the CPU, or any DirectML GPU (AMD, Intel)"
-    page = "https://alegauss.github.io/modelado/"  # the page that should say it plainly
+    page = "https://alegauss.com/modelado/"  # the page that should say it plainly
 
     [[question]]
     text = "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?"

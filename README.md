@@ -1,8 +1,8 @@
 # askround
 
-**Site:** [alegauss.github.io/askround](https://alegauss.github.io/askround/), with a real
+**Site:** [alegauss.com/askround](https://alegauss.com/askround/), with a real
 recorded round. **Docs:** [install, a first session, prompt sets, budget, reports, the MCP
-tools and the CLI](https://alegauss.github.io/askround/docs/).
+tools and the CLI](https://alegauss.com/askround/docs/).
 
 People now ask ChatGPT or Gemini which app to use, and you cannot see the answer they
 get. askround asks the assistants for you: the same question to OpenAI, Gemini,
@@ -34,7 +34,7 @@ report is about the API.
 pip install askround          # from a checkout until the first release: pip install .
 askround doctor               # which providers have a key
 askround ask "What app can turn a photo into a 3D model on Windows without an NVIDIA GPU?" \
-    --product "Modelado,alegauss.github.io/modelado" --extract
+    --product "Modelado,alegauss.com/modelado" --extract
 ```
 
 Python 3.11 or later and the standard library only, so nothing in it is specific to one
@@ -77,7 +77,7 @@ answer, and a quote not found in the answer is marked `(?)`. Positions ranked th
 show a `*`.
 
 Give the product's own places among its names, anything with a dot: a domain or a URL
-prefix (`--product "Modelado,alegauss.github.io/modelado,github.com/alegauss/modelado"`).
+prefix (`--product "Modelado,alegauss.com/modelado,github.com/alegauss/modelado"`).
 The report then says, per provider, how many answers cited one of its pages and which
 kind (site, repository, store, docs), and `round.json` lists every page and the
 third-party domains cited. Tracking parameters are dropped; Gemini's redirect links are
@@ -118,12 +118,12 @@ The model per provider is overridden with `ASKROUND_OPENAI_MODEL`,
 # modelado.toml
 [product]
 name = "Modelado"
-places = ["alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+places = ["alegauss.com/modelado", "github.com/alegauss/modelado"]
 
 [[fact]]
 attribute = "Runs without an NVIDIA GPU"
 value = "Yes: any DirectX 12 GPU through DirectML, or the CPU"
-page = "https://alegauss.github.io/modelado/"   # where it should be said plainly
+page = "https://alegauss.com/modelado/"   # where it should be said plainly
 ```
 
 `askround ask "..." --product-file modelado.toml --extract` asks about the product the

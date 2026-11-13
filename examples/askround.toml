@@ -9,24 +9,24 @@
 [product]
 name = "askround"
 aliases = []
-places = ["alegauss.github.io/askround", "github.com/alegauss/askround", "pypi.org/project/askround"]
+places = ["alegauss.com/askround", "github.com/alegauss/askround", "pypi.org/project/askround"]
 # the site's own wording: a question that borrows it steers the assistant to the site
 phrases = ["see what assistants recommend"]
 
 [[fact]]
 attribute = "Licence"
 value = "Apache-2.0, open source"
-page = "https://alegauss.github.io/askround/"
+page = "https://alegauss.com/askround/"
 
 [[fact]]
 attribute = "Runtime dependencies"
 value = "None: Python 3.11+ and the standard library"
-page = "https://alegauss.github.io/askround/docs/install/"
+page = "https://alegauss.com/askround/docs/install/"
 
 [[fact]]
 attribute = "MCP server"
 value = "Yes: askround mcp serves its tools to Claude Code and other MCP clients"
-page = "https://alegauss.github.io/askround/docs/reference/mcp/"
+page = "https://alegauss.com/askround/docs/reference/mcp/"
 
 [[question]]
 text = "How can I track whether ChatGPT and Gemini recommend my app when people ask for a tool like it?"

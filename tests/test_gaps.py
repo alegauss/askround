@@ -27,17 +27,17 @@ NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
 FILE = """[product]
 name = "Modelado"
 aliases = []
-places = ["alegauss.github.io/modelado", "github.com/alegauss/modelado"]
+places = ["alegauss.com/modelado", "github.com/alegauss/modelado"]
 
 [[fact]]
 attribute = "Runs without an NVIDIA GPU"
 value = "Yes: on the CPU, or any DirectML GPU"
-page = "https://alegauss.github.io/modelado/"
+page = "https://alegauss.com/modelado/"
 
 [[fact]]
 attribute = "Price"
 value = "Free"
-page = "https://alegauss.github.io/modelado/"
+page = "https://alegauss.com/modelado/"
 """
 
 TABLE = "| App | CPU only | Price |\n|---|---|---|\n| Modelado | Check build | Free |\n"
@@ -69,13 +69,13 @@ def test_load(product_file):
     assert product.name == "Modelado"
     assert product.names == [
         "Modelado",
-        "alegauss.github.io/modelado",
+        "alegauss.com/modelado",
         "github.com/alegauss/modelado",
     ]
     assert product.facts[0] == Fact(
         "Runs without an NVIDIA GPU",
         "Yes: on the CPU, or any DirectML GPU",
-        "https://alegauss.github.io/modelado/",
+        "https://alegauss.com/modelado/",
     )
 
 
@@ -128,7 +128,7 @@ def test_the_cpu_gap_points_at_the_first_screen(product_file):
     gap = found[0]
     assert (gap.attribute, gap.value, gap.verdict) == ("CPU only", "Check build", "doubts")
     assert gap.fact == "Runs without an NVIDIA GPU: Yes: on the CPU, or any DirectML GPU"
-    assert gap.page == "https://alegauss.github.io/modelado/"
+    assert gap.page == "https://alegauss.com/modelado/"
     assert gap.cited == ["https://github.com/alegauss/modelado"]
     assert gap.providers == {"openai": 1}
     assert '1. CPU only: Check build (passage: "Check build")' in judge.prompts[0]
@@ -164,7 +164,7 @@ def test_cli_product_file_reports_the_gap(all_keys, tmp_path, product_file, caps
     assert code == 0
     assert "Modelado: fact gaps" in out
     assert "CPU only: Check build   (openai 1)  doubts" in out
-    assert "say it plainly on https://alegauss.github.io/modelado/" in out
+    assert "say it plainly on https://alegauss.com/modelado/" in out
     round_, products = load_round(find_round(None, tmp_path / "rounds"))
     report = markdown(build(round_, products))
     assert "**Fact gaps**" in report

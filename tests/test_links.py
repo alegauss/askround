@@ -17,7 +17,7 @@ from askround.report import build, find_round, load_round, markdown
 from askround.round import Result, Round
 
 NOW = datetime(2026, 11, 12, 14, 30, 5, tzinfo=UTC)
-PRODUCT = ["Modelado", "alegauss.github.io/modelado", "apps.microsoft.com/detail/9own"]
+PRODUCT = ["Modelado", "alegauss.com/modelado", "apps.microsoft.com/detail/9own"]
 
 ROW = (
     "| Modelado | [![Modelado](https://store-images.example/rival.png)]"
@@ -28,7 +28,7 @@ ANSWER = f"""| App | Get it |
 {ROW}
 | Meshroom | [site](https://meshroom.example/) |
 
-**Modelado** runs on the CPU ([site](https://alegauss.github.io/modelado/)). For other
+**Modelado** runs on the CPU ([site](https://alegauss.com/modelado/)). For other
 needs, a much longer paragraph goes on about photogrammetry, cameras, lighting and many
 other things before it finally names [Meshroom](https://meshroom.example/download).
 """
@@ -40,9 +40,9 @@ PAGES = {
         "<title>Image to 3d model - Free download | Microsoft Store</title>",
     ),
     "https://store-images.example/rival.png": (200, "https://store-images.example/rival.png", ""),
-    "https://alegauss.github.io/modelado/": (
+    "https://alegauss.com/modelado/": (
         200,
-        "https://alegauss.github.io/modelado/",
+        "https://alegauss.com/modelado/",
         "<title>Modelado</title>",
     ),
     "https://apps.microsoft.com/detail/9own": (
@@ -62,13 +62,13 @@ def test_attributed_takes_the_row_and_the_nearby_prose():
     assert attributed(ANSWER, ["Modelado"]) == [
         "https://store-images.example/rival.png",
         "https://apps.microsoft.com/detail/9rival",
-        "https://alegauss.github.io/modelado/",
+        "https://alegauss.com/modelado/",
     ]
     # Meshroom's links, in its own row and far down the paragraph, are not Modelado's
 
 
 def test_judge():
-    assert judge(PRODUCT, 200, "https://alegauss.github.io/modelado/x", "") == "ok"
+    assert judge(PRODUCT, 200, "https://alegauss.com/modelado/x", "") == "ok"
     assert judge(PRODUCT, 200, "https://x.example/", "Modelado - Microsoft Store") == "ok"
     assert judge(PRODUCT, 200, "https://apps.microsoft.com/detail/9rival", "Image to 3d model") == (
         "elsewhere"
@@ -87,7 +87,7 @@ def test_the_rivals_store_page_is_flagged_and_the_real_pages_pass():
     round_ = Round("q", NOW, [Result("openai", "m", 1, answer=answer)], runs=1)
     checks = {c.url: c for c in check_links(round_, PRODUCT, get=fake_fetch)}
     assert checks["https://apps.microsoft.com/detail/9rival"].verdict == "elsewhere"
-    assert checks["https://alegauss.github.io/modelado/"].verdict == "ok"
+    assert checks["https://alegauss.com/modelado/"].verdict == "ok"
     # an image with no title on a host that is not the product's
     assert checks["https://store-images.example/rival.png"].verdict == "elsewhere"
 

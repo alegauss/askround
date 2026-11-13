@@ -80,7 +80,7 @@
           },
           {
             "type": "url",
-            "url": "https://alegauss.github.io/modelado/"
+            "url": "https://alegauss.com/modelado/"
           },
           {
             "type": "url",
@@ -167,7 +167,7 @@
           },
           {
             "type": "url",
-            "url": "https://alegauss.github.io/modelado/"
+            "url": "https://alegauss.com/modelado/"
           },
           {
             "type": "url",
@@ -179,7 +179,7 @@
           },
           {
             "type": "url",
-            "url": "https://alegauss.github.io/products/modelado/"
+            "url": "https://alegauss.com/products/modelado/"
           },
           {
             "type": "url",
@@ -499,7 +499,7 @@
           },
           {
             "type": "url",
-            "url": "https://alegauss.github.io/products/modelado/?utm_source=openai"
+            "url": "https://alegauss.com/products/modelado/?utm_source=openai"
           },
           {
             "type": "url",
@@ -544,7 +544,7 @@
               "end_index": 510,
               "start_index": 423,
               "title": "Modelado — Windows · Desktop app · Alegauss",
-              "url": "https://alegauss.github.io/products/modelado/?utm_source=openai"
+              "url": "https://alegauss.com/products/modelado/?utm_source=openai"
             },
             {
               "type": "url_citation",
@@ -583,7 +583,7 @@
             }
           ],
           "logprobs": [],
-          "text": "Short answer: Yes—there are several Windows apps that do single‑image → 3D and don’t require an NVIDIA GPU. These run on AMD GPUs (DirectML/ROCm) or even CPU-only:\n\n- Modelado (Windows desktop app)\n  - What it does: Turns one photo of a single object into a textured mesh (TripoSR under the hood). Exports GLB/OBJ/STL/PLY.\n  - Hardware: Runs locally on AMD/Intel/NVIDIA via DirectML or falls back to CPU; no CUDA required. ([alegauss.github.io](https://alegauss.github.io/products/modelado/?utm_source=openai))\n\n- Shape Studio by Hivemind (free)\n  - What it does: Local image‑to‑3D studio with TripoSR and other pipelines; includes mesh tools and exports.\n  - Hardware: Packaged to run on CPU; NVIDIA is optional for some models, so it works on CPU‑only machines. ([github.com](https://github.com/senacula/senacula-shapestudio?utm_source=openai))\n\n- Modly (open‑source desktop app)\n  - What it does: Local image‑to‑3D (TRELLIS.2, Hunyuan3D, TripoSG) with GLB/OBJ/STL/PLY export.\n  - Hardware: Supports AMD GPUs through ROCm on Windows; designed to run on your GPU (no NVIDIA required). ([modly3d.app](https://modly3d.app/?utm_source=openai))\n\n- Reallusion Character Creator + Headshot 3 (plugin) — faces\n  - What it does: Generates a fully rigged 3D head from a single photo inside Character Creator.\n  - Hardware: Windows app; AMD Radeon GPUs are officially supported. ([reallusion.com](https://www.reallusion.com/character-creator/headshot/photo-to-3d-head.html?utm_source=openai))\n\n- FaceGen Artist (faces)\n  - What it does: Creates a 3D face from one (or more) photos; exports for Daz/other tools.\n  - Hardware: Windows app; works without CUDA (CPU‑based). ([facegen.com](https://facegen.com/artist.htm))\n\nNotes\n- “Single photo” 3D is AI‑inferred—the hidden sides are guessed. You’ll get best results with centered, well‑lit objects on plain backgrounds; complex shapes may need light cleanup in Blender/MeshLab. ([github.com](https://github.com/alegauss/modelado?utm_source=openai))\n\nIf you tell me whether you need general objects or human heads—and whether you prefer GPU or strictly CPU‑only—I can suggest the best pick and a 3‑step setup."
+          "text": "Short answer: Yes—there are several Windows apps that do single‑image → 3D and don’t require an NVIDIA GPU. These run on AMD GPUs (DirectML/ROCm) or even CPU-only:\n\n- Modelado (Windows desktop app)\n  - What it does: Turns one photo of a single object into a textured mesh (TripoSR under the hood). Exports GLB/OBJ/STL/PLY.\n  - Hardware: Runs locally on AMD/Intel/NVIDIA via DirectML or falls back to CPU; no CUDA required. ([alegauss.com](https://alegauss.com/products/modelado/?utm_source=openai))\n\n- Shape Studio by Hivemind (free)\n  - What it does: Local image‑to‑3D studio with TripoSR and other pipelines; includes mesh tools and exports.\n  - Hardware: Packaged to run on CPU; NVIDIA is optional for some models, so it works on CPU‑only machines. ([github.com](https://github.com/senacula/senacula-shapestudio?utm_source=openai))\n\n- Modly (open‑source desktop app)\n  - What it does: Local image‑to‑3D (TRELLIS.2, Hunyuan3D, TripoSG) with GLB/OBJ/STL/PLY export.\n  - Hardware: Supports AMD GPUs through ROCm on Windows; designed to run on your GPU (no NVIDIA required). ([modly3d.app](https://modly3d.app/?utm_source=openai))\n\n- Reallusion Character Creator + Headshot 3 (plugin) — faces\n  - What it does: Generates a fully rigged 3D head from a single photo inside Character Creator.\n  - Hardware: Windows app; AMD Radeon GPUs are officially supported. ([reallusion.com](https://www.reallusion.com/character-creator/headshot/photo-to-3d-head.html?utm_source=openai))\n\n- FaceGen Artist (faces)\n  - What it does: Creates a 3D face from one (or more) photos; exports for Daz/other tools.\n  - Hardware: Windows app; works without CUDA (CPU‑based). ([facegen.com](https://facegen.com/artist.htm))\n\nNotes\n- “Single photo” 3D is AI‑inferred—the hidden sides are guessed. You’ll get best results with centered, well‑lit objects on plain backgrounds; complex shapes may need light cleanup in Blender/MeshLab. ([github.com](https://github.com/alegauss/modelado?utm_source=openai))\n\nIf you tell me whether you need general objects or human heads—and whether you prefer GPU or strictly CPU‑only—I can suggest the best pick and a 3‑step setup."
         }
       ],
       "role": "assistant"
