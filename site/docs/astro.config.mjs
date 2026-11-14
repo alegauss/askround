@@ -23,6 +23,8 @@ export default defineConfig({
       pagefind: true,
       social: [{ icon: "github", label: "GitHub", href: "https://github.com/alegauss/askround" }],
       customCss: ["./src/styles/area.css"],
+      // A BreadcrumbList per page — see the file for why Google needs to be told.
+      routeMiddleware: "./src/breadcrumbs.ts",
       sidebar: [
         { label: "What askround is", link: "/" },
         { label: "Install", link: "/install/" },
