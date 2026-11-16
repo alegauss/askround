@@ -35,9 +35,22 @@ const touch = new Resvg(icon, { fitTo: { mode: "width", value: 180 } }).render()
 writeFileSync(join(distDir, "apple-touch-icon.png"), touch);
 console.log(`touch icon: dist/apple-touch-icon.png  180x180  (${(touch.length / 1024).toFixed(0)} kB)`);
 
+/** A route's breadcrumb name: its last path segment, each word capitalised. */
+const crumbName = (path) =>
+  path
+    .replace(/\/$/, "")
+    .split("/")
+    .pop()
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 const written = prerenderSite({
   distDir,
-  routes: ROUTES,
+  // VDS253: each route's crumb is its last path segment, title-cased (`/features/locate` -> "Locate");
+  // the <title> is a sentence, too long for a breadcrumb.
+  routes: ROUTES.map((route) => ({ ...route, breadcrumb: crumbName(route.path) })),
+  breadcrumbs: { name: "askround", above: [{ name: "alegauss.com", url: "https://alegauss.com/" }] },
   render,
   canonicalUrl,
   outputDir,
